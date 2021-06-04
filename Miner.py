@@ -12,9 +12,7 @@ import sys
 from colorama import init 
 from termcolor import colored 
 from pyngrok import ngrok
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
+
 import json
 import time
 
@@ -34,11 +32,6 @@ NGROK_IP = None
 NGROK_PORT = None
 
 txValidated = []
-
-
-if not firebase_admin._apps:
-    cred = credentials.Certificate("./cryptocoin-de716-firebase-adminsdk-r78ms-08b475d8f8.json")
-    firebase_admin.initialize_app(cred)
 
 
 sys.setrecursionlimit(1000000)
