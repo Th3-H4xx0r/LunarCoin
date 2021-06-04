@@ -245,7 +245,7 @@ def archiveServer(my_addr):
 
                 else:
 
-                    print("regular transaction")
+                    #print("regular transaction")
 
 
                     addrSimplified = newTx.public

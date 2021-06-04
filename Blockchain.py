@@ -63,11 +63,11 @@ class Blockchain:
         txThreshold = self.getBlockTXThreshold()
 
         if(len(self.current_transactions) >= txThreshold):
-            print("Going to next block with index: " + str(len(self.chain)))
+            #print("Going to next block with index: " + str(len(self.chain)))
             return True
 
         else:
-            print(str(len(self.current_transactions))  + "/" + str(txThreshold) + " transactions left until next block")
+            #print(str(len(self.current_transactions))  + "/" + str(txThreshold) + " transactions left until next block")
             return False
 
 
