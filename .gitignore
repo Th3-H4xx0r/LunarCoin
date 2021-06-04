@@ -2,3 +2,4 @@ privateKey.pem
 blockchain.dat
 __pycache__/
 Blockchain/
+config.json
