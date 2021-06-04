@@ -119,10 +119,17 @@ This is an example of how to list things you need to use the software and how to
    python GenerateWallet.py
    ```
    
- 4. Configure your config.json file
+4. Make an ngrok account: https://ngrok.io
+
+6. Get your authtoken from https://dashboard.ngrok.com/get-started/your-authtoken
+   
+4. Configure your config.json file
  ```sh
- python GenerateWallet.py
+ Replace the default authtoken with your ngrok auth token
+ Add your minerID that we will provide you with.
  ```
+ 
+ Need an minerID? Vist: https://lunarcoin.network/validator
 
 
 
