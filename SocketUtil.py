@@ -4,9 +4,6 @@ import socket
 import pickle
 from colorama import init 
 from termcolor import colored 
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
 import requests
 
 
@@ -114,7 +111,7 @@ class SocketUtil:
         return False
 
     
-    def updateMinerIp(db, ip, minerID):
+    def updateMinerIp(ip, minerID):
 
         ip = ip[6:]
 

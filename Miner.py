@@ -40,7 +40,6 @@ if not firebase_admin._apps:
     cred = credentials.Certificate("./cryptocoin-de716-firebase-adminsdk-r78ms-08b475d8f8.json")
     firebase_admin.initialize_app(cred)
 
-db = firestore.client()
 
 sys.setrecursionlimit(1000000)
 

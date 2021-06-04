@@ -12,9 +12,6 @@ import sys
 from colorama import init 
 from termcolor import colored 
 from pyngrok import ngrok
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
 import json
 import time
 
@@ -35,13 +32,6 @@ NGROK_IP = None
 NGROK_PORT = None
 
 walletTxFreq = {}
-
-
-if not firebase_admin._apps:
-    cred = credentials.Certificate("./cryptocoin-de716-firebase-adminsdk-r78ms-08b475d8f8.json")
-    firebase_admin.initialize_app(cred)
-
-db = firestore.client()
 
 sys.setrecursionlimit(1000000)
 
@@ -82,7 +72,7 @@ def runGrok():
     tunnel = ngrok.connect(TCP_PORT, "tcp")
     print("Running ngrok connection server: " + str(tunnel.public_url))
 
-    NGROK_IP, NGROK_PORT = SocketUtil.updateMinerIp(db, tunnel.public_url, MINER_ID)
+    NGROK_IP, NGROK_PORT = SocketUtil.updateMinerIp(tunnel.public_url, MINER_ID)
 
 
 
@@ -171,7 +161,7 @@ def recvObj(socket, blockchainObj, syncUtil):
 
 #def sendBlockchain(ip, port):
 
-
+'''
 def verifyBlock(block, db):
 
     blockVerifyList = []
@@ -212,7 +202,7 @@ def verifyBlock(block, db):
             print("Error with sending block to other nodes: " + str(e))
     
     #print(blockVerifyList)
-
+'''
 
 def archiveServer(my_addr):
 

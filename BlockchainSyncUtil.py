@@ -2,10 +2,6 @@
 import socket
 import pickle
 
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
-
 from colorama import init 
 from termcolor import colored 
 from SocketUtil import SocketUtil
