@@ -114,10 +114,15 @@ This is an example of how to list things you need to use the software and how to
    python -m pip install -r requirements.txt
    ```
    
-4. Enter your API in `config.js`
-   ```JS
-   const API_KEY = 'ENTER YOUR API';
+3. Generate your miner wallet
+   ```sh
+   python GenerateWallet.py
    ```
+   
+ 4. Configure your config.json file
+ ```sh
+ python GenerateWallet.py
+ ```
 
 
 
