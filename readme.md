@@ -80,16 +80,20 @@ This section should list any major frameworks that you built your project using.
 <!-- GETTING STARTED -->
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+To get started with running a validator node for the Lunar Coin network, follow the steps below to get started. If at any point, you need help, please contact our developers at devv@lunarcoin.network
 
 ### Prerequisites
 
 This is an example of how to list things you need to use the software and how to install them.
-* npm
+* python (Linux)
   ```sh
-  npm install npm@latest -g
+  $ sudo apt-get update
+  $ sudo apt-get install python3.8
   ```
+  
+  or 
+  
+* Python windows: https://www.python.org/downloads/
 
 ### Installation
 
