@@ -70,10 +70,11 @@ A list of commonly used resources that I find helpful are listed in the acknowle
 
 ### Built With
 
-This section should list any major frameworks that you built your project using. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
-* [Bootstrap](https://getbootstrap.com)
-* [JQuery](https://jquery.com)
-* [Laravel](https://laravel.com)
+Here are a list of major frameworks or languages used to build LunarCoin.
+* [Python](https://www.python.org)
+* [Socket.io](https://socket.io/)
+* [Ngrok](https://ngrok.com/)
+* [Cryptography](https://cryptography.io)
 
 
 
@@ -149,8 +150,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 <!-- ROADMAP -->
 ## Roadmap
 
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a list of proposed features (and known issues).
-
+See the [roadmap](https://lunarcoin.network/roadmap) for our official roadmap.
 
 
 <!-- CONTRIBUTING -->
@@ -176,9 +176,11 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Your Name - [@your_twitter](https://twitter.com/your_username) - email@example.com
+LunarCoin Dev Team - dev@lunarcoin.network
 
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
+Project Website: [Lunar Coin Website](https://lunarcoin.network)
+
+Project Whiteppaper: [Whitepaper](https://lunarcoin.network/whitepaper)
 
 
 
