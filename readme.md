@@ -19,12 +19,6 @@
   <p align="center">
     Lunar Coin is the future of crypto currency.
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
   </p>
 </p>
 
@@ -101,7 +95,7 @@ This is an example of how to list things you need to use the software and how to
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/your_username_/Project-Name.git
+   git clone https://github.com/Th3-H4xx0r/LunarCoin
    ```
 2. Install python dependencies
    ```sh
@@ -125,8 +119,14 @@ This is an example of how to list things you need to use the software and how to
    
 4. Configure your config.json file
  ```sh
- Replace the default authtoken with your ngrok auth token
- Add your minerID that we will provide you with.
+ 
+ {
+    "minerID": Add your minerID that we will provide you with,
+    "ngrokAuthToken": Replace the default authtoken with your ngrok auth token,
+    "network": "mainnet" or "testnet" based on the network you want to mine for
+}
+ 
+
  ```
  
  Need an minerID? Vist: https://lunarcoin.network/validator
