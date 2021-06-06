@@ -72,12 +72,12 @@ Here are a list of major frameworks or languages used to build LunarCoin.
 <!-- GETTING STARTED -->
 ## Getting Started
 
-To get started with running a validator node for the Lunar Coin network, follow the steps below to get started. If at any point, you need help, please contact our developers at devv@lunarcoin.network
+To get started with running a validator node for the Lunar Coin network, follow the steps below to get started. If at any point, you need help, please contact our developers at dev@lunarcoin.network
 
 ### Prerequisites
 
-This is an example of how to list things you need to use the software and how to install them.
-* python (Linux)
+These are some prerequisites that are required to run a LunarCoin vvalidator node.
+* Python (Linux)
   ```sh
   $ sudo apt-get update
   $ sudo apt-get install python3.8
@@ -85,7 +85,7 @@ This is an example of how to list things you need to use the software and how to
   
   or 
   
-* Python windows: https://www.python.org/downloads/
+* Python Windows: https://www.python.org/downloads/
 
 ### Installation
 
