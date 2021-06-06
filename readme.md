@@ -19,12 +19,6 @@
   <p align="center">
     Lunar Coin is the future of crypto currency.
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
   </p>
 </p>
 
@@ -63,55 +57,73 @@
 
 [![Product Name Screen Shot][product-screenshot]](https://lunarcoin.network)
 
-There are many great README templates available on GitHub, however, I didn't find one that really suit my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
-
-Here's why:
-* Your time should be focused on creating something amazing. A project that solves a problem and helps others
-* You shouldn't be doing the same tasks over and over like creating a README from scratch
-* You should element DRY principles to the rest of your life :smile:
-
-Of course, no one template will serve all projects since your needs may be different. So I'll be adding more in the near future. You may also suggest changes by forking this repo and creating a pull request or opening an issue. Thanks to all the people have have contributed to expanding this template!
-
-A list of commonly used resources that I find helpful are listed in the acknowledgements.
+Fill out
 
 ### Built With
 
-This section should list any major frameworks that you built your project using. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
-* [Bootstrap](https://getbootstrap.com)
-* [JQuery](https://jquery.com)
-* [Laravel](https://laravel.com)
+Here are a list of major frameworks or languages used to build LunarCoin.
+* [Python](https://www.python.org)
+* [Socket.io](https://socket.io/)
+* [Ngrok](https://ngrok.com/)
+* [Cryptography](https://cryptography.io)
 
 
 
 <!-- GETTING STARTED -->
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+To get started with running a validator node for the Lunar Coin network, follow the steps below to get started. If at any point, you need help, please contact our developers at dev@lunarcoin.network
 
 ### Prerequisites
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
+These are some prerequisites that are required to run a LunarCoin validator node.
+* Python (Linux)
   ```sh
-  npm install npm@latest -g
+  $ sudo apt-get update
+  $ sudo apt-get install python3.8
   ```
+  
+  or 
+  
+* Python Windows: https://www.python.org/downloads/
 
 ### Installation
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
+1. Clone the repo
    ```sh
-   git clone https://github.com/your_username_/Project-Name.git
+   git clone https://github.com/Th3-H4xx0r/LunarCoin
    ```
-3. Install NPM packages
+2. Install python dependencies
    ```sh
-   npm install
+   pip install -r requirements.txt
    ```
-4. Enter your API in `config.js`
-   ```JS
-   const API_KEY = 'ENTER YOUR API';
+   
+   or 
+   
+   ```sh
+   python -m pip install -r requirements.txt
    ```
+   
+3. Generate your miner wallet
+   ```sh
+   python GenerateWallet.py
+   ```
+   
+4. Make an ngrok account: https://ngrok.io
+
+6. Get your authtoken from https://dashboard.ngrok.com/get-started/your-authtoken
+   
+4. Configure your config.json file
+
+ ```sh
+ {
+    "minerID": Add your validator ID that we will provide you with,
+    "ngrokAuthToken": Replace the default auth token with your ngrok auth token,
+    "network": "mainnet" or "testnet"
+}
+ ```
+ 
+ Need an minerID? Vist: https://lunarcoin.network/validator
 
 
 
@@ -127,8 +139,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 <!-- ROADMAP -->
 ## Roadmap
 
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a list of proposed features (and known issues).
-
+See the [roadmap](https://lunarcoin.network/roadmap) for our official roadmap.
 
 
 <!-- CONTRIBUTING -->
@@ -154,9 +165,11 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Your Name - [@your_twitter](https://twitter.com/your_username) - email@example.com
+LunarCoin Dev Team - dev@lunarcoin.network
 
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
+Project Website: [Lunar Coin Website](https://lunarcoin.network)
+
+Project Whitepaper: [Whitepaper](https://lunarcoin.network/whitepaper)
 
 
 
