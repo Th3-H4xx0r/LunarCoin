@@ -18,7 +18,7 @@ class SocketUtil:
         pass
 
     
-    def getMinerNodes():
+    def getMinerNodes(net):
 
         minerNodesList = []
 
@@ -49,9 +49,13 @@ class SocketUtil:
         '''
 
         try:
-            r = requests.get('https://api.classvibes.net/validator/getNodes')
+            r = requests.get('https://api.classvibes.net/validator/getNodes?network=' + str(net))
+
+            print('https://api.classvibes.net/validator/getNodes?network=' + str(net))
 
             data = r.json()
+
+            #print(data)
 
             if(data['status'] == "success"):
                 
