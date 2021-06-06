@@ -395,7 +395,7 @@ if __name__ == "__main__":
 
         while True:
 
-            print(nodesData)
+            #print(nodesData)
 
             # IF getNodes is None
 
