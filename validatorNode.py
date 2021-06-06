@@ -108,6 +108,7 @@ def runGrok():
     global MINER_ID
     global NGROK_IP
     global NGROK_PORT
+    global NETWORK
 
     # 1sbjL6HgcrNZeVi61XPymtYEisD_xaXYnSwRckKbJiUmBfVg   ---  token for mcendercraftnetwork@gmail.com
 
@@ -115,7 +116,7 @@ def runGrok():
     tunnel = ngrok.connect(TCP_PORT, "tcp")
     print("Running ngrok connection server: " + str(tunnel.public_url))
 
-    NGROK_IP, NGROK_PORT = SocketUtil.updateMinerIp(tunnel.public_url, MINER_ID)
+    NGROK_IP, NGROK_PORT = SocketUtil.updateMinerIp(tunnel.public_url, MINER_ID, NETWORK)
 
 
 
@@ -358,12 +359,15 @@ def spamManagement():
 
 if __name__ == "__main__":
 
-    if(NETWORK == "testnet"):
-        print(colored("[VALIDATOR CORE][WARNING] Validator node is running in testnet mode. If you want to run in mainnet, change the 'network' option to 'mainnet' in the config.json", "yellow"))
 
     # Loads node configuration
 
     loadComplete = loadConfiguration()
+
+    if(NETWORK == "testnet"):
+        print(colored("[VALIDATOR CORE][WARNING] Validator node is running in testnet mode. If you want to run in mainnet, change the 'network' option to 'mainnet' in the config.json", "yellow"))
+
+    time.sleep(3)
 
     if(loadComplete):
 
@@ -400,7 +404,7 @@ if __name__ == "__main__":
                 print("Error with connecting to network node. Restart miner and try again later.")
                 break
 
-            print("Repeat")
+            #print("Repeat")
 
             syncNodeIP, syncNodePort, nodeDataJSON = syncUtil.getRandomNode(MINER_ID, nodesData)
 

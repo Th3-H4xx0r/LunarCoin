@@ -111,7 +111,7 @@ class SocketUtil:
         return False
 
     
-    def updateMinerIp(ip, minerID):
+    def updateMinerIp(ip, minerID, net):
 
         ip = ip[6:]
 
@@ -121,7 +121,7 @@ class SocketUtil:
         ip = ip[:colon]
 
         try:
-            r = requests.get('https://api.classvibes.net/validator/update?ip=' + str(ip) + "&port=" + str(port) + "&id=" + str(minerID))
+            r = requests.get('https://api.classvibes.net/validator/update?ip=' + str(ip) + "&port=" + str(port) + "&id=" + str(minerID) + "&network=" + str(net))
             #print("Updated miner ip: " + str(r.json()))
 
         except Exception as e:
