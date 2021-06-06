@@ -88,9 +88,9 @@ class BlockchainSyncUtil:
             socket.send(dataSend)
             socket.close()
 
-    def getNodes(self):
+    def getNodes(self, net):
         try:
-            r = requests.get('https://api.classvibes.net/validator/getNodes')
+            r = requests.get('https://api.classvibes.net/validator/getNodes?network=' + str(net))
 
             data = r.json()
 

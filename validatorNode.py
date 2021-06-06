@@ -30,6 +30,7 @@ MINER_ID = None
 
 NGROK_IP = None
 NGROK_PORT = None
+NETWORK = None
 
 walletTxFreq = {}
 
@@ -39,23 +40,65 @@ def loadConfiguration():
 
     global NGROK_AUTH_TOKEN
     global MINER_ID
+    global NETWORK
 
     try:
         with open('config.json', 'r') as file:
             data = json.load(file)
 
-            NGROK_AUTH_TOKEN = data['ngrokAuthToken']
-            #NGROK_AUTH_TOKEN = '1sbhWV700nwAio8OdFHAYq4eHFY_2kKKwLrHPFu4D3sXvHzNR'
-            MINER_ID = data['minerID']
+            try: # Checks if ngrokAuthToken exists
+
+                NGROK_AUTH_TOKEN = data['ngrokAuthToken']
+
+                # Checks if ngrokAuthToken is proper
+
+                if(isinstance(NGROK_AUTH_TOKEN, str) != True):
+                    print(colored("Error with loading config.json: key ngrokAuthToken is not of type string", "red"))
+                    return False
+
+            except Exception as e:
+                print(colored("Error with loading config.json: key ngrokAuthToken does not exist", "red"))
+                return False
+
+
+            try: # Checks if minerID exists
+                MINER_ID = data['minerID']
+
+                
+                if(isinstance(MINER_ID, str) != True): # Checks if minerID is proper
+                    print(colored("Error with loading config.json: key minerID is not of type string", "red"))
+                    return False
+
+            except Exception as e:
+                print(colored("Error with loading config.json: key minerID does not exist", "red"))
+                return False
+            
+
+            try: # Checks if network exists
+                NETWORK = data['network']
+
+                
+                if(isinstance(MINER_ID, str) and (NETWORK == "mainnet" or NETWORK == "testnet")): # Checks if network is proper
+                    pass
+                
+                else: 
+                    print(colored("Error with loading config.json: key network is not of type string or is not 'mainnet' or 'testnet'", "red"))
+                    return False
+
+            except Exception as e:
+                print(colored("Error with loading config.json: key network does not exist", "red"))
+                return False
+
+
+            # If all values successfull load
 
             print(colored("[MINER CORE] Loaded Miner Configs from config.json", "green"))
-
             return True
 
-
+    
+    # Error with file loading
     except Exception as e:
         print(colored("Error with loading config.json or file does not exist: " + str(e), "red")) 
-
         return False
 
 
@@ -315,6 +358,9 @@ def spamManagement():
 
 if __name__ == "__main__":
 
+    if(NETWORK == "testnet"):
+        print(colored("[VALIDATOR CORE][WARNING] Validator node is running in testnet mode. If you want to run in mainnet, change the 'network' option to 'mainnet' in the config.json", "yellow"))
+
     # Loads node configuration
 
     loadComplete = loadConfiguration()
@@ -337,7 +383,7 @@ if __name__ == "__main__":
 
         syncUtil = BlockchainSyncUtil.BlockchainSyncUtil()
 
-        nodesData = syncUtil.getNodes()
+        nodesData = syncUtil.getNodes(NETWORK)
 
         execute = False
 
