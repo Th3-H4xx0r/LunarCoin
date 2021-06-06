@@ -76,7 +76,7 @@ To get started with running a validator node for the Lunar Coin network, follow 
 
 ### Prerequisites
 
-These are some prerequisites that are required to run a LunarCoin vvalidator node.
+These are some prerequisites that are required to run a LunarCoin validator node.
 * Python (Linux)
   ```sh
   $ sudo apt-get update
@@ -116,14 +116,11 @@ These are some prerequisites that are required to run a LunarCoin vvalidator nod
 4. Configure your config.json file
 
  ```sh
- 
  {
-    "minerID": Add your minerID that we will provide you with,
-    "ngrokAuthToken": Replace the default authtoken with your ngrok auth token,
-    "network": "mainnet" or "testnet" based on the network you want to mine for
+    "minerID": Add your validator ID that we will provide you with,
+    "ngrokAuthToken": Replace the default auth token with your ngrok auth token,
+    "network": "mainnet" or "testnet"
 }
- 
-
  ```
  
  Need an minerID? Vist: https://lunarcoin.network/validator
