@@ -16,6 +16,8 @@ if __name__ == "__main__":
         index = len(unser) - 1
         currentBlock = unser[index]
 
+        print(unser)
+
 
         '''
 

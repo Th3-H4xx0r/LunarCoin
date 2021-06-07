@@ -51,8 +51,6 @@ class SocketUtil:
         try:
             r = requests.get('https://api.classvibes.net/validator/getNodes?network=' + str(net))
 
-            print('https://api.classvibes.net/validator/getNodes?network=' + str(net))
-
             data = r.json()
 
             #print(data)
