@@ -39,13 +39,16 @@ myPrivate, myPublic = Signatures().load_key('privateKey.pem')
 
 if __name__ == "__main__":
 
-    networkInp = input("Mainnet(m) or testnet(t) mode>>")
+    networkInp = input("Mainnet(m) or testnet(t) (testnet default if left blank) mode>>")
 
-    if(networkInp == "t" or networkInp == "m"):
+    if(networkInp == "t" or networkInp == "m" or networkInp == ""):
 
         network = None
 
-        if networkInp == "m":
+        if(networkInp == ""):
+            network = "testnet"
+
+        elif networkInp == "m":
             network = "mainnet"
 
         elif networkInp == "t":
