@@ -11,8 +11,8 @@ import os
 import random
 import itertools, sys
 import sys
-
-
+import logging
+import time
 
 init()
 
@@ -75,6 +75,8 @@ class BlockchainSyncUtil:
 
             #print("Send chain size to node")
 
+            time.sleep(2)
+
             socket.send(dataSend) # Sends the blockchain
             socket.close()
 
@@ -122,9 +124,9 @@ class BlockchainSyncUtil:
                     ip = selectedNode['ip']
                     port = selectedNode['port']
 
-                    print(ip)
+                    #print(ip)
 
-                    print(port)
+                    #print(port)
 
                     return ip, int(port), selectedNode
                     
@@ -187,16 +189,8 @@ class BlockchainSyncUtil:
 
                     #spinner = itertools.cycle(['-', '/', '|', '\\'])
 
-                    
-                    i = 0
-
                     while True:
                         packet = s.recv(BUFFER_SIZE)
-
-                        if(i == 0):
-                            print(sys.getsizeof(packet))
-
-                        i = i + 1
 
                         if not packet: break
                         
@@ -211,6 +205,8 @@ class BlockchainSyncUtil:
                         data += packet
                     
                     bar.finish()
+
+                    #print(data)
 
                     dataLoaded = pickle.loads(data)
 
@@ -254,6 +250,7 @@ class BlockchainSyncUtil:
 
             
                 except Exception as e1:
+                    logging.exception('message')
                     
                     print(colored('[MINER CORE] Error with blockchain sync has occured: ' + str(e1),'cyan'))
                 
@@ -269,7 +266,7 @@ class BlockchainSyncUtil:
 
 
         except Exception as e:
-            print(colored('[MINER CORE] Error with connecting to an archival server: ' + str(e),'cyan'))
+            print(colored('[MINER CORE] Error with connecting to an validator node: ' + str(e),'cyan'))
 
         
         return False, None
