@@ -17,7 +17,7 @@
   <h3 align="center">Lunar Coin</h3>
 
   <p align="center">
-    Lunar Coin is the future of crypto currency.
+     Lunar Coin is a digital payment method that involves transactions with zero transaction fees. An important aspect of Lunar Coin is being eco-friendly due to the decreased amount of energy required, as well as requiring fewer validator nodes. Lunar coins, being energy efficient as well as having minimal environmental impact, will be the digital currency that you can use whenever and wherever you want.
     <br />
   </p>
 </p>
