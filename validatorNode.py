@@ -163,6 +163,10 @@ def recvObj(socket, blockchainObj, syncUtil):
                 txValidatedCnt = 0
                 txAccuracy = 0.1
 
+                myPrivate, myPublic = Signatures().load_key('privateKey.pem')
+
+                print(minerPublic == myPublic)
+
 
                 for i in range(len(txRecv)):
                     try:
@@ -196,7 +200,7 @@ def recvObj(socket, blockchainObj, syncUtil):
                 elif(txAccuracy >= 80.0): # Regular transaction count
                     PAY_VALIDATOR_REWARD = True
 
-                #print(txList)
+                print(txList)
                 print(txAccuracy)
 
                 #print(minerPublic)
@@ -204,7 +208,8 @@ def recvObj(socket, blockchainObj, syncUtil):
                 if(PAY_VALIDATOR_REWARD == True):
                     Tx = Transaction("validator_reward")
                     Tx.addOutput(minerPublic, 100)
-                    Tx.sign(minerPublic, True)
+                    print(minerPublic)
+                    Tx.sign(minerPublic, True) 
 
                     print(colored("[VALIDATOR REWARD] Paying miner reward", "yellow"))
 

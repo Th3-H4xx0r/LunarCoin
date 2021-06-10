@@ -81,6 +81,10 @@ if __name__ == "__main__":
 
                     addr = b'-----BEGIN PUBLIC KEY-----\n' + addr + b'\n-----END PUBLIC KEY-----\n'
 
+                    #-----
+
+                    #-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANN/zgMTrkYsV5Lc+ZrXJlWmt1GM+mue\nNupg/CPYQIBoXUi5ftB1kmz85u+7e9iH6lrurwtAGCu7bHTsjD4WGosCAwEAAQ==\n-----END PUBLIC KEY-----\n
+
 
                     if(addr == b"" or addr == None or addr == ""):
                         addr = sendPublic
