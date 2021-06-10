@@ -16,6 +16,7 @@ import json
 import time
 import hashlib
 import logging
+from Transaction import Transaction
 
 import os
 
@@ -171,9 +172,9 @@ def recvObj(socket, blockchainObj, syncUtil):
                     except:
                         pass
                 
-                print("VALIDATED: " + str(txValidatedCnt))
+                #print("VALIDATED: " + str(txValidatedCnt))
 
-                print("LEN OF TX RECV: " + str(len(txRecv)))
+                #print("LEN OF TX RECV: " + str(len(txRecv)))
 
                 try:
                     txAccuracy = txValidatedCnt/len(txRecv) * 100
@@ -182,15 +183,36 @@ def recvObj(socket, blockchainObj, syncUtil):
                     print(e)
                     pass
 
-                print(txList)
+                PAY_VALIDATOR_REWARD = False
+
+                if(len(txList) == 0 and len(txRecv) == 0): # IF both lists are empty (no transactions made)
+                    PAY_VALIDATOR_REWARD = True
+                
+                elif(len(txList) <= 4): # If transactions count is low
+                    if(txAccuracy >= 50.0):
+                        PAY_VALIDATOR_REWARD = True
+
+
+                elif(txAccuracy >= 80.0): # Regular transaction count
+                    PAY_VALIDATOR_REWARD = True
+
+                #print(txList)
                 print(txAccuracy)
 
                 #print(minerPublic)
 
-                #Tx = Transaction("validator_reward")
-                #Tx.addOutput(addr, amount)
-                #Tx.sign(myPrivate)
-                return None
+                if(PAY_VALIDATOR_REWARD == True):
+                    Tx = Transaction("validator_reward")
+                    Tx.addOutput(minerPublic, 100)
+                    Tx.sign(minerPublic)
+
+                    print(colored("[VALIDATOR REWARD] Paying miner reward", "yellow"))
+
+                    return Tx
+                
+                else:
+                    print(colored("[VALIDATOR REWARD] Not paying miner reward as miner proof of work is not sufficient", "yellow"))
+                    return None
 
             elif('blockchain_init_sync' in str(returnData)): # Get user balance and send to user
                 print('Blockchain sync requested from miner: ' + str(addr[0]) + ":" + str(addr[1]))
@@ -316,9 +338,11 @@ def archiveServer(my_addr):
 
                 #print(newTx)
 
-                if(newTx.public == 'validator_reward'):
+                if(newTx.public == 'validator_reward'): # For validator reward transaction
 
                     blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
+
+                    txRecv.append(hash(newTx))
 
                     newBlock = blockchain.goNewBlock()
 
@@ -326,9 +350,7 @@ def archiveServer(my_addr):
 
                         blockchain.new_block() # Creates new block if block meets all requirements\\
 
-                else:
-
-                    #print("regular transaction")
+                else: # For regular trasaction
 
 
                     addrSimplified = newTx.public
