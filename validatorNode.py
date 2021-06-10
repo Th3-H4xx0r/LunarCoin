@@ -422,7 +422,8 @@ def validatorRewardService():
 
                     except:
                         pass
-
+        
+        time.sleep(5)
         txRecv = [] # Clears transactions list
 
 
