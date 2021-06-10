@@ -55,7 +55,7 @@ for i in range(reps):
         #pass
 
     try:
-        SocketUtil.sendObj('6.tcp.ngrok.io', Tx, 12964)
+        SocketUtil.sendObj('2.tcp.ngrok.io', Tx, 19062)
     except:
         pass
 

@@ -7,21 +7,12 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.exceptions import InvalidSignature
 
 from cryptography.hazmat.primitives import serialization
+import json
+import hashlib
 
+x = 324234
 
-private = rsa.generate_private_key(
-    public_exponent=65537,
-    key_size=512,
-    backend=default_backend()
-)
+block_string = json.dumps(x, sort_keys=True).encode()
+x1 = hashlib.sha256(block_string).hexdigest()
 
-public = private.public_key()
-
-pu_ser = public.public_bytes(
-    encoding=serialization.Encoding.PEM,
-    format=serialization.PublicFormat.SubjectPublicKeyInfo
-)
-
-
-
-print(pu_ser)
+print(x1)

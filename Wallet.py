@@ -55,7 +55,7 @@ if __name__ == "__main__":
             network = "testnet"
 
 
-        minerNodesList = SocketUtil.getMinerNodes(network)
+
 
         #server = SocketUtil.newServerConnection('localhost', my_port)
 
@@ -70,6 +70,8 @@ if __name__ == "__main__":
 
             #  Makes a transaction
             if(inp == "s"):
+
+                minerNodesList = SocketUtil.getMinerNodes(network)
 
                 if(len(minerNodesList) == 0):
                     print(colored("No online nodes detected.", "yellow"))
@@ -145,6 +147,8 @@ if __name__ == "__main__":
             #  Gets balance of wallet
 
             elif(inp == "b"):
+
+                minerNodesList = SocketUtil.getMinerNodes(network)
 
                 if(len(minerNodesList) == 0):
                     print(colored("No online nodes detected. Failed to fetch balance", "yellow"))

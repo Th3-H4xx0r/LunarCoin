@@ -14,6 +14,8 @@ from termcolor import colored
 from pyngrok import ngrok
 import json
 import time
+import hashlib
+import logging
 
 import os
 
@@ -22,7 +24,7 @@ import BlockchainSyncUtil as BlockchainSyncUtil
 init()
 # Global var
 TCP_PORT = 6003
-BUFFER_SIZE = 1024
+BUFFER_SIZE = 4096
 
 CURRENT_BLOCK = None
 NGROK_AUTH_TOKEN = None
@@ -33,6 +35,8 @@ NGROK_PORT = None
 NETWORK = None
 
 walletTxFreq = {}
+
+txRecv = []
 
 sys.setrecursionlimit(1000000)
 
@@ -146,13 +150,49 @@ def recvObj(socket, blockchainObj, syncUtil):
 
             #print(returnData)
 
-            #print(type(returnData))
 
-            #print(returnData)
+            if('validator_reward_transaction' in str(returnData)): # If tx is miner transaction
+                print("Validator reward tx")
 
-            #print(isinstance(returnData, Blockchain))
+                rtnDataSTR = str(returnData)
+                minerPublic = bytes(rtnDataSTR[rtnDataSTR.find(":") + 1: rtnDataSTR.find("&&&")], 'utf-8').decode('unicode-escape').encode("ISO-8859-1")
 
-            if('blockchain_init_sync' in str(returnData)): # Get user balance and send to user
+                txList = eval(rtnDataSTR[rtnDataSTR.find("&&&")+3:len(rtnDataSTR) - 1])
+                
+                txValidatedCnt = 0
+                txAccuracy = 0.1
+
+
+                for i in range(len(txRecv)):
+                    try:
+                        if(txRecv[i] in txList):
+                            txValidatedCnt += 1
+                    
+                    except:
+                        pass
+                
+                print("VALIDATED: " + str(txValidatedCnt))
+
+                print("LEN OF TX RECV: " + str(len(txRecv)))
+
+                try:
+                    txAccuracy = txValidatedCnt/len(txRecv) * 100
+                
+                except Exception as e: #Zero division error
+                    print(e)
+                    pass
+
+                print(txList)
+                print(txAccuracy)
+
+                #print(minerPublic)
+
+                #Tx = Transaction("validator_reward")
+                #Tx.addOutput(addr, amount)
+                #Tx.sign(myPrivate)
+                return None
+
+            elif('blockchain_init_sync' in str(returnData)): # Get user balance and send to user
                 print('Blockchain sync requested from miner: ' + str(addr[0]) + ":" + str(addr[1]))
 
                 #block = returnData
@@ -168,7 +208,7 @@ def recvObj(socket, blockchainObj, syncUtil):
 
 
 
-            if('send_user_balance_command' in str(returnData)): # Get user balance and send to user
+            elif('send_user_balance_command' in str(returnData)): # Get user balance and send to user
 
                 print(colored("[WALLET REQUEST] Wallet request for balance", "blue"))
 
@@ -201,6 +241,7 @@ def recvObj(socket, blockchainObj, syncUtil):
     
     except Exception as e:
         print(colored("[FATAL ERROR] Error recieving object from client: " + str(e), "red"))
+        logging.log("message", 'message')
 
 
 #def sendBlockchain(ip, port):
@@ -275,9 +316,7 @@ def archiveServer(my_addr):
 
                 #print(newTx)
 
-                if(newTx.public == 'mining_reward'):
-
-                    print("Mining reward transaction")
+                if(newTx.public == 'validator_reward'):
 
                     blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
 
@@ -326,6 +365,15 @@ def archiveServer(my_addr):
 
                                     blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
 
+
+                                    # Adds transaction hash to list
+
+                                    #tx_string = json.dumps(newTx, sort_keys=True).encode()
+                                    #tx_hash = hashlib.sha256(tx_string).hexdigest()
+
+
+                                    txRecv.append(hash(newTx))
+
                                     newBlock = blockchain.goNewBlock()
 
                                     if(newBlock):
@@ -345,7 +393,34 @@ def archiveServer(my_addr):
     
     #except Exception as e:
         #print(colored("[FATAL ERROR] Miner error occured. " + str(e) + " Restart miner.", 'red'))
+
+def validatorRewardService():
+    global txRecv
+    global NETWORK
+
+    while True:
+
+        time.sleep(5) # Executes every 24 hours
+
+        print("TX List: " + str(txRecv))
+
+        nodesData = syncUtil.getNodes(NETWORK)
+
+        if(nodesData != None):
+            if(nodesData['status'] == 'success'):
+                nodes = nodesData['data']
+
+                #{'ip': '4.tcp.ngrok.io', 'network': 'testnet', 'nodeID': 'default', 'port': '15793'}
+
+                myPrivate, myPublic = Signatures().load_key('privateKey.pem')
                 
+                for node in nodes:
+                    SocketUtil.sendObj(node['ip'], b'validator_reward_transaction:' + myPublic + b"&&&" + bytes(str(txRecv), 'utf-8'), int(node['port']))
+
+        txRecv = [] # Clears transactions list
+
+
+
 def spamManagement():
     global walletTxFreq
 
@@ -448,10 +523,13 @@ if __name__ == "__main__":
             # Starts spam protection service
             spamProtection = threading.Thread(target=spamManagement)
 
+            validatorRewardServ = threading.Thread(target=validatorRewardService)
+
             # Starts the threads
             grok.start()
             t1.start()
             spamProtection.start()
+            validatorRewardServ.start()
 
         else:
             x = input(">>")
