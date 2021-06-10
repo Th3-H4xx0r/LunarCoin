@@ -8,6 +8,7 @@ import zlib
 import requests
 from progress.bar import Bar
 # Global Variables
+from BlockchainSyncUtil import BlockchainSyncUtil
 
 
 #myPrivate, myPublic = Signatures.generate_keys()
@@ -45,35 +46,39 @@ Tx.sign(myPrivate)
 
 reps = 20000
 
-bar = Bar('Sending transactions', max=reps)
+nodesData = BlockchainSyncUtil().getNodes('testnet')
 
-for i in range(reps):
-    #try:
-        #SocketUtil.sendObj('localhost', Tx, 5005)
-    
-    #except:
-        #pass
+if(nodesData != None):
+    if(nodesData['status'] == 'success'):
+        nodes = nodesData['data']
 
-    try:
-        SocketUtil.sendObj('2.tcp.ngrok.io', Tx, 19062)
-    except:
-        pass
+        bar = Bar('Sending transactions', max=reps)
 
-    if i % 10 == 0:
-        #time.sleep(0.3) 
-        pass
-    
-    bar.next()
+        for i in range(reps):
+            #try:
+                #SocketUtil.sendObj('localhost', Tx, 5005)
+            
+            #except:
+                #pass
+
+            for node in nodes:
+                #print(node)
+                try:
+                    SocketUtil.sendObj(node['ip'], Tx, int(node['port']))
+                except:
+                    pass
+                
+            bar.next()
 
 
-bar.finish()
+        bar.finish()
 
-toc = time.perf_counter()
+        toc = time.perf_counter()
 
-rate = reps/(toc - tic)
+        rate = reps/(toc - tic)
 
-print(f"Sent " + str(reps) + f" transactions in {toc - tic:0.4f} seconds")
-print("Rate: " + str(rate))
+        print(f"Sent " + str(reps) + f" transactions in {toc - tic:0.4f} seconds")
+        print("Rate: " + str(rate))
 
 
 

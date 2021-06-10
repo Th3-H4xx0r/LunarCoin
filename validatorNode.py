@@ -402,9 +402,9 @@ def validatorRewardService():
 
         time.sleep(10) # Executes every 24 hours
 
-        print("Paying validator reward")
+        #print("Paying validator reward")
 
-        print("TX List: " + str(txRecv))
+        #print("TX List: " + str(txRecv))
 
         nodesData = syncUtil.getNodes(NETWORK)
 
@@ -424,7 +424,7 @@ def validatorRewardService():
                         pass
         
         time.sleep(5)
-        txRecv = [] # Clears transactions list
+        #txRecv = [] # Clears transactions list
 
 
 
@@ -536,7 +536,7 @@ if __name__ == "__main__":
             grok.start()
             t1.start()
             spamProtection.start()
-            validatorRewardServ.start()
+            #validatorRewardServ.start()
 
         else:
             x = input(">>")
