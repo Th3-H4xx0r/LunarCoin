@@ -127,6 +127,7 @@ def runGrok():
 
 
 def recvObj(socket, blockchainObj, syncUtil):
+    global txRecv
 
     new_sock = None
 
@@ -163,11 +164,6 @@ def recvObj(socket, blockchainObj, syncUtil):
                 txValidatedCnt = 0
                 txAccuracy = 0.1
 
-                myPrivate, myPublic = Signatures().load_key('privateKey.pem')
-
-                print(minerPublic == myPublic)
-
-
                 for i in range(len(txRecv)):
                     try:
                         if(txRecv[i] in txList):
@@ -200,7 +196,7 @@ def recvObj(socket, blockchainObj, syncUtil):
                 elif(txAccuracy >= 80.0): # Regular transaction count
                     PAY_VALIDATOR_REWARD = True
 
-                print(txList)
+                #print(txList)
                 print(txAccuracy)
 
                 #print(minerPublic)
@@ -208,7 +204,7 @@ def recvObj(socket, blockchainObj, syncUtil):
                 if(PAY_VALIDATOR_REWARD == True):
                     Tx = Transaction("validator_reward")
                     Tx.addOutput(minerPublic, 100)
-                    print(minerPublic)
+                    #print(minerPublic)
                     Tx.sign(minerPublic, True) 
 
                     print(colored("[VALIDATOR REWARD] Paying miner reward", "yellow"))
@@ -216,6 +212,8 @@ def recvObj(socket, blockchainObj, syncUtil):
                     return Tx
                 
                 else:
+                    print(txList)
+                    print(txRecv)
                     print(colored("[VALIDATOR REWARD] Not paying miner reward as miner proof of work is not sufficient", "yellow"))
                     return None
 
@@ -316,13 +314,14 @@ def verifyBlock(block, db):
     #print(blockVerifyList)
 '''
 
-def archiveServer(my_addr):
+def validatorServer(my_addr):
 
     #try:
 
         global tx_list
         global break_now
         global walletTxFreq
+        global txRecv
 
         blockchain = Blockchain()
 
@@ -490,7 +489,7 @@ if __name__ == "__main__":
             os.makedirs(final_directory)
 
     
-        print("Starting archival server")
+        print("Starting validator node")
 
         # Syncs the blockchain
 
@@ -550,7 +549,7 @@ if __name__ == "__main__":
 
         if(execute):
             # Starts the main threads
-            t1 = threading.Thread(target=archiveServer, args=(('0.0.0.0', TCP_PORT), ))
+            t1 = threading.Thread(target=validatorServer, args=(('0.0.0.0', TCP_PORT), ))
 
             grok = threading.Thread(target=runGrok)
 
