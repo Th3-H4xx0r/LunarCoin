@@ -425,6 +425,7 @@ def validatorServer(my_addr):
 def validatorRewardService():
     global txRecv
     global NETWORK
+    global MINER_ID
 
     while True:
 
@@ -444,12 +445,15 @@ def validatorRewardService():
 
                 myPrivate, myPublic = Signatures().load_key('privateKey.pem')
                 
-                for node in nodes:
-                    try:
-                        SocketUtil.sendObj(node['ip'], b'validator_reward_transaction:' + myPublic + b"&&&" + bytes(str(txRecv), 'utf-8'), int(node['port']))
+                #for node in nodes:
 
-                    except:
-                        pass
+                data = {'publicKey': myPublic, 'transactions': txRecv, 'minerID': MINER_ID}
+
+                try:
+                    SocketUtil.sendObj('localhost', data, 9090)
+
+                except:
+                    pass
         
         time.sleep(5)
         #txRecv = [] # Clears transactions list
