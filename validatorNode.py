@@ -447,7 +447,7 @@ def validatorRewardService():
                 
                 #for node in nodes:
 
-                data = {'publicKey': myPublic, 'transactions': txRecv, 'minerID': MINER_ID}
+                data = {'publicKey': myPublic, 'transactions': txRecv, 'minerID': MINER_ID, 'network': NETWORK}
 
                 try:
                     SocketUtil.sendObj('localhost', data, 9090)
