@@ -400,7 +400,9 @@ def validatorRewardService():
 
     while True:
 
-        time.sleep(5) # Executes every 24 hours
+        time.sleep(10) # Executes every 24 hours
+
+        print("Paying validator reward")
 
         print("TX List: " + str(txRecv))
 
@@ -415,7 +417,11 @@ def validatorRewardService():
                 myPrivate, myPublic = Signatures().load_key('privateKey.pem')
                 
                 for node in nodes:
-                    SocketUtil.sendObj(node['ip'], b'validator_reward_transaction:' + myPublic + b"&&&" + bytes(str(txRecv), 'utf-8'), int(node['port']))
+                    try:
+                        SocketUtil.sendObj(node['ip'], b'validator_reward_transaction:' + myPublic + b"&&&" + bytes(str(txRecv), 'utf-8'), int(node['port']))
+
+                    except:
+                        pass
 
         txRecv = [] # Clears transactions list
 
