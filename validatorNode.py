@@ -204,7 +204,7 @@ def recvObj(socket, blockchainObj, syncUtil):
                 if(PAY_VALIDATOR_REWARD == True):
                     Tx = Transaction("validator_reward")
                     Tx.addOutput(minerPublic, 100)
-                    Tx.sign(minerPublic)
+                    Tx.sign(minerPublic, True)
 
                     print(colored("[VALIDATOR REWARD] Paying miner reward", "yellow"))
 
@@ -558,7 +558,7 @@ if __name__ == "__main__":
             grok.start()
             t1.start()
             spamProtection.start()
-            #validatorRewardServ.start()
+            validatorRewardServ.start()
 
         else:
             x = input(">>")
