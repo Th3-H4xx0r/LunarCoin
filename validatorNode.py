@@ -176,6 +176,9 @@ def recvObj(socket, blockchainObj, syncUtil):
 
                 #print("LEN OF TX RECV: " + str(len(txRecv)))
 
+                print(txList)
+                print(txRecv)
+
                 try:
                     txAccuracy = txValidatedCnt/len(txRecv) * 100
                 
@@ -212,8 +215,7 @@ def recvObj(socket, blockchainObj, syncUtil):
                     return Tx
                 
                 else:
-                    print(txList)
-                    print(txRecv)
+
                     print(colored("[VALIDATOR REWARD] Not paying miner reward as miner proof of work is not sufficient", "yellow"))
                     return None
 
