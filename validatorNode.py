@@ -152,7 +152,7 @@ def recvObj(socket, blockchainObj, syncUtil):
 
             #print(returnData)
 
-
+            '''
             if('validator_reward_transaction' in str(returnData)): # If tx is miner transaction
                 print("Validator reward tx")
 
@@ -231,11 +231,16 @@ def recvObj(socket, blockchainObj, syncUtil):
                 syncUtil.sendBlockchain(new_sock, blockchainObj)
 
                 return None
+            '''
+
+
+            if('send_transactions_list' in str(returnData)):
                 
+                dat = pickle.dumps(txRecv)
 
+                new_sock.send(dat)
 
-
-            elif('send_user_balance_command' in str(returnData)): # Get user balance and send to user
+            if('send_user_balance_command' in str(returnData)): # Get user balance and send to user
 
                 print(colored("[WALLET REQUEST] Wallet request for balance", "blue"))
 
@@ -363,7 +368,7 @@ def validatorServer(my_addr):
 
                             if(newBlock):
 
-                                blockchain.new_block() # Creates new block if block meets all requirements\\
+                                blockchain.new_block() # Creates new block if block meets all requirements
                         
                         else:
                             print(colored("[Share Rejected] Validator reward transaction is fraud (incorrect signed address)", "red"))
@@ -441,6 +446,8 @@ def validatorRewardService():
     global txRecv
     global NETWORK
     global MINER_ID
+    global NGROK_PORT
+    global NGROK_IP
 
     while True:
 
@@ -462,7 +469,7 @@ def validatorRewardService():
                 
                 #for node in nodes:
 
-                data = {'publicKey': myPublic, 'transactions': txRecv, 'minerID': MINER_ID, 'network': NETWORK}
+                data = {'publicKey': myPublic, 'transactions': txRecv, 'minerID': MINER_ID, 'network': NETWORK, 'ip': NGROK_IP, 'port': NGROK_PORT}
 
                 managers = SocketUtil.getManagerNodes()
 
