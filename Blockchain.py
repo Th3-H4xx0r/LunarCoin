@@ -48,12 +48,15 @@ class Blockchain:
 
 
     def getBlockTXThreshold(self):
+
+        TX_INTERVAL = 100
+
         currentBlockCount = len(self.chain)
 
         txThreshold = 1
 
         for i in range(currentBlockCount):
-            if(i % 5 == 0):
+            if(i % TX_INTERVAL == 0):
                 txThreshold = txThreshold + 1
 
         return txThreshold

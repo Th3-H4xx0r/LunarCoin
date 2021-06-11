@@ -18,6 +18,32 @@ class SocketUtil:
         pass
 
     
+    def getManagerNodes():
+
+        managerNodesList = []
+
+        try:
+            r = requests.get('https://api.classvibes.net/manager/getNodes')
+
+            data = r.json()
+
+            #print(data)
+
+            if(data['status'] == "success"):
+                
+                for miner in data['data']:
+                    managerNodesList.append({"ip": miner['ip'], "port": int(miner['port'])})
+
+                return managerNodesList 
+
+            
+            else: # Failed to get list of validators
+                return []
+        
+        except Exception as e: # Failed to get list of validators
+            print("Failed to fetch list of manager nodes")
+            return []
+
     def getMinerNodes(net):
 
         minerNodesList = []

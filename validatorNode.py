@@ -269,6 +269,7 @@ def recvObj(socket, blockchainObj, syncUtil):
     except Exception as e:
         print(colored("[FATAL ERROR] Error recieving object from client: " + str(e), "red"))
         logging.log("message", 'message')
+        return None
 
 
 #def sendBlockchain(ip, port):
@@ -344,17 +345,31 @@ def validatorServer(my_addr):
 
                 #print(newTx)
 
-                if(newTx.public == 'validator_reward'): # For validator reward transaction
+                if(newTx.metaData == 'validator_reward'): # For validator reward transaction
 
-                    blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
+                    valid = util.verifyTransaction(newTx, newTx.public)
 
-                    txRecv.append(hash(newTx))
+                    if(valid): # Checks if TX is valid
 
-                    newBlock = blockchain.goNewBlock()
+                        if(newTx.public == b'-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKZ4YgvL1GxYqhspqII8TkkfatEbu3bO\nX8e0vCCAsIzBa+VDsLY/fyzhiLWpQMlmIiXn4gu+BcEBpyDuqBSKdlECAwEAAQ==\n-----END PUBLIC KEY-----\n'): #Checks if reward TX is from manager node wallet
+                            
+                            print(colored("[Share Accepted] Validator reward transaction is valid", "green"))
 
-                    if(newBlock):
+                            blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
 
-                        blockchain.new_block() # Creates new block if block meets all requirements\\
+                            txRecv.append(hash(newTx))
+
+                            newBlock = blockchain.goNewBlock()
+
+                            if(newBlock):
+
+                                blockchain.new_block() # Creates new block if block meets all requirements\\
+                        
+                        else:
+                            print(colored("[Share Rejected] Validator reward transaction is fraud (incorrect signed address)", "red"))
+                    
+                    else:
+                        print(colored("[Share Rejected] Validator reward transaction is not valid", "red"))
 
                 else: # For regular trasaction
 
@@ -449,11 +464,16 @@ def validatorRewardService():
 
                 data = {'publicKey': myPublic, 'transactions': txRecv, 'minerID': MINER_ID, 'network': NETWORK}
 
-                try:
-                    SocketUtil.sendObj('localhost', data, 9090)
+                managers = SocketUtil.getManagerNodes()
 
-                except:
-                    pass
+                print(colored("[MINER CORE] Sending request for validator reward", "cyan"))
+
+                for manager in managers:
+                    try:
+                        SocketUtil.sendObj(manager['ip'], data, manager['port'])
+
+                    except:
+                        pass
         
         time.sleep(5)
         #txRecv = [] # Clears transactions list
