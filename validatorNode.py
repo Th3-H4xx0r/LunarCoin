@@ -268,7 +268,7 @@ def recvObj(socket, blockchainObj, syncUtil):
     
     except Exception as e:
         print(colored("[FATAL ERROR] Error recieving object from client: " + str(e), "red"))
-        logging.log("message", 'message')
+        #logging.log("message", 'message')
         return None
 
 
