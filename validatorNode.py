@@ -408,7 +408,6 @@ def validatorServer(my_addr):
 
             except Exception as e:
                 print(colored("[FATAL ERROR] Error occured with recieving data. " + str(e), 'red'))
-                logging.log('message')
 
     #except Exception as e:
         #print(colored("[FATAL ERROR] Miner error occured. " + str(e) + " Restart miner.", 'red'))

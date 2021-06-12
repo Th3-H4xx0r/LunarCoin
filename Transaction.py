@@ -8,6 +8,7 @@ class Transaction:
     outputAmount = 0.0
     public = None
     transactionTimestamp = 1
+    metaData = None
 
     signedData = None
     data = []
@@ -25,6 +26,8 @@ class Transaction:
         self.outputAddress = address
         self.outputAmount = coins
 
+    def addMetadata(self, data):
+        self.metaData = data
 
         
 
@@ -52,4 +55,4 @@ class Transaction:
 
 
     def __repr__(self):
-        return"--- Transaction ---\nInput Address: " + str(self.public) + "\nOutput Address: " + str(self.outputAddress) + "\nOutput Amount: " + str(self.outputAmount) + "\nSigned with private key\nTimestamp: " + str(self.transactionTimestamp) + "\n--- END ---"
+        return"--- Transaction ---\nInput Address: " + str(self.public) + "\nOutput Address: " + str(self.outputAddress) + "\nOutput Amount: " + str(self.outputAmount) + "\nSigned with private key\nTimestamp: " + str(self.transactionTimestamp) + "\nMetadata:  " + str(self.metaData) + "\n--- END ---"
