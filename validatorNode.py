@@ -17,7 +17,7 @@ import time
 import hashlib
 import logging
 from Transaction import Transaction
-
+import hashlib
 import os
 
 import BlockchainSyncUtil as BlockchainSyncUtil
@@ -280,6 +280,14 @@ def recvObj(socket, blockchainObj, syncUtil):
         #logging.log("message", 'message')
         return None
 
+def addTxToList(tx):
+    global txRecv
+    m = hashlib.sha256()
+    m.update(tx)
+    dig = m.hexdigest()
+    txRecv.append(dig)
+
+
 def validatorServer(my_addr):
 
     #try:
@@ -319,7 +327,7 @@ def validatorServer(my_addr):
 
                                 blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
 
-                                txRecv.append(newTx)
+                                addTxToList(newTx)
 
                                 newBlock = blockchain.goNewBlock()
 
@@ -377,7 +385,7 @@ def validatorServer(my_addr):
                                         #tx_hash = hashlib.sha256(tx_string).hexdigest()
 
 
-                                        txRecv.append(newTx)
+                                        addTxToList(newTx)
 
                                         newBlock = blockchain.goNewBlock()
 
