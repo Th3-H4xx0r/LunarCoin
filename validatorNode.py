@@ -305,13 +305,6 @@ def validatorServer(my_addr):
 
                     util = SocketUtil()
 
-                    print(newTx)
-
-                    try:
-                        print(newTx.metaData)
-
-                    except: pass
-
                     if(newTx.metaData == 'validator_reward'): # For validator reward transaction
 
                         valid = util.verifyTransaction(newTx, newTx.public)
