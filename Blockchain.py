@@ -49,7 +49,7 @@ class Blockchain:
 
     def getBlockTXThreshold(self):
 
-        TX_INTERVAL = 100
+        TX_INTERVAL = 1000
 
         currentBlockCount = len(self.chain)
 
