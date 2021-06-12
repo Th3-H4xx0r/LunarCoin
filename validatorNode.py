@@ -218,8 +218,9 @@ def recvObj(socket, blockchainObj, syncUtil):
 
                     print(colored("[VALIDATOR REWARD] Not paying miner reward as miner proof of work is not sufficient", "yellow"))
                     return None
+            '''
 
-            elif('blockchain_init_sync' in str(returnData)): # Get user balance and send to user
+            if('blockchain_init_sync' in str(returnData)): # Get user balance and send to user
                 print('Blockchain sync requested from miner: ' + str(addr[0]) + ":" + str(addr[1]))
 
                 #block = returnData
@@ -231,16 +232,17 @@ def recvObj(socket, blockchainObj, syncUtil):
                 syncUtil.sendBlockchain(new_sock, blockchainObj)
 
                 return None
-            '''
 
 
-            if('send_transactions_list' in str(returnData)):
+            elif('send_transactions_list' in str(returnData)):
                 
                 dat = pickle.dumps(txRecv)
 
                 new_sock.send(dat)
 
-            if('send_user_balance_command' in str(returnData)): # Get user balance and send to user
+                return None
+
+            elif('send_user_balance_command' in str(returnData)): # Get user balance and send to user
 
                 print(colored("[WALLET REQUEST] Wallet request for balance", "blue"))
 
@@ -276,52 +278,6 @@ def recvObj(socket, blockchainObj, syncUtil):
         #logging.log("message", 'message')
         return None
 
-
-#def sendBlockchain(ip, port):
-
-'''
-def verifyBlock(block, db):
-
-    blockVerifyList = []
-
-    ref = db.collection(u"Miner Nodes")
-
-    docs = ref.stream()
-
-    for doc in docs:
-        dataToSend = block
-
-        try:
-
-            dataDoc = doc.to_dict()
-
-            if(dataDoc['ip'] != NGROK_IP and dataDoc['port'] != NGROK_PORT):
-
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect((dataDoc['ip'], dataDoc['port']))
-                data = pickle.dumps(dataToSend)
-                s.send(data)
-
-                print("sent to " + str(dataDoc['ip'] + ":" + str(dataDoc['port'])))
-
-                try:
-
-                    data = s.recv(BUFFER_SIZE)
-
-                    blockVerifyList.append(data.decode())
-
-                
-                except Exception as e1:
-                    print("Error with blockchain sync has occured: " + str(e1))
-
-                s.close()
-        
-        except Exception as e:
-            print("Error with sending block to other nodes: " + str(e))
-    
-    #print(blockVerifyList)
-'''
-
 def validatorServer(my_addr):
 
     #try:
@@ -340,105 +296,115 @@ def validatorServer(my_addr):
         server = SocketUtil.newServerConnection(my_ip, my_port)
 
         while True:
-            newTx = recvObj(server, blockchain, syncUtil)
+            try:
+                newTx = recvObj(server, blockchain, syncUtil)
 
-            if(newTx != None):
-                #print(newTx)
-                print(colored("[Share Recieved] Transaction share recieved - Validating...", "green"))
+                if(newTx != None):
+                    #print(newTx)
+                    print(colored("[Share Recieved] Transaction share recieved - Validating...", "green"))
 
-                util = SocketUtil()
+                    util = SocketUtil()
 
-                #print(newTx)
+                    print(newTx)
 
-                if(newTx.metaData == 'validator_reward'): # For validator reward transaction
+                    try:
+                        print(newTx.metaData)
 
-                    valid = util.verifyTransaction(newTx, newTx.public)
+                    except: pass
 
-                    if(valid): # Checks if TX is valid
+                    if(newTx.metaData == 'validator_reward'): # For validator reward transaction
 
-                        if(newTx.public == b'-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKZ4YgvL1GxYqhspqII8TkkfatEbu3bO\nX8e0vCCAsIzBa+VDsLY/fyzhiLWpQMlmIiXn4gu+BcEBpyDuqBSKdlECAwEAAQ==\n-----END PUBLIC KEY-----\n'): #Checks if reward TX is from manager node wallet
-                            
-                            print(colored("[Share Accepted] Validator reward transaction is valid", "green"))
-
-                            blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
-
-                            txRecv.append(hash(newTx))
-
-                            newBlock = blockchain.goNewBlock()
-
-                            if(newBlock):
-
-                                blockchain.new_block() # Creates new block if block meets all requirements
-                        
-                        else:
-                            print(colored("[Share Rejected] Validator reward transaction is fraud (incorrect signed address)", "red"))
-                    
-                    else:
-                        print(colored("[Share Rejected] Validator reward transaction is not valid", "red"))
-
-                else: # For regular trasaction
-
-
-                    addrSimplified = newTx.public
-
-                    addrSimplified = addrSimplified.replace(b'-----BEGIN PUBLIC KEY-----\n', b'')
-                    addrSimplified = addrSimplified.replace(b'\n-----END PUBLIC KEY-----\n', b'')
-
-                    addrSimplified = str(addrSimplified, 'utf-8')
-
-                    if (walletTxFreq.get(addrSimplified) != None):
-                        walletTxFreq[addrSimplified] = walletTxFreq[addrSimplified] + 1
-                    else:
-                        walletTxFreq[addrSimplified] = 1
-
-                    
-                    if(walletTxFreq.get(addrSimplified) > 2000): # If wallet spams
-                        print(colored("[Share Rejected] Wallet address is executing too many transactions", "yellow"))
-
-                    else: # If wallet does not spam
-
-                        #print(newTx)
                         valid = util.verifyTransaction(newTx, newTx.public)
 
-                        userCurrentBalance = blockchain.getUserBalance(newTx.public)
+                        if(valid): # Checks if TX is valid
 
-                        
-                        #print(userCurrentBalance)
+                            if(newTx.public == b'-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKZ4YgvL1GxYqhspqII8TkkfatEbu3bO\nX8e0vCCAsIzBa+VDsLY/fyzhiLWpQMlmIiXn4gu+BcEBpyDuqBSKdlECAwEAAQ==\n-----END PUBLIC KEY-----\n'): #Checks if reward TX is from manager node wallet
+                                
+                                print(colored("[Share Accepted] Validator reward transaction is valid", "green"))
 
-                        if(userCurrentBalance >= newTx.outputAmount):
+                                blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
 
-                            if(valid):
+                                txRecv.append(hash(newTx))
 
-                                if(newTx.outputAddress != newTx.public):
+                                newBlock = blockchain.goNewBlock()
 
-                                    blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
+                                if(newBlock):
 
-
-                                    # Adds transaction hash to list
-
-                                    #tx_string = json.dumps(newTx, sort_keys=True).encode()
-                                    #tx_hash = hashlib.sha256(tx_string).hexdigest()
-
-
-                                    txRecv.append(hash(newTx))
-
-                                    newBlock = blockchain.goNewBlock()
-
-                                    if(newBlock):
-
-                                        blockchain.new_block() # Creates new block if block meets all requirements\\
-
-                                        #verifyBlock(blockchain.last_block_blockchain(), db)
-
-                                    print(colored("[Share Accepted] Share validated", 'green'))
-                                else:
-                                    print(colored("[Share Rejected] User attempting to send coins to themself.", 'yellow'))
-
-                            #print(block)
+                                    blockchain.new_block() # Creates new block if block meets all requirements
+                            
+                            else:
+                                print(colored("[Share Rejected] Validator reward transaction is fraud (incorrect signed address)", "red"))
                         
                         else:
-                            print(colored("[Share Rejected] User balance is too low to make transaction", 'yellow'))
-    
+                            print(colored("[Share Rejected] Validator reward transaction is not valid", "red"))
+
+                    else: # For regular trasaction
+
+
+                        addrSimplified = newTx.public
+
+                        addrSimplified = addrSimplified.replace(b'-----BEGIN PUBLIC KEY-----\n', b'')
+                        addrSimplified = addrSimplified.replace(b'\n-----END PUBLIC KEY-----\n', b'')
+
+                        addrSimplified = str(addrSimplified, 'utf-8')
+
+                        if (walletTxFreq.get(addrSimplified) != None):
+                            walletTxFreq[addrSimplified] = walletTxFreq[addrSimplified] + 1
+                        else:
+                            walletTxFreq[addrSimplified] = 1
+
+                        
+                        if(walletTxFreq.get(addrSimplified) > 2000): # If wallet spams
+                            print(colored("[Share Rejected] Wallet address is executing too many transactions", "yellow"))
+
+                        else: # If wallet does not spam
+
+                            #print(newTx)
+                            valid = util.verifyTransaction(newTx, newTx.public)
+
+                            userCurrentBalance = blockchain.getUserBalance(newTx.public)
+
+                            
+                            #print(userCurrentBalance)
+
+                            if(userCurrentBalance >= newTx.outputAmount):
+
+                                if(valid):
+
+                                    if(newTx.outputAddress != newTx.public):
+
+                                        blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
+
+
+                                        # Adds transaction hash to list
+
+                                        #tx_string = json.dumps(newTx, sort_keys=True).encode()
+                                        #tx_hash = hashlib.sha256(tx_string).hexdigest()
+
+
+                                        txRecv.append(hash(newTx))
+
+                                        newBlock = blockchain.goNewBlock()
+
+                                        if(newBlock):
+
+                                            blockchain.new_block() # Creates new block if block meets all requirements\\
+
+                                            #verifyBlock(blockchain.last_block_blockchain(), db)
+
+                                        print(colored("[Share Accepted] Share validated", 'green'))
+                                    else:
+                                        print(colored("[Share Rejected] User attempting to send coins to themself.", 'yellow'))
+
+                                #print(block)
+                            
+                            else:
+                                print(colored("[Share Rejected] User balance is too low to make transaction", 'yellow'))
+
+            except Exception as e:
+                print(colored("[FATAL ERROR] Error occured with recieving data. " + str(e), 'red'))
+                logging.log('message')
+
     #except Exception as e:
         #print(colored("[FATAL ERROR] Miner error occured. " + str(e) + " Restart miner.", 'red'))
 
