@@ -25,7 +25,7 @@ import BlockchainSyncUtil as BlockchainSyncUtil
 init()
 # Global var
 TCP_PORT = 6003
-BUFFER_SIZE = 4096
+BUFFER_SIZE = 65536
 
 CURRENT_BLOCK = None
 NGROK_AUTH_TOKEN = None
@@ -240,6 +240,8 @@ def recvObj(socket, blockchainObj, syncUtil):
 
                 new_sock.send(dat)
 
+                #print(txRecv)
+
                 #print("Sending transactions list")
 
                 return None
@@ -283,7 +285,7 @@ def recvObj(socket, blockchainObj, syncUtil):
 def addTxToList(tx):
     global txRecv
     m = hashlib.sha256()
-    m.update(tx)
+    m.update(pickle.dumps(tx))
     dig = m.hexdigest()
     txRecv.append(dig)
 
