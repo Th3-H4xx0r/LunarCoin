@@ -119,7 +119,7 @@ def runGrok():
 
     ngrok.set_auth_token(NGROK_AUTH_TOKEN) # token for krishnatechpranav@gmail.com
     tunnel = ngrok.connect(TCP_PORT, "tcp")
-    print("Running ngrok connection server: " + str(tunnel.public_url))
+    print("[Internal Server] Running ngrok connection server: " + str(tunnel.public_url))
 
     NGROK_IP, NGROK_PORT = SocketUtil.updateMinerIp(tunnel.public_url, MINER_ID, NETWORK)
 
@@ -240,6 +240,8 @@ def recvObj(socket, blockchainObj, syncUtil):
 
                 new_sock.send(dat)
 
+                #print("Sending transactions list")
+
                 return None
 
             elif('send_user_balance_command' in str(returnData)): # Get user balance and send to user
@@ -317,7 +319,7 @@ def validatorServer(my_addr):
 
                                 blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
 
-                                txRecv.append(hash(newTx))
+                                txRecv.append(newTx)
 
                                 newBlock = blockchain.goNewBlock()
 
@@ -375,7 +377,7 @@ def validatorServer(my_addr):
                                         #tx_hash = hashlib.sha256(tx_string).hexdigest()
 
 
-                                        txRecv.append(hash(newTx))
+                                        txRecv.append(newTx)
 
                                         newBlock = blockchain.goNewBlock()
 
@@ -511,7 +513,7 @@ if __name__ == "__main__":
 
             if(syncNodeIP == True and syncNodePort == True and nodeDataJSON == True): # This is the first online node
 
-                print("Detected as first online node")
+                print("[ONLINE " + colored("⦾", 'green') + " ] Detected as first online node")
 
                 execute = True
 
