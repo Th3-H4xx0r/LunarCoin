@@ -323,11 +323,13 @@ def validatorServer(my_addr):
 
                         if(valid): # Checks if TX is valid
 
-                            if(newTx.public == b'-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKZ4YgvL1GxYqhspqII8TkkfatEbu3bO\nX8e0vCCAsIzBa+VDsLY/fyzhiLWpQMlmIiXn4gu+BcEBpyDuqBSKdlECAwEAAQ==\n-----END PUBLIC KEY-----\n'): #Checks if reward TX is from manager node wallet
+                            addrOwnWallet, wif = SignaturesECDSA().make_address(newTx.public.to_string())
+
+                            if(addrOwnWallet == 'LC1D9x7UovnwqekVXtKg5BsykBybf9ZsHErh'): #Checks if reward TX is from manager node wallet
                                 
                                 print(colored("[Share Accepted] Validator reward transaction is valid", "green"))
 
-                                blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
+                                blockchain.new_transaction(newTx.ownWallet, newTx.outputAddress, newTx.outputAmount)
 
                                 addTxToList(newTx)
 
@@ -424,6 +426,7 @@ def validatorRewardService():
     global MINER_ID
     global NGROK_PORT
     global NGROK_IP
+    global wall
 
     while True:
 
@@ -441,11 +444,12 @@ def validatorRewardService():
 
                 #{'ip': '4.tcp.ngrok.io', 'network': 'testnet', 'nodeID': 'default', 'port': '15793'}
 
-                myPrivate, myPublic = Signatures().load_key('privateKey.pem')
+                myPrivateSigning, myVerifyingKey = SignaturesECDSA().loadKey()
+                walletAddress, wif = SignaturesECDSA().make_address(myVerifyingKey.to_string())
                 
                 #for node in nodes:
 
-                data = {'publicKey': myPublic, 'transactions': txRecv, 'minerID': MINER_ID, 'network': NETWORK, 'ip': NGROK_IP, 'port': NGROK_PORT}
+                data = {'walletAddress': walletAddress, 'transactions': txRecv, 'minerID': MINER_ID, 'network': NETWORK, 'ip': NGROK_IP, 'port': NGROK_PORT}
 
                 managers = SocketUtil.getManagerNodes()
 
@@ -571,7 +575,7 @@ if __name__ == "__main__":
             grok.start()
             t1.start()
             spamProtection.start()
-            #validatorRewardServ.start()
+            validatorRewardServ.start()
 
         else:
             x = input(">>")
