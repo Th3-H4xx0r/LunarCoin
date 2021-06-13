@@ -1,6 +1,8 @@
-termcolor==1.1.0
-colorama==0.4.4
 progress==1.5
 cryptography==3.4.7
 requests==2.21.0
+termcolor==1.1.0
 pyngrok==5.0.5
+ecdsa==0.17.0
+colorama==0.4.4
+secrets==1.0.2
