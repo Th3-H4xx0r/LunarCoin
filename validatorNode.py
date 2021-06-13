@@ -336,7 +336,8 @@ def validatorServer(my_addr):
                                 newBlock = blockchain.goNewBlock()
 
                                 if(newBlock):
-
+                                    
+                                    print("[BLOCKCHAIN] Block complete. Adding block to the blockchain")
                                     blockchain.new_block() # Creates new block if block meets all requirements
                             
                             else:
@@ -397,6 +398,7 @@ def validatorServer(my_addr):
                                             newBlock = blockchain.goNewBlock()
 
                                             if(newBlock):
+                                                print("[BLOCKCHAIN] Block complete. Adding block to the blockchain")
 
                                                 blockchain.new_block() # Creates new block if block meets all requirements\\
 
