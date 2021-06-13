@@ -76,7 +76,7 @@ if __name__ == "__main__":
                     print(colored("No online nodes detected.", "yellow"))
                 
                 else:
-                    addr = bytes(input("Wallet address>>"), 'utf-8').decode('unicode-escape').encode("ISO-8859-1")
+                    addr = input("Wallet address>>")
 
                     if(addr == b"" or addr == None or addr == ""):
                         print("Address cannot be left blank")
@@ -99,6 +99,7 @@ if __name__ == "__main__":
                         #print(type(addr))
 
 
+
                         if(addr and amount):    
                             Tx = Transaction(myVerifyingKey, walletAddress)
                             Tx.addOutput(addr, amount)
@@ -107,7 +108,7 @@ if __name__ == "__main__":
                             print(Tx)
 
                         
-                            print(colored("====== Transaction confirmation ======\nSend to: " + str(addr, 'utf-8') + "\nAmount: " + str(amount) + "\n====================", 'green'))
+                            print(colored("====== Transaction confirmation ======\nSend to: " + addr + "\nAmount: " + str(amount) + "\n====================", 'green'))
                             
                             confirm = input("Execute transaction (Y/N)?>> ")
 

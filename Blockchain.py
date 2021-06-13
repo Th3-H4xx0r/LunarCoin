@@ -327,6 +327,8 @@ class Blockchain:
 
                         #print(tx['sender'] + " : " + myPublic + " --- " + str(type(tx['sender'])))
 
+                        print(tx['sender'])
+                        print(type(tx['recipient']))
 
 
                         if(tx['sender'] == myPublic):
