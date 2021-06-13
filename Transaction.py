@@ -1,5 +1,5 @@
 # Imports
-from Signatures import Signatures
+from SignaturesECDSA import SignaturesECDSA
 import time
 
 class Transaction:
@@ -12,14 +12,17 @@ class Transaction:
 
     signedData = None
     data = []
+    ownWallet = None
 
 
-    def __init__(self, public):
+
+    def __init__(self, public, wallet):
         self.public = public
         self.transactionTimestamp = None
         self.outputAddress = None
         self.outputAmount = None
         self.signedData = None
+        self.ownWallet = wallet
         self.data = []
 
     def addOutput(self, address, coins):
@@ -43,7 +46,7 @@ class Transaction:
         if(miningReward):
             pass
         else:
-            self.signedData = Signatures.sign(self.data, privateKey)
+            self.signedData = SignaturesECDSA().sign(self.data, privateKey)
         
 
     def miningRewardTx(self, public, amount):

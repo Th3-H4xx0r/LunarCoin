@@ -39,7 +39,7 @@ class Blockchain:
 
             myPrivate, myPublic = Signatures().load_key('privateKey.pem')
 
-            self.new_transaction('genesis', b'-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANN/zgMTrkYsV5Lc+ZrXJlWmt1GM+mue\nNupg/CPYQIBoXUi5ftB1kmz85u+7e9iH6lrurwtAGCu7bHTsjD4WGosCAwEAAQ==\n-----END PUBLIC KEY-----\n', 10000, True)
+            self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, True)
             self.new_block(previous_hash=None)
 
             self.saveBlock()
@@ -283,6 +283,9 @@ class Blockchain:
 
     def getUserBalance(self, myPublic, apiServer = None, remoteBlockchain = False):
 
+        if(not isinstance(myPublic, str)):
+            myPublic = myPublic.decode("utf-8") 
+
         try:
 
             data = None
@@ -321,6 +324,10 @@ class Blockchain:
                     for tx in transactions:
 
                         # Checks if coins are being widthdrawed
+
+                        #print(tx['sender'] + " : " + myPublic + " --- " + str(type(tx['sender'])))
+
+
 
                         if(tx['sender'] == myPublic):
 

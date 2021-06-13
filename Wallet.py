@@ -1,13 +1,9 @@
 # Imports
 from Blockchain import Blockchain
 from Transaction import Transaction
-from Signatures import Signatures
-from cryptography.hazmat.primitives.asymmetric import rsa
+from SignaturesECDSA import SignaturesECDSA
 from SocketUtil import SocketUtil
 import pickle
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from colorama import init 
 from termcolor import colored 
 
@@ -25,13 +21,16 @@ init()
 
 # Global Variables
 #myPrivate, myPublic = Signatures.generate_keys()
-sendPrivate, sendPublic = Signatures.generate_keys()
+#sendPrivate, sendPublic = Signatures.generate_keys()
 
 #save_key(myPrivate)
 
-myPrivate, myPublic = Signatures().load_key('privateKey.pem')
+myPrivateSigning, myVerifyingKey = SignaturesECDSA().loadKey()
+walletAddress, wif = SignaturesECDSA().make_address(myVerifyingKey.to_string())
+#walletAddress = "LC" + walletAddress
 
-#print(myPublic)
+#print(myPublicSigning)
+#print(type(myPublicSigning))
 
 #print(sendPublic)
 
@@ -79,21 +78,14 @@ if __name__ == "__main__":
                 else:
                     addr = bytes(input("Wallet address>>"), 'utf-8').decode('unicode-escape').encode("ISO-8859-1")
 
-                    addr = b'-----BEGIN PUBLIC KEY-----\n' + addr + b'\n-----END PUBLIC KEY-----\n'
-
-                    #-----
-
-                    #-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANN/zgMTrkYsV5Lc+ZrXJlWmt1GM+mue\nNupg/CPYQIBoXUi5ftB1kmz85u+7e9iH6lrurwtAGCu7bHTsjD4WGosCAwEAAQ==\n-----END PUBLIC KEY-----\n
-
-
                     if(addr == b"" or addr == None or addr == ""):
-                        addr = sendPublic
+                        print("Address cannot be left blank")
 
                     
                                     
                     #print("Sending to: " + str(addr))
                     
-                    if(myPublic == addr):
+                    elif(walletAddress == addr):
                         print(colored("You cannot send coins to your own wallet", 'red'))
 
 
@@ -108,12 +100,14 @@ if __name__ == "__main__":
 
 
                         if(addr and amount):    
-                            Tx = Transaction(myPublic)
+                            Tx = Transaction(myVerifyingKey, walletAddress)
                             Tx.addOutput(addr, amount)
-                            Tx.sign(myPrivate)
+                            Tx.sign(myPrivateSigning)
+
+                            print(Tx)
 
                         
-                            print(colored("====== Transaction confirmation ======\nSend to: " + str(addr) + "\nAmount: " + str(amount) + "\n====================", 'green'))
+                            print(colored("====== Transaction confirmation ======\nSend to: " + str(addr, 'utf-8') + "\nAmount: " + str(amount) + "\n====================", 'green'))
                             
                             confirm = input("Execute transaction (Y/N)?>> ")
 
@@ -154,6 +148,8 @@ if __name__ == "__main__":
 
                 minerNodesList = SocketUtil.getMinerNodes(network)
 
+                #print(minerNodesList)
+
                 if(len(minerNodesList) == 0):
                     print(colored("No online nodes detected. Failed to fetch balance", "yellow"))
 
@@ -162,16 +158,20 @@ if __name__ == "__main__":
 
                     balance = []
 
+    
+
                     for miner in minerNodesList:
 
                         try:
 
-                            dataToSend =  b'send_user_balance_command:' + myPublic
+                            dataToSend =  b'send_user_balance_command:' + bytes(walletAddress, 'utf-8')
 
                             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                             s.connect((miner['ip'], miner['port']))
                             data = pickle.dumps(dataToSend)
                             s.send(data)
+
+                            #print("Sent data")
 
                             try:
 
@@ -186,8 +186,9 @@ if __name__ == "__main__":
                             s.close()
 
 
-                        except:
+                        except Exception as e:
                             #print("Miner node is not active")
+                            #print(e)
                             pass
 
 
@@ -206,8 +207,11 @@ if __name__ == "__main__":
                     print(balance)
 
                     
-
-                    print("Current balance: " + colored(str(statistics.mode(balance)) + " coins", 'yellow'))
+                    try:
+                        print("Current balance: " + colored(str(statistics.mode(balance)) + " coins", 'yellow'))
+                    
+                    except Exception as e:
+                        print(colored("Error loading balance: " + str(e) , 'yellow'))
 
 
 
@@ -233,10 +237,10 @@ if __name__ == "__main__":
 
             elif(inp == "v"):
 
-                printPublic = myPublic
+                printPublic = walletAddress
 
-                printPublic = printPublic.replace(b'-----BEGIN PUBLIC KEY-----\n', b'')
-                printPublic = printPublic.replace(b'\n-----END PUBLIC KEY-----\n', b'')
+                #printPublic = printPublic.replace(b'-----BEGIN PUBLIC KEY-----\n', b'')
+                #printPublic = printPublic.replace(b'\n-----END PUBLIC KEY-----\n', b'')
 
                 #myPublic = b'-----BEGIN PUBLIC KEY-----\n' + myPublic + b'\n-----END PUBLIC KEY-----\n'
                 print("Wallet address " + colored("(Inside quotes): ", "green") + colored(printPublic, "yellow"))

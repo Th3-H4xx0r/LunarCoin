@@ -1,6 +1,7 @@
 # Imports
 
 #try:
+from SignaturesECDSA import SignaturesECDSA
 import socket
 import pickle
 import select
@@ -279,7 +280,6 @@ def recvObj(socket, blockchainObj, syncUtil):
     
     except Exception as e:
         print(colored("[FATAL ERROR] Error recieving object from client: " + str(e), "red"))
-        #logging.log("message", 'message')
         return None
 
 def addTxToList(tx):
@@ -346,12 +346,12 @@ def validatorServer(my_addr):
                     else: # For regular trasaction
 
 
-                        addrSimplified = newTx.public
+                        addrSimplified = newTx.ownWallet
 
-                        addrSimplified = addrSimplified.replace(b'-----BEGIN PUBLIC KEY-----\n', b'')
-                        addrSimplified = addrSimplified.replace(b'\n-----END PUBLIC KEY-----\n', b'')
+                        #addrSimplified = addrSimplified.replace(b'-----BEGIN PUBLIC KEY-----\n', b'')
+                        #addrSimplified = addrSimplified.replace(b'\n-----END PUBLIC KEY-----\n', b'')
 
-                        addrSimplified = str(addrSimplified, 'utf-8')
+                        # Handles spam management
 
                         if (walletTxFreq.get(addrSimplified) != None):
                             walletTxFreq[addrSimplified] = walletTxFreq[addrSimplified] + 1
@@ -367,47 +367,53 @@ def validatorServer(my_addr):
                             #print(newTx)
                             valid = util.verifyTransaction(newTx, newTx.public)
 
-                            userCurrentBalance = blockchain.getUserBalance(newTx.public)
+                            addrOwnWallet, wif = SignaturesECDSA().make_address(newTx.public.to_string())
 
+                            if(addrOwnWallet == newTx.ownWallet):
+
+                                userCurrentBalance = blockchain.getUserBalance(newTx.ownWallet)
                             
-                            #print(userCurrentBalance)
+                                #print(userCurrentBalance)
 
-                            if(userCurrentBalance >= newTx.outputAmount):
+                                if(userCurrentBalance >= newTx.outputAmount):
 
-                                if(valid):
+                                    if(valid):
 
-                                    if(newTx.outputAddress != newTx.public):
+                                        if(newTx.outputAddress != newTx.public):
 
-                                        blockchain.new_transaction(newTx.public, newTx.outputAddress, newTx.outputAmount)
-
-
-                                        # Adds transaction hash to list
-
-                                        #tx_string = json.dumps(newTx, sort_keys=True).encode()
-                                        #tx_hash = hashlib.sha256(tx_string).hexdigest()
+                                            blockchain.new_transaction(newTx.ownWallet, newTx.outputAddress, newTx.outputAmount)
 
 
-                                        addTxToList(newTx)
+                                            # Adds transaction hash to list
 
-                                        newBlock = blockchain.goNewBlock()
+                                            #tx_string = json.dumps(newTx, sort_keys=True).encode()
+                                            #tx_hash = hashlib.sha256(tx_string).hexdigest()
 
-                                        if(newBlock):
 
-                                            blockchain.new_block() # Creates new block if block meets all requirements\\
+                                            addTxToList(newTx)
 
-                                            #verifyBlock(blockchain.last_block_blockchain(), db)
+                                            newBlock = blockchain.goNewBlock()
 
-                                        print(colored("[Share Accepted] Share validated", 'green'))
-                                    else:
-                                        print(colored("[Share Rejected] User attempting to send coins to themself.", 'yellow'))
+                                            if(newBlock):
 
-                                #print(block)
-                            
+                                                blockchain.new_block() # Creates new block if block meets all requirements\\
+
+                                                #verifyBlock(blockchain.last_block_blockchain(), db)
+
+                                            print(colored("[Share Accepted] Share validated", 'green'))
+                                        else:
+                                            print(colored("[Share Rejected] User attempting to send coins to themself.", 'yellow'))
+
+                                    #print(block)
+                                
+                                else:
+                                    print(colored("[Share Rejected] User balance is too low to make transaction", 'yellow'))
                             else:
-                                print(colored("[Share Rejected] User balance is too low to make transaction", 'yellow'))
+                                print(colored("[Share Rejected] Wallet address does not match public key", 'yellow'))
 
             except Exception as e:
                 print(colored("[FATAL ERROR] Error occured with recieving data. " + str(e), 'red'))
+                logging.log('message')
 
     #except Exception as e:
         #print(colored("[FATAL ERROR] Miner error occured. " + str(e) + " Restart miner.", 'red'))

@@ -1,4 +1,5 @@
 # Imports
+from SignaturesECDSA import SignaturesECDSA
 from Signatures import Signatures
 import socket
 import pickle
@@ -106,7 +107,9 @@ class SocketUtil:
 
             #print(transaction.signedData)
 
-            verifed = Signatures.verify(transaction.data, transaction.signedData, public)
+            #message, sig, verifyingKey
+
+            verifed = SignaturesECDSA().verify(bytes(str(transaction.data), 'utf-8'), transaction.signedData, public)
 
             if verifed == True: #  Checks if transaction is valid
                 if transaction.outputAmount > 0: # Checks if transaction amount is greater than zero
@@ -119,7 +122,7 @@ class SocketUtil:
                 return False
         
         except Exception as e: # On error
-            print(" Error occured verifyTransaction - MinerUtil.py: " + str(e))
+            print(" Error occured verifyTransaction - SocketUtil.py: " + str(e))
             return False
 
     def newServerConnection(ip_addr, port=TCP_PORT):
