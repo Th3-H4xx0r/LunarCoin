@@ -221,6 +221,7 @@ def recvObj(socket, blockchainObj, syncUtil):
                     return None
             '''
 
+
             if('blockchain_init_sync' in str(returnData)): # Get user balance and send to user
                 print('Blockchain sync requested from miner: ' + str(addr[0]) + ":" + str(addr[1]))
 
@@ -271,6 +272,20 @@ def recvObj(socket, blockchainObj, syncUtil):
 
 
                 #print("send_user_balance_command for public key: " + str(publicKey))
+                return None
+
+            
+            elif('ping' in str(returnData)): # Get user balance and send to user
+                print('Validator pingged')
+
+                #block = returnData
+
+                #BlockchainSyncUtil.verifyBlock()
+
+                #BlockchainSyncUtil.sendRecievedBlock(block, blockchainObj, new_sock)
+
+                new_sock.send(str('pong').encode('utf-8'))
+
                 return None
             
             else:
