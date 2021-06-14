@@ -313,8 +313,6 @@ def validatorServer(my_addr):
 
                 newTx = txPacket.getTransaction()
 
-                if(pickle.dumps(newTx))
-
                 if(newTx != None):
                     #print(newTx)
                     print(colored("[Share Recieved] Transaction share recieved - Validating...", "green"))

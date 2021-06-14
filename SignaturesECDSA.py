@@ -102,8 +102,16 @@ class SignaturesECDSA:
         except: 
             print("Error with loading private key")
             return None, None
+    
+    def signRaw(self, data, pk):
+        try:
+            signature = pk.sign(data)
+            return signature
         
-
+        except Exception as e:
+            print("Error with verifying signature: " + str(e))
+            return False
+        
     def sign(self, data, pk):
         
         try:
