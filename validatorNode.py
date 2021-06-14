@@ -309,7 +309,11 @@ def validatorServer(my_addr):
 
         while True:
             try:
-                newTx = recvObj(server, blockchain, syncUtil)
+                txPacket = recvObj(server, blockchain, syncUtil)
+
+                newTx = txPacket.getTransaction()
+
+                if(pickle.dumps(newTx))
 
                 if(newTx != None):
                     #print(newTx)
@@ -391,7 +395,6 @@ def validatorServer(my_addr):
 
                                             #tx_string = json.dumps(newTx, sort_keys=True).encode()
                                             #tx_hash = hashlib.sha256(tx_string).hexdigest()
-
 
                                             addTxToList(newTx)
 

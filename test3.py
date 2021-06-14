@@ -1,18 +1,15 @@
-from cryptography.hazmat.primitives import serialization
-# imports
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.exceptions import InvalidSignature
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5
+from base64 import b64decode,b64encode
 
-from cryptography.hazmat.primitives import serialization
-import json
-import hashlib
+key = RSA.generate(2048)
 
-x = 324234
+pubkey = key
+msg = "test"
+keyDER = b64decode(pubkey)
+keyPub = RSA.importKey(keyDER)
+cipher = Cipher_PKCS1_v1_5.new(keyPub)
+cipher_text = cipher.encrypt(msg.encode())
+emsg = b64encode(cipher_text)
+print (emsg)
 
-block_string = json.dumps(x, sort_keys=True).encode()
-x1 = hashlib.sha256(block_string).hexdigest()
-
-print(x1)

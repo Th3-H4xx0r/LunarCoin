@@ -1,4 +1,5 @@
 # Imports
+from TransactionPacket import TransactionPacket
 from Blockchain import Blockchain
 from Transaction import Transaction
 from SignaturesECDSA import SignaturesECDSA
@@ -114,12 +115,15 @@ if __name__ == "__main__":
 
                             if(confirm == "Y" or confirm == "y"):
 
+                                '''
+
                                 bar = Bar('Sending transaction', max=len(minerNodesList))
 
                                 for i in range(len(minerNodesList)):
 
                                     #print(colored("Sending transaction for processing to miner node: " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'yellow'))
 
+                                    txPacket = TransactionPacket()
                                     try:
                                         SocketUtil.sendObj(minerNodesList[i]['ip'], Tx, minerNodesList[i]['port'])
                                         #print(colored("Sent to miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'green'))
@@ -134,6 +138,8 @@ if __name__ == "__main__":
 
                                 
                                 bar.finish()
+                                '''
+                                SocketUtil.sendObj('localhost', Tx, 39802)
 
 
                             elif(confirm == "N" or confirm == "n"):
