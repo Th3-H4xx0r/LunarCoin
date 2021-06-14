@@ -19,7 +19,7 @@ class TransactionPacket:
     
     def updateCompletedNode(self, node):
         try:
-            self.__allNodes.remove(node)
+            self.__remainingNodes.remove(node)
         
         except Exception as e:
             print("Error removing node: " + str(e))
@@ -42,4 +42,4 @@ class TransactionPacket:
         return self.__signedData
     
     def __repr__(self):
-        return (str(self.__allNodes) + " : " + str(self.__completedNodes) + " - TX")
+        return (str(self.__remainingNodes) + " : " + str(self.__remainingNodes) + " - TX")
