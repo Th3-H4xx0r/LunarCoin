@@ -276,7 +276,7 @@ def recvObj(socket, blockchainObj, syncUtil):
 
             
             elif('ping' in str(returnData)): # Get user balance and send to user
-                print('Validator pingged')
+                print('Validator pinged')
 
                 #block = returnData
 
@@ -284,7 +284,20 @@ def recvObj(socket, blockchainObj, syncUtil):
 
                 #BlockchainSyncUtil.sendRecievedBlock(block, blockchainObj, new_sock)
 
-                new_sock.send(str('pong').encode('utf-8'))
+                time.sleep(0.5)
+
+                managers = SocketUtil.getManagerNodes()
+
+                #print(colored("[MINER CORE] Sending request for validator reward", "cyan"))
+
+                for manager in managers:
+                    try:
+                        SocketUtil.sendObj(manager['ip'], 'pong:' + str(MINER_ID), manager['port'])
+
+                    except:
+                        pass
+
+                #new_sock.send(str('pong').encode('utf-8'))
 
                 return None
             
@@ -626,7 +639,7 @@ if __name__ == "__main__":
             grok.start()
             t1.start()
             spamProtection.start()
-            #validatorRewardServ.start()
+            validatorRewardServ.start()
 
         else:
             x = input(">>")
