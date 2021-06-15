@@ -163,7 +163,7 @@ if __name__ == "__main__":
 
                                         for node in nodes:
                                             try:
-                                                SocketUtil.sendObj(node['ip'], Tx, node['port'])
+                                                SocketUtil.sendObj(node['ip'], {'transaction': Tx, 'network': network}, node['port'])
                                                 print("Transaction sent to propagator node")
                                             
                                             except Exception as e:
