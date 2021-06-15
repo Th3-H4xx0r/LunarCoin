@@ -12,6 +12,7 @@ import statistics
 import socket
 from progress.bar import Bar
 import sys
+import requests
 
 minerNodesList = []
 BUFFER_SIZE = 1024
@@ -34,6 +35,20 @@ walletAddress, wif = SignaturesECDSA().make_address(myVerifyingKey.to_string())
 #print(type(myPublicSigning))
 
 #print(sendPublic)
+
+def getPropagatorNodes():
+    try:
+            r = requests.get('https://api.classvibes.net/propagator/getNodes')
+
+            data = r.json()
+
+            return data
+
+
+    except Exception as e:
+        return None
+
+        
 
 
 
@@ -139,7 +154,20 @@ if __name__ == "__main__":
                                 
                                 bar.finish()
                                 '''
-                                SocketUtil.sendObj('localhost', Tx, 39802)
+
+                                nodesData = getPropagatorNodes()
+
+                                if(nodesData != None):
+                                    if(nodesData['status'] == 'success'):
+                                        nodes = nodesData['data']
+
+                                        for node in nodes:
+                                            try:
+                                                SocketUtil.sendObj(node['ip'], Tx, node['port'])
+                                                print("Transaction sent to propagator node")
+                                            
+                                            except Exception as e:
+                                                print("Cannot connect to propagator node")
 
 
                             elif(confirm == "N" or confirm == "n"):
