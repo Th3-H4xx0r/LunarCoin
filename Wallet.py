@@ -161,13 +161,15 @@ if __name__ == "__main__":
                                     if(nodesData['status'] == 'success'):
                                         nodes = nodesData['data']
 
+                                        print(nodes)
+
                                         for node in nodes:
                                             try:
-                                                SocketUtil.sendObj(node['ip'], {'transaction': Tx, 'network': network}, node['port'])
+                                                SocketUtil.sendObj(node['ip'], {'transaction': Tx, 'network': network}, int(node['port']))
                                                 print("Transaction sent to propagator node")
                                             
                                             except Exception as e:
-                                                print("Cannot connect to propagator node")
+                                                print("Cannot connect to propagator node: " + str(e))
 
 
                             elif(confirm == "N" or confirm == "n"):

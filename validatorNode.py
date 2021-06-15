@@ -639,7 +639,7 @@ if __name__ == "__main__":
             grok.start()
             t1.start()
             spamProtection.start()
-            validatorRewardServ.start()
+            #validatorRewardServ.start()
 
         else:
             x = input(">>")

@@ -1,7 +1,6 @@
 # Imports
 from Transaction import Transaction
-from Signatures import Signatures
-from cryptography.hazmat.primitives.asymmetric import rsa
+from SignaturesECDSA import SignaturesECDSA
 from SocketUtil import SocketUtil
 import time 
 import zlib
@@ -12,8 +11,15 @@ from BlockchainSyncUtil import BlockchainSyncUtil
 
 
 #myPrivate, myPublic = Signatures.generate_keys()
-myPrivate, myPublic = Signatures().load_key('privateKey.pem')
-sendPrivate, sendPublic = Signatures.generate_keys()
+myPrivate, myPublic = SignaturesECDSA().loadKey()
+
+addr, wif = SignaturesECDSA().make_address(myPublic.to_string())
+
+
+sendPrivate = SignaturesECDSA().generateKeys()
+
+sendPublic = sendPrivate.get_verifying_key()
+addrSend, wifSend = SignaturesECDSA().make_address(sendPublic.to_string())
 
 #ori = myPublic
 
@@ -40,13 +46,30 @@ sendPrivate, sendPublic = Signatures.generate_keys()
 
 tic = time.perf_counter()
 
-Tx = Transaction(myPublic)
-Tx.addOutput(sendPublic, 0.1)
+Tx = Transaction(myPublic, addr)
+Tx.addOutput(addrSend, 0.1)
 Tx.sign(myPrivate)
 
-reps = 20000
+reps = 10000
 
-nodesData = BlockchainSyncUtil().getNodes('testnet')
+
+def getPropagatorNodes():
+    try:
+            r = requests.get('https://api.classvibes.net/propagator/getNodes')
+
+            data = r.json()
+
+            return data
+
+
+    except Exception as e:
+        return None
+
+#nodesData = BlockchainSyncUtil().getNodes('testnet')
+
+nodesData = getPropagatorNodes()
+
+
 
 if(nodesData != None):
     if(nodesData['status'] == 'success'):
@@ -61,14 +84,20 @@ if(nodesData != None):
             #except:
                 #pass
 
+
             for node in nodes:
-                #print(node)
                 try:
-                    SocketUtil.sendObj(node['ip'], Tx, int(node['port']))
-                except:
-                    pass
+                    SocketUtil.sendObj(node['ip'], {'transaction': Tx, 'network': 'testnet'}, int(node['port']))
+                    #print("Transaction sent to propagator node")
                 
-            bar.next()
+                except Exception as e:
+                    pass
+                    #print("Cannot connect to propagator node: " + str(e))
+
+                bar.next()
+
+                
+
 
 
         bar.finish()
