@@ -1,43 +1,22 @@
-#----- A simple TCP based server program in Python using send() function -----
+import eventlet
+import socketio
 
- 
+sio = socketio.Server()
+app = socketio.WSGIApp(sio, static_files={
+    '/': {'content_type': 'text/html', 'filename': 'index.html'}
+})
 
-import socket
+@sio.event
+def connect(sid, environ):
+    print('connect ', sid)
 
- 
+@sio.event
+def my_message(sid, data):
+    print('message ', data)
 
-# Create a stream based socket(i.e, a TCP socket)
+@sio.event
+def disconnect(sid):
+    print('disconnect ', sid)
 
-# operating on IPv4 addressing scheme
-
-serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
-
- 
-
-# Bind and listen
-
-serverSocket.bind(("127.0.0.1",9090));
-
-serverSocket.listen();
-
- 
-
-# Accept connections
-
-while(True):
-
-    (clientConnected, clientAddress) = serverSocket.accept();
-
-    print("Accepted a connection request from %s:%s"%(clientAddress[0], clientAddress[1]));
-
-   
-
-    dataFromClient = clientConnected.recv(1024)
-
-    print(dataFromClient.decode());
-
- 
-
-    # Send some data back to the client
-
-    clientConnected.send("Hello Client!".encode());
+if __name__ == '__main__':
+    eventlet.wsgi.server(eventlet.listen(('', 5000)), app)

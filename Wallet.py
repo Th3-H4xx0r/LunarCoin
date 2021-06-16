@@ -86,97 +86,107 @@ if __name__ == "__main__":
             #  Makes a transaction
             if(inp == "s"):
 
-                minerNodesList = SocketUtil.getMinerNodes(network)
+                #minerNodesList = SocketUtil.getMinerNodes(network)
 
-                if(len(minerNodesList) == 0):
-                    print(colored("No online nodes detected.", "yellow"))
+                #if(len(minerNodesList) == 0):
+                    #print(colored("No online nodes detected.", "yellow"))
+                
+                #else:
+                addr = input("Wallet address>>")
+
+                if(addr == b"" or addr == None or addr == ""):
+                    print("Address cannot be left blank")
+
+                
+                                
+                #print("Sending to: " + str(addr))
+                
+                elif(walletAddress == addr):
+                    print(colored("You cannot send coins to your own wallet", 'red'))
+
+
                 
                 else:
-                    addr = input("Wallet address>>")
+                
+                    amount = float(input("Enter amount to send>> "))
 
-                    if(addr == b"" or addr == None or addr == ""):
-                        print("Address cannot be left blank")
+
+                    #print(type(sendPublic))
+                    #print(type(addr))
+
+
+
+                    if(addr and amount):    
+                        Tx = Transaction(myVerifyingKey, walletAddress)
+                        Tx.addOutput(addr, amount)
+                        Tx.sign(myPrivateSigning)
+
+                        #print(Tx)
 
                     
-                                    
-                    #print("Sending to: " + str(addr))
-                    
-                    elif(walletAddress == addr):
-                        print(colored("You cannot send coins to your own wallet", 'red'))
-
-
-                    
-                    else:
-                    
-                        amount = float(input("Enter amount to send>> "))
-
-
-                        #print(type(sendPublic))
-                        #print(type(addr))
-
-
-
-                        if(addr and amount):    
-                            Tx = Transaction(myVerifyingKey, walletAddress)
-                            Tx.addOutput(addr, amount)
-                            Tx.sign(myPrivateSigning)
-
-                            print(Tx)
-
+                        print(colored("====== Transaction confirmation ======\nSend to: " + addr + "\nAmount: " + str(amount) + "\n====================", 'green'))
                         
-                            print(colored("====== Transaction confirmation ======\nSend to: " + addr + "\nAmount: " + str(amount) + "\n====================", 'green'))
+                        confirm = input("Execute transaction (Y/N)?>> ")
+
+                        if(confirm == "Y" or confirm == "y"):
+
+                            '''
+
+                            bar = Bar('Sending transaction', max=len(minerNodesList))
+
+                            for i in range(len(minerNodesList)):
+
+                                #print(colored("Sending transaction for processing to miner node: " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'yellow'))
+
+                                txPacket = TransactionPacket()
+                                try:
+                                    SocketUtil.sendObj(minerNodesList[i]['ip'], Tx, minerNodesList[i]['port'])
+                                    #print(colored("Sent to miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'green'))
+
+                                except:
+                                    #print(colored("Miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']) +" is offline", 'red'))
+                                    pass
+                                    
+                                i = i + 1
+
+                                bar.next()
+
                             
-                            confirm = input("Execute transaction (Y/N)?>> ")
+                            bar.finish()
+                            '''
 
-                            if(confirm == "Y" or confirm == "y"):
+                            nodesData = getPropagatorNodes()
 
-                                '''
+                            oneNodeRecv = False
 
-                                bar = Bar('Sending transaction', max=len(minerNodesList))
+                            if(nodesData != None):
+                                if(nodesData['status'] == 'success'):
+                                    nodes = nodesData['data']
 
-                                for i in range(len(minerNodesList)):
+                                    #print(nodes)
 
-                                    #print(colored("Sending transaction for processing to miner node: " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'yellow'))
-
-                                    txPacket = TransactionPacket()
-                                    try:
-                                        SocketUtil.sendObj(minerNodesList[i]['ip'], Tx, minerNodesList[i]['port'])
-                                        #print(colored("Sent to miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'green'))
-
-                                    except:
-                                        #print(colored("Miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']) +" is offline", 'red'))
-                                        pass
+                                    for node in nodes:
+                                        try:
+                                            SocketUtil.sendObj(node['ip'], {'transaction': Tx, 'network': network}, int(node['port']))
+                                            oneNodeRecv = True
+                                            #print("Transaction sent to propagator node")
                                         
-                                    i = i + 1
-
-                                    bar.next()
-
-                                
-                                bar.finish()
-                                '''
-
-                                nodesData = getPropagatorNodes()
-
-                                if(nodesData != None):
-                                    if(nodesData['status'] == 'success'):
-                                        nodes = nodesData['data']
-
-                                        print(nodes)
-
-                                        for node in nodes:
-                                            try:
-                                                SocketUtil.sendObj(node['ip'], {'transaction': Tx, 'network': network}, int(node['port']))
-                                                print("Transaction sent to propagator node")
-                                            
-                                            except Exception as e:
-                                                print("Cannot connect to propagator node: " + str(e))
+                                        except Exception as e:
+                                            pass
+                                            #print("Cannot connect to propagator node: " + str(e))
+                                    
+                                    if(oneNodeRecv == False):
+                                        print("Error sending transaction. Cannot connect to the network,")
+                                    
+                                    else:
+                                        print("Transaction sent successfully.")
 
 
-                            elif(confirm == "N" or confirm == "n"):
-                                pass
-                                
-                            else:
-                                print("Selection does not match Y or N")
+                        elif(confirm == "N" or confirm == "n"):
+                            pass
+                            
+                        else:
+                            print("Selection does not match Y or N")
 
 
             #  Gets balance of wallet

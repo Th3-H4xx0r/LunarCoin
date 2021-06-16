@@ -59,6 +59,7 @@ class Blockchain:
             if(i % TX_INTERVAL == 0):
                 txThreshold = txThreshold + 1
 
+        print(txThreshold)
         return txThreshold
 
     def goNewBlock(self):
