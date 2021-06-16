@@ -57,7 +57,8 @@ class Blockchain:
 
         for i in range(currentBlockCount):
             if(i % TX_INTERVAL == 0):
-                txThreshold = txThreshold + 1
+                if(i != 0):
+                    txThreshold = txThreshold + 1
 
         print(txThreshold)
         return txThreshold
