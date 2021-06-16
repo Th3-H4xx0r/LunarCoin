@@ -107,86 +107,95 @@ if __name__ == "__main__":
 
                 
                 else:
+
+                    validInput = False
+
+                    try:
                 
-                    amount = float(input("Enter amount to send>> "))
+                        amount = float(input("Enter amount to send>> "))
+                        validInput = True
+
+                    except:
+                        print("Input is not valid. Please enter a decimal or whole number") 
+                        pass
 
 
                     #print(type(sendPublic))
                     #print(type(addr))
 
+                    if(validInput == True):
 
+                        if(addr and amount):    
+                            Tx = Transaction(myVerifyingKey, walletAddress)
+                            Tx.addOutput(addr, amount)
+                            Tx.sign(myPrivateSigning)
 
-                    if(addr and amount):    
-                        Tx = Transaction(myVerifyingKey, walletAddress)
-                        Tx.addOutput(addr, amount)
-                        Tx.sign(myPrivateSigning)
+                            #print(Tx)
 
-                        #print(Tx)
-
-                    
-                        print(colored("====== Transaction confirmation ======\nSend to: " + addr + "\nAmount: " + str(amount) + "\n====================", 'green'))
                         
-                        confirm = input("Execute transaction (Y/N)?>> ")
-
-                        if(confirm == "Y" or confirm == "y"):
-
-                            '''
-
-                            bar = Bar('Sending transaction', max=len(minerNodesList))
-
-                            for i in range(len(minerNodesList)):
-
-                                #print(colored("Sending transaction for processing to miner node: " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'yellow'))
-
-                                txPacket = TransactionPacket()
-                                try:
-                                    SocketUtil.sendObj(minerNodesList[i]['ip'], Tx, minerNodesList[i]['port'])
-                                    #print(colored("Sent to miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'green'))
-
-                                except:
-                                    #print(colored("Miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']) +" is offline", 'red'))
-                                    pass
-                                    
-                                i = i + 1
-
-                                bar.next()
-
+                            print(colored("====== Transaction confirmation ======\nSend to: " + addr + "\nAmount: " + str(amount) + "\n====================", 'green'))
                             
-                            bar.finish()
-                            '''
+                            confirm = input("Execute transaction (Y/N)?>> ")
 
-                            nodesData = getPropagatorNodes()
+                            if(confirm == "Y" or confirm == "y"):
 
-                            oneNodeRecv = False
+                                '''
 
-                            if(nodesData != None):
-                                if(nodesData['status'] == 'success'):
-                                    nodes = nodesData['data']
+                                bar = Bar('Sending transaction', max=len(minerNodesList))
 
-                                    #print(nodes)
+                                for i in range(len(minerNodesList)):
 
-                                    for node in nodes:
-                                        try:
-                                            SocketUtil.sendObj(node['ip'], {'transaction': Tx, 'network': network}, int(node['port']))
-                                            oneNodeRecv = True
-                                            #print("Transaction sent to propagator node")
+                                    #print(colored("Sending transaction for processing to miner node: " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'yellow'))
+
+                                    txPacket = TransactionPacket()
+                                    try:
+                                        SocketUtil.sendObj(minerNodesList[i]['ip'], Tx, minerNodesList[i]['port'])
+                                        #print(colored("Sent to miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'green'))
+
+                                    except:
+                                        #print(colored("Miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']) +" is offline", 'red'))
+                                        pass
                                         
-                                        except Exception as e:
-                                            pass
-                                            #print("Cannot connect to propagator node: " + str(e))
-                                    
-                                    if(oneNodeRecv == False):
-                                        print("Error sending transaction. Cannot connect to the network,")
-                                    
-                                    else:
-                                        print("Transaction sent successfully.")
+                                    i = i + 1
+
+                                    bar.next()
+
+                                
+                                bar.finish()
+                                '''
+
+                                nodesData = getPropagatorNodes()
+
+                                oneNodeRecv = False
+
+                                if(nodesData != None):
+                                    if(nodesData['status'] == 'success'):
+                                        nodes = nodesData['data']
+
+                                        #print(nodes)
+
+                                        for node in nodes:
+                                            try:
+                                                SocketUtil.sendObj(node['ip'], {'transaction': Tx, 'network': network}, int(node['port']))
+                                                oneNodeRecv = True
+                                                #print("Transaction sent to propagator node")
+                                            
+                                            except Exception as e:
+                                                pass
+                                                #print("Cannot connect to propagator node: " + str(e))
+                                        
+                                        if(oneNodeRecv == False):
+                                            print("Error sending transaction. Cannot connect to the network,")
+                                        
+                                        else:
+                                            print("Transaction sent successfully.")
 
 
-                        elif(confirm == "N" or confirm == "n"):
-                            pass
-                            
-                        else:
-                            print("Selection does not match Y or N")
+                            elif(confirm == "N" or confirm == "n"):
+                                pass
+                                
+                            else:
+                                print("Selection does not match Y or N")
 
 
             #  Gets balance of wallet
