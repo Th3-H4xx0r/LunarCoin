@@ -399,7 +399,7 @@ def validatorServer(my_addr):
                                 
                                 print(colored("[Share Accepted] Validator reward transaction is valid", "green"))
 
-                                if(blockchain.checkCoinsInCirculation() + newTx.outputAmount <= 10500):
+                                if(blockchain.checkCoinsInCirculation() + newTx.outputAmount <= 146692378):
 
                                     blockchain.new_transaction('validator_reward', newTx.outputAddress, newTx.outputAmount)
 
