@@ -46,6 +46,41 @@ class Blockchain:
 
         self.current_transactions = []
 
+    
+    def checkCoinsInCirculation(self):
+
+        unser = self.chain
+
+        balance = 0
+
+        for block in unser:
+            #print(block)
+
+            transactions = block.transactions
+
+            for tx in transactions:
+
+                # Checks if coins are being widthdrawed
+
+                #print(tx['sender'] + " : " + myPublic + " --- " + str(type(tx['sender'])))
+
+                #print(tx['sender'])
+                #print(type(tx['recipient']))
+
+                if(tx['sender'] == 'genesis'):
+                    balance = balance + tx['amount']
+
+
+                if(tx['sender'] == 'validator_reward'):
+                    balance = balance + tx['amount']
+
+
+
+
+        print("Coins in circulation: " + str(balance))
+            
+        return balance
+
 
     def getBlockTXThreshold(self):
 
@@ -60,7 +95,7 @@ class Blockchain:
                 if(i != 0):
                     txThreshold = txThreshold + 1
 
-        print(txThreshold)
+        #print(txThreshold)
         return txThreshold
 
     def goNewBlock(self):

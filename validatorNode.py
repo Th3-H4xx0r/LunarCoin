@@ -320,6 +320,7 @@ def addTxToList(tx):
 
 def validatorServer(my_addr):
 
+
     #try:
 
         global tx_list
@@ -334,6 +335,8 @@ def validatorServer(my_addr):
         my_ip, my_port = my_addr
         # Open server connection
         server = SocketUtil.newServerConnection(my_ip, my_port)
+
+
 
         while True:
             try:
@@ -373,6 +376,7 @@ def validatorServer(my_addr):
                 '''
 
 
+                blockchain.checkCoinsInCirculation()
 
                 if(newTx != None):
                     #print(newTx)
@@ -392,16 +396,21 @@ def validatorServer(my_addr):
                                 
                                 print(colored("[Share Accepted] Validator reward transaction is valid", "green"))
 
-                                blockchain.new_transaction(newTx.ownWallet, newTx.outputAddress, newTx.outputAmount)
+                                if(blockchain.checkCoinsInCirculation() + newTx.outputAmount <= 10100):
 
-                                addTxToList(newTx)
+                                    blockchain.new_transaction(newTx.ownWallet, newTx.outputAddress, newTx.outputAmount)
 
-                                newBlock = blockchain.goNewBlock()
+                                    addTxToList(newTx)
 
-                                if(newBlock):
-                                    
-                                    print("[BLOCKCHAIN] Block complete. Adding block to the blockchain")
-                                    blockchain.new_block() # Creates new block if block meets all requirements
+                                    newBlock = blockchain.goNewBlock()
+
+                                    if(newBlock):
+                                        
+                                        print("[BLOCKCHAIN] Block complete. Adding block to the blockchain")
+                                        blockchain.new_block() # Creates new block if block meets all requirements
+                                
+                                else:
+                                    print(colored("[Share Rejected] Coin limit reached", "red"))
                             
                             else:
                                 print(colored("[Share Rejected] Validator reward transaction is fraud (incorrect signed address)", "red"))
@@ -437,43 +446,49 @@ def validatorServer(my_addr):
 
                             if(addrOwnWallet == newTx.ownWallet):
 
-                                userCurrentBalance = blockchain.getUserBalance(newTx.ownWallet)
-                            
-                                #print(userCurrentBalance)
+                                if(newTx.ownWallet != "genesis" and newTx.ownWallet != "validator_reward"):
 
-                                if(userCurrentBalance >= newTx.outputAmount):
+                                    userCurrentBalance = blockchain.getUserBalance(newTx.ownWallet)
+                                
+                                    #print(userCurrentBalance)
 
-                                    if(valid):
+                                    if(userCurrentBalance >= newTx.outputAmount):
 
-                                        if(newTx.outputAddress != newTx.public):
+                                        if(valid):
 
-                                            blockchain.new_transaction(newTx.ownWallet, newTx.outputAddress, newTx.outputAmount)
+                                            if(newTx.outputAddress != newTx.public):
+
+                                                blockchain.new_transaction(newTx.ownWallet, newTx.outputAddress, newTx.outputAmount)
 
 
-                                            # Adds transaction hash to list
+                                                # Adds transaction hash to list
 
-                                            #tx_string = json.dumps(newTx, sort_keys=True).encode()
-                                            #tx_hash = hashlib.sha256(tx_string).hexdigest()
+                                                #tx_string = json.dumps(newTx, sort_keys=True).encode()
+                                                #tx_hash = hashlib.sha256(tx_string).hexdigest()
 
-                                            addTxToList(newTx)
+                                                addTxToList(newTx)
 
-                                            newBlock = blockchain.goNewBlock()
+                                                newBlock = blockchain.goNewBlock()
 
-                                            if(newBlock):
-                                                print("[BLOCKCHAIN] Block complete. Adding block to the blockchain")
+                                                if(newBlock):
+                                                    print("[BLOCKCHAIN] Block complete. Adding block to the blockchain")
 
-                                                blockchain.new_block() # Creates new block if block meets all requirements\\
+                                                    blockchain.new_block() # Creates new block if block meets all requirements\\
 
-                                                #verifyBlock(blockchain.last_block_blockchain(), db)
+                                                    #verifyBlock(blockchain.last_block_blockchain(), db)
 
-                                            print(colored("[Share Accepted] Share validated", 'green'))
-                                        else:
-                                            print(colored("[Share Rejected] User attempting to send coins to themself.", 'yellow'))
+                                                print(colored("[Share Accepted] Share validated", 'green'))
+                                            else:
+                                                print(colored("[Share Rejected] User attempting to send coins to themself.", 'yellow'))
 
-                                    #print(block)
+                                        #print(block)
+                                    
+                                    else:
+                                        print(colored("[Share Rejected] User balance is too low to make transaction", 'yellow'))
                                 
                                 else:
-                                    print(colored("[Share Rejected] User balance is too low to make transaction", 'yellow'))
+                                    print(colored("[Share Rejected] Fraud transaction detected", 'yellow'))
+
                             else:
                                 print(colored("[Share Rejected] Wallet address does not match public key", 'yellow'))
 
@@ -555,7 +570,6 @@ if __name__ == "__main__":
     time.sleep(3)
 
     if(loadComplete):
-
 
         # Creates the /blockchain dir if not exist
         current_directory = os.getcwd()
