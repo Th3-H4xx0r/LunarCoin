@@ -47,7 +47,7 @@ addrSend, wifSend = SignaturesECDSA().make_address(sendPublic.to_string())
 tic = time.perf_counter()
 
 Tx = Transaction(myPublic, addr)
-Tx.addOutput(addrSend, 0.1)
+Tx.addOutput(addrSend, 0.00001)
 Tx.sign(myPrivate)
 
 reps = 10000

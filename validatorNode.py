@@ -437,7 +437,7 @@ def validatorServer(my_addr):
                             walletTxFreq[addrSimplified] = 1
 
                         
-                        if(walletTxFreq.get(addrSimplified) > 2000): # If wallet spams
+                        if(walletTxFreq.get(addrSimplified) > 200000000000): # If wallet spams
                             print(colored("[Share Rejected] Wallet address is executing too many transactions", "yellow"))
 
                         else: # If wallet does not spam
@@ -512,7 +512,7 @@ def validatorRewardService():
 
     while True:
 
-        time.sleep(10) # Executes every 24 hours
+        time.sleep(20) # Executes every 24 hours
 
         #print("Paying validator reward")
 
