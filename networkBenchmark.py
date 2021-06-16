@@ -53,7 +53,7 @@ tic = time.perf_counter()
 
 
 
-reps = 10
+reps = 20
 
 
 def getPropagatorNodes():
@@ -148,7 +148,7 @@ if(nodesData != None):
 
         minerNodesList = SocketUtil.getMinerNodes('testnet')
 
-        time.sleep(20)
+        time.sleep(25)
 
         bar1 = Bar('Getting balances', max=WALLET_COUNT)
 
