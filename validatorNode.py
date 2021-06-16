@@ -276,7 +276,7 @@ def recvObj(socket, blockchainObj, syncUtil):
 
             
             elif('ping' in str(returnData)): # Get user balance and send to user
-                print('Validator pinged')
+                #print('Validator pinged')
 
                 #block = returnData
 
@@ -376,10 +376,13 @@ def validatorServer(my_addr):
                 '''
 
 
-                blockchain.checkCoinsInCirculation()
+
 
                 if(newTx != None):
                     #print(newTx)
+
+                    blockchain.checkCoinsInCirculation()
+
                     print(colored("[Share Recieved] Transaction share recieved - Validating...", "green"))
 
                     util = SocketUtil()
@@ -396,9 +399,9 @@ def validatorServer(my_addr):
                                 
                                 print(colored("[Share Accepted] Validator reward transaction is valid", "green"))
 
-                                if(blockchain.checkCoinsInCirculation() + newTx.outputAmount <= 10100):
+                                if(blockchain.checkCoinsInCirculation() + newTx.outputAmount <= 10500):
 
-                                    blockchain.new_transaction(newTx.ownWallet, newTx.outputAddress, newTx.outputAmount)
+                                    blockchain.new_transaction('validator_reward', newTx.outputAddress, newTx.outputAmount)
 
                                     addTxToList(newTx)
 
