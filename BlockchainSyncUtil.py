@@ -53,7 +53,7 @@ class BlockchainSyncUtil:
 
 
 '''
-    def syncSpamManagementClock(ip, port):
+    def syncSpamManagementClock(self, ip, port):
         try:
             print(colored('[MINER CORE] Syncing spam management service.','cyan'))
 

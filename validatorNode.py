@@ -35,7 +35,8 @@ MINER_ID = None
 NGROK_IP = None
 NGROK_PORT = None
 NETWORK = None
-SPAM_MANAGEMENT_SECONDS_LEFT = 10
+SPAM_MANAGEMENT_SECONDS_LEFT = 86400
+SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT = SPAM_MANAGEMENT_SECONDS_LEFT
 
 walletTxFreq = {}
 
@@ -130,7 +131,7 @@ def runGrok():
 
 def recvObj(socket, blockchainObj, syncUtil):
     global txRecv
-    global SPAM_MANAGEMENT_SECONDS_LEFT
+    global SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT
     global walletTxFreq
 
     new_sock = None
@@ -281,7 +282,7 @@ def recvObj(socket, blockchainObj, syncUtil):
 
                 print(colored("[VALIDATOR REQUEST] Validator request for sync spam management", "blue"))
 
-                new_sock.send(pickle.dumps({'secondsLeft': SPAM_MANAGEMENT_SECONDS_LEFT, 'walletsList': walletTxFreq}))
+                new_sock.send(pickle.dumps({'secondsLeft': SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT, 'walletsList': walletTxFreq}))
 
                 return None
 
@@ -563,21 +564,22 @@ def validatorRewardService():
 def spamManagement():
     global walletTxFreq
     global SPAM_MANAGEMENT_SECONDS_LEFT
+    global SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT
 
     print(colored('[MINER CORE] Started spam protection service','cyan'))
     
 
     while True:
 
-        for i in range(SPAM_MANAGEMENT_SECONDS_LEFT, 0):
+        for i in range(SPAM_MANAGEMENT_SECONDS_LEFT, -1, - 1):
             time.sleep(1)
-            SPAM_MANAGEMENT_SECONDS_LEFT = SPAM_MANAGEMENT_SECONDS_LEFT - 1
-            print(i)
+            SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT = SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT - 1
+            #print(i)
 
         
-        time.sleep(SPAM_MANAGEMENT_SECONDS_LEFT) # Set seconds to 24 hours
         walletTxFreq = {} # Resets wallet spam threshold periodically
-        SPAM_MANAGEMENT_SECONDS_LEFT = 10
+        SPAM_MANAGEMENT_SECONDS_LEFT = 86400
+        SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT = SPAM_MANAGEMENT_SECONDS_LEFT
 
 
 if __name__ == "__main__":
@@ -648,8 +650,8 @@ if __name__ == "__main__":
 
                     seconds, txFreqRecv = syncUtil.syncSpamManagementClock(syncNodeIP, syncNodePort)
 
-                    print(seconds)
-                    print(txFreqRecv)
+                    #print(seconds)
+                    #print(txFreqRecv)
 
                     if(seconds != None and txFreqRecv != None):
                         SPAM_MANAGEMENT_SECONDS_LEFT = seconds
