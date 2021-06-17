@@ -38,7 +38,7 @@ class Blockchain:
             
             # Create the genesis block
 
-            myPrivate, myPublic = SignaturesECDSA().loadKey('key.pem')
+            myPrivate, myPublic = SignaturesECDSA().loadKey()
 
             self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, True)
             self.new_block(previous_hash=None)
