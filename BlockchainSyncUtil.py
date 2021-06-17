@@ -53,6 +53,55 @@ class BlockchainSyncUtil:
 
 
 '''
+    def syncSpamManagementClock(ip, port):
+        try:
+            print(colored('[MINER CORE] Syncing spam management service.','cyan'))
+
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((ip, port))
+
+            dataToSend = b'sync_spam_management'
+            data = pickle.dumps(dataToSend)
+            s.send(data)
+
+            # Gets the bytes length of blockchain
+
+
+            try:
+                data = b''
+
+                packet = s.recv(BUFFER_SIZE)
+
+                
+
+                data += packet
+                #print("Got packet chain size")
+
+                syncData = pickle.loads(data)
+
+                print(syncData)
+
+                s.close()
+
+                if(syncData != None):
+                    return syncData['secondsLeft'], syncData['walletsList']
+
+                else:
+                    return None, None
+
+            
+            except Exception as e:
+                print("Error with getting spam management sync data")
+                return None, None
+        
+ 
+
+        except Exception as e:
+            print(colored('[MINER CORE] Error with connecting to an validator node for spam management sync data: ' + str(e),'cyan'))
+
+        
+        return None, None
+
 
     def sendBlockchain(self, socket, blockchain):
 

@@ -35,6 +35,7 @@ MINER_ID = None
 NGROK_IP = None
 NGROK_PORT = None
 NETWORK = None
+SPAM_MANAGEMENT_SECONDS_LEFT = 10
 
 walletTxFreq = {}
 
@@ -129,6 +130,8 @@ def runGrok():
 
 def recvObj(socket, blockchainObj, syncUtil):
     global txRecv
+    global SPAM_MANAGEMENT_SECONDS_LEFT
+    global walletTxFreq
 
     new_sock = None
 
@@ -272,6 +275,14 @@ def recvObj(socket, blockchainObj, syncUtil):
 
 
                 #print("send_user_balance_command for public key: " + str(publicKey))
+                return None
+            
+            elif('sync_spam_management' in str(returnData)): # Get user balance and send to user
+
+                print(colored("[VALIDATOR REQUEST] Validator request for sync spam management", "blue"))
+
+                new_sock.send(pickle.dumps({'secondsLeft': SPAM_MANAGEMENT_SECONDS_LEFT, 'walletsList': walletTxFreq}))
+
                 return None
 
             
@@ -551,13 +562,22 @@ def validatorRewardService():
 
 def spamManagement():
     global walletTxFreq
+    global SPAM_MANAGEMENT_SECONDS_LEFT
 
     print(colored('[MINER CORE] Started spam protection service','cyan'))
     
 
     while True:
-        time.sleep(86400) # Set seconds to 24 hours
+
+        for i in range(SPAM_MANAGEMENT_SECONDS_LEFT, 0):
+            time.sleep(1)
+            SPAM_MANAGEMENT_SECONDS_LEFT = SPAM_MANAGEMENT_SECONDS_LEFT - 1
+            print(i)
+
+        
+        time.sleep(SPAM_MANAGEMENT_SECONDS_LEFT) # Set seconds to 24 hours
         walletTxFreq = {} # Resets wallet spam threshold periodically
+        SPAM_MANAGEMENT_SECONDS_LEFT = 10
 
 
 if __name__ == "__main__":
@@ -625,8 +645,20 @@ if __name__ == "__main__":
                 syncComplete, currentTx = syncUtil.chainInitSync(syncNodeIP, syncNodePort) # Blockchain is attempted to be synced
 
                 if(syncComplete): # If blockchain is synced
+
+                    seconds, txFreqRecv = syncUtil.syncSpamManagementClock(syncNodeIP, syncNodePort)
+
+                    print(seconds)
+                    print(txFreqRecv)
+
+                    if(seconds != None and txFreqRecv != None):
+                        SPAM_MANAGEMENT_SECONDS_LEFT = seconds
+                        walletTxFreq = txFreqRecv
+
                     execute = True 
                     currentTransactions = currentTx
+
+
                     break
                     
                 else: # Sync failed
