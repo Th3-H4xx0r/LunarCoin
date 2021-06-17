@@ -324,10 +324,7 @@ def recvObj(socket, blockchainObj, syncUtil):
 
 def addTxToList(tx):
     global txRecv
-    m = hashlib.sha256()
-    m.update(pickle.dumps(tx))
-    dig = m.hexdigest()
-    txRecv.append(dig)
+    txRecv.append(pickle.dumps(tx))
 
 
 def validatorServer(my_addr):
