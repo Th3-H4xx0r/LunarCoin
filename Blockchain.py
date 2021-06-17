@@ -13,6 +13,7 @@ from colorama import init
 from termcolor import colored 
 import socket
 from progress.bar import Bar
+from SignaturesECDSA import SignaturesECDSA
 
 init()
 
@@ -37,7 +38,7 @@ class Blockchain:
             
             # Create the genesis block
 
-            myPrivate, myPublic = Signatures().load_key('privateKey.pem')
+            myPrivate, myPublic = SignaturesECDSA().load_key('key.pem')
 
             self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, True)
             self.new_block(previous_hash=None)
