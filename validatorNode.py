@@ -345,8 +345,7 @@ try:
 
     def validatorServer(my_addr):
 
-
-        #try:
+        try:
 
             global tx_list
             global break_now
@@ -533,8 +532,8 @@ try:
                     validatorLogger.logMessage("[FATAL ERROR] Error occured with recieving data. " + str(e), 'error')
                     #logging.log('message')
 
-        #except Exception as e:
-            #print(colored("[FATAL ERROR] Miner error occured. " + str(e) + " Restart miner.", 'red'))
+        except Exception as e:
+            validatorLogger.logMessage("[FATAL ERROR] Miner error occured. " + str(e) + " Restart node.", 'error')
 
     def validatorRewardService():
         global txRecv
