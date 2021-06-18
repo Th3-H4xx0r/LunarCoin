@@ -4,3 +4,4 @@ blockchain.dat
 __pycache__/
 Blockchain/
 config.json
+runtimeLogger.log

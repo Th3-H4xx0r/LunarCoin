@@ -22,6 +22,7 @@ import hashlib
 import os
 
 import BlockchainSyncUtil as BlockchainSyncUtil
+from Logger import Logger
 
 init()
 # Global var
@@ -42,6 +43,8 @@ walletTxFreq = {}
 
 txRecv = []
 
+validatorLogger = Logger()
+
 sys.setrecursionlimit(1000000)
 
 def loadConfiguration():
@@ -49,6 +52,7 @@ def loadConfiguration():
     global NGROK_AUTH_TOKEN
     global MINER_ID
     global NETWORK
+    global validatorLogger
 
     try:
         with open('config.json', 'r') as file:
@@ -61,11 +65,11 @@ def loadConfiguration():
                 # Checks if ngrokAuthToken is proper
 
                 if(isinstance(NGROK_AUTH_TOKEN, str) != True):
-                    print(colored("Error with loading config.json: key ngrokAuthToken is not of type string", "red"))
+                    validatorLogger.logMessage("Error with loading config.json: key ngrokAuthToken is not of type string", 'error')
                     return False
 
             except Exception as e:
-                print(colored("Error with loading config.json: key ngrokAuthToken does not exist", "red"))
+                validatorLogger.logMessage("Error with loading config.json: key ngrokAuthToken does not exist", 'error')
                 return False
 
 
@@ -74,11 +78,11 @@ def loadConfiguration():
 
                 
                 if(isinstance(MINER_ID, str) != True): # Checks if minerID is proper
-                    print(colored("Error with loading config.json: key minerID is not of type string", "red"))
+                    validatorLogger.logMessage("Error with loading config.json: key minerID is not of type string", 'error')
                     return False
 
             except Exception as e:
-                print(colored("Error with loading config.json: key minerID does not exist", "red"))
+                validatorLogger.logMessage("Error with loading config.json: key minerID does not exist", 'error')
                 return False
             
 
@@ -90,23 +94,22 @@ def loadConfiguration():
                     pass
                 
                 else: 
-                    print(colored("Error with loading config.json: key network is not of type string or is not 'mainnet' or 'testnet'", "red"))
+                    validatorLogger.logMessage("Error with loading config.json: key network is not of type string or is not 'mainnet' or 'testnet'", 'error')
                     return False
 
             except Exception as e:
-                print(colored("Error with loading config.json: key network does not exist", "red"))
+                validatorLogger.logMessage("Error with loading config.json: key network does not exist", 'error')
                 return False
 
 
             # If all values successfull load
-
-            print(colored("[MINER CORE] Loaded Miner Configs from config.json", "green"))
+            validatorLogger.logMessage("[MINER CORE] Loaded Miner Configs from config.json", 'success')
             return True
 
     
     # Error with file loading
     except Exception as e:
-        print(colored("Error with loading config.json or file does not exist: " + str(e), "red")) 
+        validatorLogger.logMessage("Error with loading config.json or file does not exist: " + str(e), 'error')
         return False
 
 
@@ -120,13 +123,21 @@ def runGrok():
 
     # 1sbjL6HgcrNZeVi61XPymtYEisD_xaXYnSwRckKbJiUmBfVg   ---  token for mcendercraftnetwork@gmail.com
 
-    ngrok.set_auth_token(NGROK_AUTH_TOKEN) # token for krishnatechpranav@gmail.com
-    tunnel = ngrok.connect(TCP_PORT, "tcp")
-    print("[Internal Server] Running ngrok connection server: " + str(tunnel.public_url))
+    try:
+        ngrok.set_auth_token(NGROK_AUTH_TOKEN) # token for krishnatechpranav@gmail.com
+        tunnel = ngrok.connect(TCP_PORT, "tcp")
+        validatorLogger.logMessage("[Internal Server] Running ngrok connection server: " + str(tunnel.public_url), 'regular')
 
-    NGROK_IP, NGROK_PORT = SocketUtil.updateMinerIp(tunnel.public_url, MINER_ID, NETWORK)
+        NGROK_IP, NGROK_PORT = SocketUtil.updateMinerIp(tunnel.public_url, MINER_ID, NETWORK)
 
+        if(NGROK_IP == None and NGROK_PORT == None):
+            validatorLogger.logMessage("[Offline] Cannot connect to network node. Your node will not be connected to the rest of the network, restart this node or try again later.", 'error')
+            print(colored("[Offline]") + " Cannot connect to network node. Your node will not be connected to the rest of the network, restart this node or try again later.")
+            os._exit(0)
 
+    except Exception as er:
+        validatorLogger.logMessage(er, 'error')
+        os._exit(0)
 
 
 def recvObj(socket, blockchainObj, syncUtil):
@@ -227,7 +238,7 @@ def recvObj(socket, blockchainObj, syncUtil):
 
 
             if('blockchain_init_sync' in str(returnData)): # Get user balance and send to user
-                print('Blockchain sync requested from miner: ' + str(addr[0]) + ":" + str(addr[1]))
+                validatorLogger.logMessage('Blockchain sync requested from miner: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
 
                 #block = returnData
 
@@ -254,7 +265,7 @@ def recvObj(socket, blockchainObj, syncUtil):
 
             elif('send_user_balance_command' in str(returnData)): # Get user balance and send to user
 
-                print(colored("[WALLET REQUEST] Wallet request for balance", "blue"))
+                validatorLogger.logMessage('[WALLET REQUEST] Wallet request for balance', 'info-blue')
 
                 publicUser = ''
 
@@ -272,7 +283,8 @@ def recvObj(socket, blockchainObj, syncUtil):
 
                 #print("Sent user the balance data")
 
-                print(colored("[WALLET REQUEST ACCEPTED] Wallet request for balance sent to wallet", "blue"))
+                validatorLogger.logMessage('[WALLET REQUEST ACCEPTED] Wallet request for balance sent to wallet', 'info-blue')
+
 
 
                 #print("send_user_balance_command for public key: " + str(publicKey))
@@ -280,7 +292,8 @@ def recvObj(socket, blockchainObj, syncUtil):
             
             elif('sync_spam_management' in str(returnData)): # Get user balance and send to user
 
-                print(colored("[VALIDATOR REQUEST] Validator request for sync spam management", "blue"))
+                validatorLogger.logMessage('[VALIDATOR REQUEST] Validator request for sync spam management', 'info')
+
 
                 new_sock.send(pickle.dumps({'secondsLeft': SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT, 'walletsList': walletTxFreq}))
 
@@ -319,7 +332,7 @@ def recvObj(socket, blockchainObj, syncUtil):
             return None
     
     except Exception as e:
-        print(colored("[FATAL ERROR] Error recieving object from client: " + str(e), "red"))
+        validatorLogger.logMessage("[FATAL ERROR] Error recieving object from client: " + str(e), 'error')
         return None
 
 def addTxToList(tx):
@@ -392,7 +405,7 @@ def validatorServer(my_addr):
 
                     blockchain.checkCoinsInCirculation()
 
-                    print(colored("[Share Recieved] Transaction share recieved - Validating...", "green"))
+                    validatorLogger.logMessage("[Share Recieved] Transaction share recieved - Validating...", 'success')
 
                     util = SocketUtil()
 
@@ -405,8 +418,8 @@ def validatorServer(my_addr):
                             addrOwnWallet, wif = SignaturesECDSA().make_address(newTx.public.to_string())
 
                             if(addrOwnWallet == 'LC1D9x7UovnwqekVXtKg5BsykBybf9ZsHErh'): #Checks if reward TX is from manager node wallet
-                                
-                                print(colored("[Share Accepted] Validator reward transaction is valid", "green"))
+
+                                validatorLogger.logMessage("[Share Accepted] Validator reward transaction is valid", 'success')
 
                                 if(blockchain.checkCoinsInCirculation() + newTx.outputAmount <= 146692378):
 
@@ -418,17 +431,20 @@ def validatorServer(my_addr):
 
                                     if(newBlock):
                                         
-                                        print("[BLOCKCHAIN] Block complete. Adding block to the blockchain")
+                                        validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
+
                                         blockchain.new_block() # Creates new block if block meets all requirements
                                 
                                 else:
-                                    print(colored("[Share Rejected] Coin limit reached", "red"))
+                                    validatorLogger.logMessage("[Share Rejected] Coin limit reached", 'info-red')
+
                             
                             else:
-                                print(colored("[Share Rejected] Validator reward transaction is fraud (incorrect signed address)", "red"))
+                                validatorLogger.logMessage("[Share Rejected] Validator reward transaction is fraud (incorrect signed address)", 'info-red')
                         
                         else:
-                            print(colored("[Share Rejected] Validator reward transaction is not valid", "red"))
+                            validatorLogger.logMessage("[Share Rejected] Validator reward transaction is not valid", 'info-red')
+
 
                     else: # For regular trasaction
 
@@ -447,7 +463,7 @@ def validatorServer(my_addr):
 
                         
                         if(walletTxFreq.get(addrSimplified) > 200000000000): # If wallet spams
-                            print(colored("[Share Rejected] Wallet address is executing too many transactions", "yellow"))
+                            validatorLogger.logMessage("[Share Rejected] Wallet address is executing too many transactions", 'warning')
 
                         else: # If wallet does not spam
 
@@ -483,30 +499,36 @@ def validatorServer(my_addr):
                                                 newBlock = blockchain.goNewBlock()
 
                                                 if(newBlock):
-                                                    print("[BLOCKCHAIN] Block complete. Adding block to the blockchain")
+
+                                                    validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
 
                                                     blockchain.new_block() # Creates new block if block meets all requirements\\
 
-                                                    #verifyBlock(blockchain.last_block_blockchain(), db)
 
-                                                print(colored("[Share Accepted] Share validated", 'green'))
+                                                    #verifyBlock(blockchain.last_block_blockchain(), db)
+                                                validatorLogger.logMessage("[Share Accepted] Share validated", 'success')
+
                                             else:
-                                                print(colored("[Share Rejected] User attempting to send coins to themself.", 'yellow'))
+                                                validatorLogger.logMessage("[Share Rejected] User attempting to send coins to themself.", 'info-yellow')
 
                                         #print(block)
                                     
                                     else:
-                                        print(colored("[Share Rejected] User balance is too low to make transaction", 'yellow'))
+
+                                        validatorLogger.logMessage("[Share Rejected] User balance is too low to make transaction", 'inof-yellow')
                                 
                                 else:
-                                    print(colored("[Share Rejected] Fraud transaction detected", 'yellow'))
+
+                                    validatorLogger.logMessage("[Share Rejected] Fraud transaction detected", 'info-yellow')
+
 
                             else:
-                                print(colored("[Share Rejected] Wallet address does not match public key", 'yellow'))
+                                validatorLogger.logMessage("[Share Rejected] Wallet address does not match public key", 'info-yellow')
+
 
             except Exception as e:
-                print(colored("[FATAL ERROR] Error occured with recieving data. " + str(e), 'red'))
-                logging.log('message')
+                validatorLogger.logMessage("[FATAL ERROR] Error occured with recieving data. " + str(e), 'error')
+                #logging.log('message')
 
     #except Exception as e:
         #print(colored("[FATAL ERROR] Miner error occured. " + str(e) + " Restart miner.", 'red'))
@@ -543,8 +565,7 @@ def validatorRewardService():
                 data = {'walletAddress': walletAddress, 'transactions': txRecv, 'minerID': MINER_ID, 'network': NETWORK, 'ip': NGROK_IP, 'port': NGROK_PORT}
 
                 managers = SocketUtil.getManagerNodes()
-
-                print(colored("[MINER CORE] Sending request for validator reward", "cyan"))
+                validatorLogger.logMessage("[MINER CORE] Sending request for validator reward", 'info')
 
                 for manager in managers:
                     try:
@@ -560,10 +581,11 @@ def validatorRewardService():
 
 def spamManagement():
     global walletTxFreq
+    global validatorLogger
     global SPAM_MANAGEMENT_SECONDS_LEFT
     global SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT
 
-    print(colored('[MINER CORE] Started spam protection service','cyan'))
+    validatorLogger.logMessage('[MINER CORE] Started spam protection service', 'info')
     
 
     while True:
@@ -587,7 +609,7 @@ if __name__ == "__main__":
     loadComplete = loadConfiguration()
 
     if(NETWORK == "testnet"):
-        print(colored("[VALIDATOR CORE][WARNING] Validator node is running in testnet mode. If you want to run in mainnet, change the 'network' option to 'mainnet' in the config.json", "yellow"))
+        validatorLogger.logMessage("[VALIDATOR CORE][WARNING] Validator node is running in testnet mode. If you want to run in mainnet, change the 'network' option to 'mainnet' in the config.json", 'warning')
 
     time.sleep(3)
 
@@ -598,11 +620,10 @@ if __name__ == "__main__":
 
         final_directory = os.path.join(current_directory, r'Blockchain')
         if not os.path.exists(final_directory):
-            print("Creating blockchain directory")
+            validatorLogger.logMessage('Creating blockchain directory', 'regular')
             os.makedirs(final_directory)
 
-    
-        print("Starting validator node")
+        validatorLogger.logMessage('Starting validator node', 'regular')
 
         # Syncs the blockchain
 
@@ -622,7 +643,7 @@ if __name__ == "__main__":
 
             if(nodesData == None):
                 execute = False
-                print("Error with connecting to network node. Restart miner and try again later.")
+                validatorLogger.logMessage('Error with connecting to network node. Restart miner and try again later.', 'regular')
                 break
 
             #print("Repeat")
@@ -631,6 +652,8 @@ if __name__ == "__main__":
 
 
             if(syncNodeIP == True and syncNodePort == True and nodeDataJSON == True): # This is the first online node
+                
+                validatorLogger.logMessage('[ONLINE] Detected as first online node', 'regular', False)
 
                 print("[ONLINE " + colored("⦾", 'green') + " ] Detected as first online node")
 
@@ -668,7 +691,7 @@ if __name__ == "__main__":
 
             else: # Blockchain could not be synced
                 #nodesData
-                print("An error has occured with syncing the blockchain")
+                validatorLogger.logMessage('An error has occured with syncing the blockchain', 'regular')
 
                 execute = False
 
@@ -684,10 +707,14 @@ if __name__ == "__main__":
             validatorRewardServ = threading.Thread(target=validatorRewardService)
 
             # Starts the threads
-            grok.start()
-            t1.start()
-            spamProtection.start()
-            validatorRewardServ.start()
+            try:
+                grok.start()
+                t1.start()
+                spamProtection.start()
+                validatorRewardServ.start()
+            
+            except Exception as err:
+                validatorLogger.logMessage("Node err has occured: " + str(err), 'regular')
 
         else:
             x = input(">>")
