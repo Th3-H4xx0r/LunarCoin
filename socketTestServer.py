@@ -1,5 +1,5 @@
-import eventlet
-import socketio
+#import eventlet
+#import socketio
 
 sio = socketio.Server()
 app = socketio.WSGIApp(sio, static_files={
