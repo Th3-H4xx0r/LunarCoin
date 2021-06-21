@@ -58,16 +58,26 @@ reps = 20
 
 
 def getPropagatorNodes():
-    try:
-            r = requests.get('https://api.classvibes.net/propagator/getNodes')
 
-            data = r.json()
+    nodes = Connections().getNetworkNodes()
 
-            return data
+    rtnData = None
+
+    for node in nodes:
+        try:
+                r = requests.get(node + '/propagator/getNodes')
+
+                data = r.json()
+
+                rtnData = data
+
+                break
 
 
-    except Exception as e:
-        return None
+        except Exception as e:
+            rtnData = None
+    
+    return rtnData
 
 #nodesData = BlockchainSyncUtil().getNodes('testnet')
 

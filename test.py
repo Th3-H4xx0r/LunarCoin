@@ -8,7 +8,7 @@ import requests
 from progress.bar import Bar
 # Global Variables
 from BlockchainSyncUtil import BlockchainSyncUtil
-
+from connections import Connections
 
 #myPrivate, myPublic = Signatures.generate_keys()
 myPrivate, myPublic = SignaturesECDSA().loadKey()
@@ -54,16 +54,26 @@ reps = 10000
 
 
 def getPropagatorNodes():
-    try:
-            r = requests.get('https://api.classvibes.net/propagator/getNodes')
 
-            data = r.json()
+    nodes = Connections().getNetworkNodes()
 
-            return data
+    rtnData = None
+
+    for node in nodes:
+        try:
+                r = requests.get(node + '/propagator/getNodes')
+
+                data = r.json()
+
+                rtnData = data
+
+                break
 
 
-    except Exception as e:
-        return None
+        except Exception as e:
+            rtnData = None
+    
+    return rtnData
 
 #nodesData = BlockchainSyncUtil().getNodes('testnet')
 

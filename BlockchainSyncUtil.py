@@ -1,4 +1,5 @@
 # Imports
+from connections import Connections
 import socket
 import pickle
 
@@ -140,17 +141,28 @@ class BlockchainSyncUtil:
             socket.close()
 
     def getNodes(self, net):
-        try:
-            r = requests.get('https://api.classvibes.net/validator/getNodes?network=' + str(net))
 
-            data = r.json()
+        nodes = Connections().getNetworkNodes()
 
-            return data
+        rtnData = None
+
+        for node in nodes:
+            try:
+                r = requests.get(node + '/validator/getNodes?network=' + str(net))
+
+                data = r.json()
+
+                rtnData = data
+
+                break
 
 
-        except Exception as e:
-            return None
+            except Exception as e:
+                rtnData =  None
 
+        return rtnData
+
+        
     def getRandomNode(self, currentID, data):
 
         try:

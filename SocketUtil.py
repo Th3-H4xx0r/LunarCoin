@@ -1,4 +1,5 @@
 # Imports
+from connections import Connections
 from SignaturesECDSA import SignaturesECDSA
 from Signatures import Signatures
 import socket
@@ -17,11 +18,6 @@ class SocketUtil:
 
     def __init__(self):
         pass
-
-    
-
-
-    
 
 
     def verifyTransaction(self, transaction, public):
@@ -76,21 +72,27 @@ class SocketUtil:
         port = ip[colon + 1:]
         ip = ip[:colon]
 
-        try:
-            r = requests.get('https://api.classvibes.net/validator/update?ip=' + str(ip) + "&port=" + str(port) + "&id=" + str(minerID) + "&network=" + str(net))
-            #print("Updated miner ip: " + str(r.json()))
+        networkNodes = Connections().getNetworkNodes()
 
-        except Exception as e:
-            print("[FATAL ERROR] Network node is offline: " + str(e))
+        rtnStatement = None
 
-            return None, None
+        for node in networkNodes:
+            try:
+                r = requests.get(node + '/validator/update?ip=' + str(ip) + "&port=" + str(port) + "&id=" + str(minerID) + "&network=" + str(net))
+                #print("Updated miner ip: " + str(r.json()))
+                rtnStatement =  ip, int(port)
+                break
 
-        #doc = db.collection(u'Miner Nodes').document(minerID)
+            except Exception as e:
+                print("[FATAL ERROR] Network node is offline: " + str(e))
+                rtnStatement = None, None
 
-        #doc.set({
-            #"ip": ip,
-            #"port": int(port)
-        #})
+            #doc = db.collection(u'Miner Nodes').document(minerID)
 
-        return ip, int(port)
+            #doc.set({
+                #"ip": ip,
+                #"port": int(port)
+            #})
+        
+        return rtnStatement
 
