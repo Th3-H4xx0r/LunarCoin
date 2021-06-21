@@ -1,5 +1,8 @@
 # Imports
 
+from connections import Connections
+
+
 try:
     from SignaturesECDSA import SignaturesECDSA
     import socket
@@ -314,7 +317,7 @@ try:
 
                     time.sleep(0.5)
 
-                    managers = SocketUtil.getManagerNodes()
+                    managers = Connections().getManagerNodes()
 
                     #print(colored("[MINER CORE] Sending request for validator reward", "cyan"))
 
@@ -566,7 +569,7 @@ try:
 
                     data = {'walletAddress': walletAddress, 'transactions': txRecv, 'minerID': MINER_ID, 'network': NETWORK, 'ip': NGROK_IP, 'port': NGROK_PORT}
 
-                    managers = SocketUtil.getManagerNodes()
+                    managers = Connections().getManagerNodes()
                     validatorLogger.logMessage("[MINER CORE] Sending request for validator reward", 'info')
 
                     for manager in managers:

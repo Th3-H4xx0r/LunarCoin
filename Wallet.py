@@ -13,6 +13,7 @@ import socket
 from progress.bar import Bar
 import sys
 import requests
+from connections import Connections
 
 minerNodesList = []
 BUFFER_SIZE = 1024
@@ -37,16 +38,28 @@ walletAddress, wif = SignaturesECDSA().make_address(myVerifyingKey.to_string())
 #print(sendPublic)
 
 def getPropagatorNodes():
-    try:
-            r = requests.get('https://api.classvibes.net/propagator/getNodes')
+
+    networkNodes = Connections().getNetworkNodes()
+
+    data = None
+
+    for node in networkNodes:
+        #print(node)
+        try:
+            r = requests.get(node + 'propagator/getNodes')
 
             data = r.json()
 
-            return data
+            #print(data)
+
+            break
 
 
-    except Exception as e:
-        return None
+        except Exception as e:
+            #print(e)
+            pass
+    
+    return data
 
         
 
@@ -202,7 +215,7 @@ if __name__ == "__main__":
 
             elif(inp == "b"):
 
-                minerNodesList = SocketUtil.getMinerNodes(network)
+                minerNodesList = Connections().getValidatorNodes(network)
 
                 #print(minerNodesList)
 

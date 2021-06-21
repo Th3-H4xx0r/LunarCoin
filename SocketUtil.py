@@ -19,84 +19,9 @@ class SocketUtil:
         pass
 
     
-    def getManagerNodes():
-
-        managerNodesList = []
-
-        try:
-            r = requests.get('https://api.classvibes.net/manager/getNodes')
-
-            data = r.json()
-
-            #print(data)
-
-            if(data['status'] == "success"):
-                
-                for miner in data['data']:
-                    managerNodesList.append({"ip": miner['ip'], "port": int(miner['port'])})
-
-                return managerNodesList 
-
-            
-            else: # Failed to get list of validators
-                return []
-        
-        except Exception as e: # Failed to get list of validators
-            print("Failed to fetch list of manager nodes")
-            return []
-
-    def getMinerNodes(net):
-
-        minerNodesList = []
-
-        '''
-
-        if not firebase_admin._apps:
-            cred = credentials.Certificate("./cryptocoin-de716-firebase-adminsdk-r78ms-08b475d8f8.json")
-            firebase_admin.initialize_app(cred)
-
-        
-        db = firestore.client()
-
-        ref = db.collection(u"Miner Nodes")
-
-        docs = ref.stream()
-
-        configRef = db.collection(u"Config").document("Config")
-
-        configDocs = configRef.get()
-
-        apiServer = configDocs.to_dict()['apiServerURL']
 
 
-        for doc in docs:
-            #print(doc.to_dict())
-            minerNodesList.append(doc.to_dict())
-        
-        '''
-
-        try:
-            r = requests.get('https://api.classvibes.net/validator/getNodes?network=' + str(net))
-
-            data = r.json()
-
-            #print(data)
-
-            if(data['status'] == "success"):
-                
-                for miner in data['data']:
-                    minerNodesList.append({"ip": miner['ip'], "port": int(miner['port'])})
-
-                return minerNodesList 
-
-            
-            else: # Failed to get list of validators
-                return []
-        
-        except Exception as e: # Failed to get list of validators
-            print("Failed to fetch list of miners")
-            return []
-
+    
 
 
     def verifyTransaction(self, transaction, public):

@@ -33,7 +33,6 @@ class Transaction:
         self.metaData = data
 
         
-
     def sign(self, privateKey, miningReward = False):
         
         self.transactionTimestamp = time.time()

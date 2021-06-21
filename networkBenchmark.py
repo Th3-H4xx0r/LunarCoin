@@ -1,4 +1,5 @@
 # Imports
+from connections import Connections
 from Transaction import Transaction
 from SignaturesECDSA import SignaturesECDSA
 from SocketUtil import SocketUtil
@@ -146,7 +147,7 @@ if(nodesData != None):
         print(f"Sent " + str(reps) + f" transactions in {toc - tic:0.4f} seconds")
         print("Rate: " + str(rate))
 
-        minerNodesList = SocketUtil.getMinerNodes('testnet')
+        minerNodesList = Connections().getValidatorNodes('testnet')
 
         time.sleep(25)
 
