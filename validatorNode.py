@@ -163,14 +163,14 @@ try:
 
                 #print("Accepted a connection request from %s:%s"%(addr[0], addr[1]));
 
-                all_data = b''
+                all_data = []
 
-                #while True:
-                data = new_sock.recv(BUFFER_SIZE)
-                #if not data: break
-                all_data = all_data + data
+                while True:
+                    packet = new_sock.recv(4096)
+                    if not packet: break
+                    all_data.append(packet)
                 
-                returnData = pickle.loads(all_data)
+                returnData = pickle.loads(b"".join(all_data))
 
                 #print(returnData)
 

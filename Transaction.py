@@ -62,7 +62,6 @@ class Transaction:
         return self.__outputAddress
     
     def getOutputAmount(self):
-        print("Output :" + str(self.__outputAmount))
         return self.__outputAmount
 
     def getOwnWallet(self):
@@ -78,7 +77,6 @@ class Transaction:
         return self.__hashData
     
     def getData(self):
-        print("DATA:" + str(self.__data))
         return self.__data
     
 
