@@ -5,60 +5,73 @@ import pickle
 
 class Transaction:
 
-    outputAddress = None
-    outputAmount = 0.0
-    public = None
-    transactionTimestamp = 1
-    metaData = None
+    __outputAddress = None
+    __outputAmount = 0.0
+    __public = None
+    __transactionTimestamp = 1
+    __metaData = None
 
-    signedData = None
-    data = []
-    ownWallet = None
-    hashData = None
+    __signedData = None
+    __data = []
+    __ownWallet = None
+    __hashData = None
 
 
 
     def __init__(self, public, wallet):
-        self.public = public
-        self.transactionTimestamp = None
-        self.outputAddress = None
-        self.outputAmount = None
-        self.signedData = None
-        self.ownWallet = wallet
-        self.data = []
+        self.__public = public
+        self.__transactionTimestamp = None
+        self.__outputAddress = None
+        self.__outputAmount = None
+        self.__signedData = None
+        self.__ownWallet = wallet
+        self.__data = []
 
     def addOutput(self, address, coins):
-        self.outputAddress = address
-        self.outputAmount = coins
+        self.__outputAddress = address
+        self.__outputAmount = coins
 
     def addMetadata(self, data):
-        self.metaData = data
+        self.__metaData = data
 
         
     def sign(self, privateKey, miningReward = False):
         
-        self.transactionTimestamp = time.time()
+        self.__transactionTimestamp = time.time()
 
-        self.data.append(self.outputAddress)
-        self.data.append(self.outputAmount)
-        self.data.append(self.transactionTimestamp)
-        self.data.append(self.public)
+        self.__data.append(self.__outputAddress)
+        self.__data.append(self.__outputAmount)
+        self.__data.append(self.__transactionTimestamp)
+        self.__data.append(self.__public)
 
         if(miningReward):
             pass
         else:
-            self.signedData = SignaturesECDSA().sign(self.data, privateKey)
+            self.__signedData = SignaturesECDSA().sign(self.__data, privateKey)
         
-        self.hashData = pickle.dumps(self.data)
-        
+        self.__hashData = pickle.dumps(self.__data)
+    
+    def getPublic(self):
+        return self.__public
+    
+    def getOutputAddress(self):
+        return self.__outputAddress
+    
+    def getOutputAmount(self):
+        return self.__outputAmount
 
-    def miningRewardTx(self, public, amount):
-        self.outputAddress = public
-        self.outputAmount = amount
-        self.public = "mining_reward"
-        self.transactionTimestamp = time.time()
-
-
+    def getOwnWallet(self):
+        return self.__ownWallet
+    
+    def getMetaData(self):
+        return self.__metaData
+    
+    def getSignedData(self):
+        return self.__signedData
+    
+    def getHash(self):
+        return self.__hashData
+    
 
     def __repr__(self):
-        return"--- Transaction ---\nInput Address: " + str(self.public) + "\nOutput Address: " + str(self.outputAddress) + "\nOutput Amount: " + str(self.outputAmount) + "\nSigned with private key\nTimestamp: " + str(self.transactionTimestamp) + "\nMetadata:  " + str(self.metaData) + "\n--- END ---"
+        return"--- Transaction ---\nInput Address: " + str(self.__public) + "\nOutput Address: " + str(self.__outputAddress) + "\nOutput Amount: " + str(self.__outputAmount) + "\nSigned with private key\nTimestamp: " + str(self.__transactionTimestamp) + "\nMetadata:  " + str(self.__metaData) + "\n--- END ---"

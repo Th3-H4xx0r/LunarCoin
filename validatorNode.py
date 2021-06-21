@@ -402,9 +402,6 @@ try:
                     print("Finished propogating to other nodes")
                     '''
 
-
-
-
                     if(newTx != None):
                         #print(newTx)
 
@@ -414,21 +411,21 @@ try:
 
                         util = SocketUtil()
 
-                        if(newTx.metaData == 'validator_reward'): # For validator reward transaction
+                        if(newTx.getMetaData() == 'validator_reward'): # For validator reward transaction
 
-                            valid = util.verifyTransaction(newTx, newTx.public)
+                            valid = util.verifyTransaction(newTx, newTx.getPublic())
 
                             if(valid): # Checks if TX is valid
 
-                                addrOwnWallet, wif = SignaturesECDSA().make_address(newTx.public.to_string())
+                                addrOwnWallet, wif = SignaturesECDSA().make_address(newTx.getPublic().to_string())
 
                                 if(addrOwnWallet == 'LC1D9x7UovnwqekVXtKg5BsykBybf9ZsHErh'): #Checks if reward TX is from manager node wallet
 
                                     validatorLogger.logMessage("[Share Accepted] Validator reward transaction is valid", 'success')
 
-                                    if(blockchain.checkCoinsInCirculation() + newTx.outputAmount <= 146692378):
+                                    if(blockchain.checkCoinsInCirculation() + newTx.getOutputAmount() <= 146692378):
 
-                                        blockchain.new_transaction('validator_reward', newTx.outputAddress, newTx.outputAmount)
+                                        blockchain.new_transaction('validator_reward', newTx.getOutputAddress(), newTx.getOutputAmount())
 
                                         addTxToList(newTx)
 
@@ -454,7 +451,7 @@ try:
                         else: # For regular trasaction
 
 
-                            addrSimplified = newTx.ownWallet
+                            addrSimplified = newTx.getOwnWallet()
 
                             #addrSimplified = addrSimplified.replace(b'-----BEGIN PUBLIC KEY-----\n', b'')
                             #addrSimplified = addrSimplified.replace(b'\n-----END PUBLIC KEY-----\n', b'')
@@ -473,25 +470,25 @@ try:
                             else: # If wallet does not spam
 
                                 #print(newTx)
-                                valid = util.verifyTransaction(newTx, newTx.public)
+                                valid = util.verifyTransaction(newTx, newTx.getPublic())
 
-                                addrOwnWallet, wif = SignaturesECDSA().make_address(newTx.public.to_string())
+                                addrOwnWallet, wif = SignaturesECDSA().make_address(newTx.getPublic().to_string())
 
-                                if(addrOwnWallet == newTx.ownWallet):
+                                if(addrOwnWallet == newTx.getOwnWallet()):
 
-                                    if(newTx.ownWallet != "genesis" and newTx.ownWallet != "validator_reward"):
+                                    if(newTx.getOwnWallet() != "genesis" and newTx.getOwnWallet() != "validator_reward"):
 
-                                        userCurrentBalance = blockchain.getUserBalance(newTx.ownWallet)
+                                        userCurrentBalance = blockchain.getUserBalance(newTx.getOwnWallet())
                                     
                                         #print(userCurrentBalance)
 
-                                        if(userCurrentBalance >= newTx.outputAmount):
+                                        if(userCurrentBalance >= newTx.getOutputAmount()):
 
                                             if(valid):
 
-                                                if(newTx.outputAddress != newTx.public):
+                                                if(newTx.getOutputAddress() != newTx.getPublic()):
 
-                                                    blockchain.new_transaction(newTx.ownWallet, newTx.outputAddress, newTx.outputAmount)
+                                                    blockchain.new_transaction(newTx.getOwnWallet(), newTx.getOutputAddress(), newTx.getOutputAmount())
 
 
                                                     # Adds transaction hash to list
