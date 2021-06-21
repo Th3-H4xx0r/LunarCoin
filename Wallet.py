@@ -238,26 +238,33 @@ if __name__ == "__main__":
 
                             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                             s.connect((miner['ip'], miner['port']))
+                            #s.setblocking(0)
                             data = pickle.dumps(dataToSend)
                             s.send(data)
 
-                            #print("Sent data")
+                            print("Sent data")
 
-                            time.sleep(1)
+                            #time.sleep(1)
 
+
+                            
                             try:
 
+            
                                 data = s.recv(BUFFER_SIZE)
 
                                 print(data)
 
                                 balance.append(float(data.decode()))
 
+                                #balance = 10
+
                             
                             except:
                                 pass
-
-                            s.close()
+                            
+                            #time.sleep(1)
+                            #s.close()
 
 
                         except Exception as e:

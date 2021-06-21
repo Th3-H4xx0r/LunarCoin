@@ -32,9 +32,9 @@ class SocketUtil:
 
             verifed = SignaturesECDSA().verify(bytes(str(transaction.getData()), 'utf-8'), transaction.getSignedData(), public)
 
-            print(verifed)
+            #print(verifed)
 
-            print(transaction.getOutputAmount())
+            #print(transaction.getOutputAmount())
 
             if verifed == True: #  Checks if transaction is valid
                 if transaction.getOutputAmount() > 0: # Checks if transaction amount is greater than zero
@@ -54,6 +54,7 @@ class SocketUtil:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((ip_addr, port))
         s.listen()
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 10485760)  
         return s
 
 
