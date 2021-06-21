@@ -27,7 +27,9 @@ class Connections:
             minerNodesList = []
 
             try:
-                r = requests.get(node + '/getNodes?network=' + str(net))
+                r = requests.get(node + '/validator/getNodes?network=' + str(net))
+
+                #print(r)
 
                 data = r.json()
 
@@ -46,8 +48,10 @@ class Connections:
                     pass
             
             except Exception as e: # Failed to get list of validators
-                print("Failed to fetch list of miners")
+                print("Failed to fetch list of miners: " + str(e))
                 #return []
+            
+            #print(minerNodesList)
         
         return minerNodesList
     

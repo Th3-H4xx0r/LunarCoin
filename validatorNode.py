@@ -23,6 +23,7 @@ try:
     from Transaction import Transaction
     import hashlib
     import os
+    import struct
 
     import BlockchainSyncUtil as BlockchainSyncUtil
     from Logger import Logger
@@ -162,17 +163,16 @@ try:
                 new_sock, addr = socket.accept()
 
                 #print("Accepted a connection request from %s:%s"%(addr[0], addr[1]));
-
-                all_data = []
-
-                while True:
-                    packet = new_sock.recv(4096)
-                    if not packet: break
-                    all_data.append(packet)
                 
-                returnData = pickle.loads(b"".join(all_data))
+                all_data = b''
 
-                #print(returnData)
+                #while True:
+                packet = new_sock.recv(1048576)
+                    #if not packet: break
+                all_data = all_data + packet
+                
+                returnData = pickle.loads(all_data)
+
 
                 '''
                 if('validator_reward_transaction' in str(returnData)): # If tx is miner transaction
@@ -272,6 +272,8 @@ try:
                 elif('send_user_balance_command' in str(returnData)): # Get user balance and send to user
 
                     validatorLogger.logMessage('[WALLET REQUEST] Wallet request for balance', 'info-blue')
+
+                    time.sleep(1)
 
                     publicUser = ''
 

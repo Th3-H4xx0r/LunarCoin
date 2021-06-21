@@ -14,6 +14,7 @@ from progress.bar import Bar
 import sys
 import requests
 from connections import Connections
+import time
 
 minerNodesList = []
 BUFFER_SIZE = 1024
@@ -242,9 +243,13 @@ if __name__ == "__main__":
 
                             #print("Sent data")
 
+                            time.sleep(1)
+
                             try:
 
                                 data = s.recv(BUFFER_SIZE)
+
+                                print(data)
 
                                 balance.append(float(data.decode()))
 

@@ -30,7 +30,9 @@ class Blockchain:
             with open('Blockchain/blockchain.dat', 'rb') as handle:
                 self.chain = pickle.load(handle)
             
-        except:
+        except Exception as e:
+
+            print("Blockchain is corrupted or file does not exist.")
 
             print("Creating genesis block")
 
@@ -167,6 +169,7 @@ class Blockchain:
 
                 if(self.chain[i].previousBlockHash == lastHash):
                     print("Hash is correct")
+                    pass
                 
                 else:
                     valid = False
@@ -175,9 +178,6 @@ class Blockchain:
             lastHash = hashlib.sha256(block_string).hexdigest()
 
 
-
-
-            
         print(valid)
 
 
