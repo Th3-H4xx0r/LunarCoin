@@ -1,6 +1,7 @@
 # Imports
 from SignaturesECDSA import SignaturesECDSA
 import time
+import pickle
 
 class Transaction:
 
@@ -13,6 +14,7 @@ class Transaction:
     signedData = None
     data = []
     ownWallet = None
+    hashData = None
 
 
 
@@ -46,6 +48,8 @@ class Transaction:
             pass
         else:
             self.signedData = SignaturesECDSA().sign(self.data, privateKey)
+        
+        self.hashData = pickle.dumps(self.data)
         
 
     def miningRewardTx(self, public, amount):
