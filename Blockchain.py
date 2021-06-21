@@ -47,6 +47,9 @@ class Blockchain:
 
         self.current_transactions = []
 
+
+        self.verifyBlockchainIntegrity()
+
     
     def checkCoinsInCirculation(self):
 
@@ -121,7 +124,7 @@ class Blockchain:
             lastBlockHash = ''
         
         else:
-            lastBlockHash = hash(self.chain[-1])
+            lastBlockHash = self.computeHash(self.chain[-1])
 
 
         block = Block(len(self.chain) + 1, time(), self.current_transactions, lastBlockHash)
@@ -144,6 +147,38 @@ class Blockchain:
 
 
         #return block
+
+    def verifyBlockchainIntegrity(self):
+
+        valid = True
+
+        lastHash = None
+
+        print(len(self.chain))
+
+        for i in range(len(self.chain)):
+
+
+            if(i != 0):
+                block_stringThis = pickle.dumps(self.chain[i])
+                thisHash = hashlib.sha256(block_stringThis).hexdigest()
+
+                print(str(self.chain[i].previousBlockHash) + " : " + str(lastHash))
+
+                if(self.chain[i].previousBlockHash == lastHash):
+                    print("Hash is correct")
+                
+                else:
+                    valid = False
+            
+            block_string = pickle.dumps(self.chain[i])
+            lastHash = hashlib.sha256(block_string).hexdigest()
+
+
+
+
+            
+        print(valid)
 
 
     def saveBlock(self):
@@ -183,7 +218,7 @@ class Blockchain:
     
 
     @staticmethod
-    def hash(block):
+    def computeHash(block):
         """
         Creates a SHA-256 hash of a Block
         :param block: <dict> Block
@@ -191,7 +226,7 @@ class Blockchain:
         """
 
         # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
-        block_string = json.dumps(block, sort_keys=True).encode()
+        block_string = pickle.dumps(block)
         return hashlib.sha256(block_string).hexdigest()
 
 
