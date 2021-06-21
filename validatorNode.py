@@ -168,6 +168,8 @@ try:
 
                 #while True:
                 packet = new_sock.recv(1048576)
+
+                print(sys.getsizeof(packet))
                     #if not packet: break
                 all_data = all_data + packet
                 

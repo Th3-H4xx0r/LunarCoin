@@ -50,7 +50,10 @@ class Blockchain:
         self.current_transactions = []
 
 
-        self.verifyBlockchainIntegrity()
+        valid = self.verifyBlockchainIntegrity()
+
+        if(valid == False):
+            raise("Blockchain invalid")
 
     
     def checkCoinsInCirculation(self):
@@ -152,33 +155,43 @@ class Blockchain:
 
     def verifyBlockchainIntegrity(self):
 
+        
         valid = True
 
-        lastHash = None
-
-        print(len(self.chain))
-
-        for i in range(len(self.chain)):
+        try:
 
 
-            if(i != 0):
-                block_stringThis = pickle.dumps(self.chain[i])
-                thisHash = hashlib.sha256(block_stringThis).hexdigest()
+            lastHash = None
 
-                print(str(self.chain[i].previousBlockHash) + " : " + str(lastHash))
+            print(len(self.chain))
 
-                if(self.chain[i].previousBlockHash == lastHash):
-                    print("Hash is correct")
-                    pass
+            for i in range(len(self.chain)):
+
+
+                if(i != 0):
+                    block_stringThis = pickle.dumps(self.chain[i])
+                    thisHash = hashlib.sha256(block_stringThis).hexdigest()
+
+                    print(str(self.chain[i].previousBlockHash) + " : " + str(lastHash))
+
+                    if(self.chain[i].previousBlockHash == lastHash):
+                        print("Hash is correct")
+                        pass
+                    
+                    else:
+                        valid = False
                 
-                else:
-                    valid = False
-            
-            block_string = pickle.dumps(self.chain[i])
-            lastHash = hashlib.sha256(block_string).hexdigest()
+                block_string = pickle.dumps(self.chain[i])
+                lastHash = hashlib.sha256(block_string).hexdigest()
 
 
-        print(valid)
+            print(valid)
+        
+        except Exception as e:
+            print("Error with validating blockchain: " + str(e))
+            valid = False
+
+        return valid
 
 
     def saveBlock(self):
