@@ -30,10 +30,10 @@ class SocketUtil:
 
             #message, sig, verifyingKey
 
-            verifed = SignaturesECDSA().verify(bytes(str(transaction.data), 'utf-8'), transaction.signedData, public)
+            verifed = SignaturesECDSA().verify(bytes(str(transaction.getData()), 'utf-8'), transaction.getSignedData(), public)
 
             if verifed == True: #  Checks if transaction is valid
-                if transaction.outputAmount > 0: # Checks if transaction amount is greater than zero
+                if transaction.getOutputAmount() > 0: # Checks if transaction amount is greater than zero
                     return True
                 else: # If transaction value is less than zero
                     print(colored("[Share Rejected] Transaction value is less than zero", 'yellow'))

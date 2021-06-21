@@ -339,6 +339,7 @@ try:
         
         except Exception as e:
             validatorLogger.logMessage("[FATAL ERROR] Error recieving object from client: " + str(e), 'error')
+            logging.exception('message')
             return None
 
     def addTxToList(tx):
@@ -481,6 +482,11 @@ try:
                                         userCurrentBalance = blockchain.getUserBalance(newTx.getOwnWallet())
                                     
                                         #print(userCurrentBalance)
+
+                                        print(newTx.getOwnWallet())
+                                        print(userCurrentBalance)
+
+                                        print(newTx.getOutputAmount())
 
                                         if(userCurrentBalance >= newTx.getOutputAmount()):
 
