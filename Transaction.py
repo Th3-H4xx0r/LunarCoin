@@ -28,7 +28,7 @@ class Transaction:
         self.__data = []
 
     def addOutput(self, address, coins):
-        if(self.__outputAddress == 0.0 and self.__outputAmount == None):
+        if(self.__outputAddress == None and self.__outputAmount == None):
             self.__outputAddress = address
             self.__outputAmount = coins
 
@@ -62,6 +62,7 @@ class Transaction:
         return self.__outputAddress
     
     def getOutputAmount(self):
+        print("Output :" + str(self.__outputAmount))
         return self.__outputAmount
 
     def getOwnWallet(self):
@@ -77,6 +78,7 @@ class Transaction:
         return self.__hashData
     
     def getData(self):
+        print("DATA:" + str(self.__data))
         return self.__data
     
 
