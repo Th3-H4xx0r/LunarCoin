@@ -76,6 +76,9 @@ class Transaction:
     def getHash(self):
         return self.__hashData
     
+    def getData(self):
+        return self.__data
+    
 
     def __repr__(self):
         return"--- Transaction ---\nInput Address: " + str(self.__public) + "\nOutput Address: " + str(self.__outputAddress) + "\nOutput Amount: " + str(self.__outputAmount) + "\nSigned with private key\nTimestamp: " + str(self.__transactionTimestamp) + "\nMetadata:  " + str(self.__metaData) + "\n--- END ---"
