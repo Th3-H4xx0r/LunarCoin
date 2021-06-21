@@ -28,28 +28,32 @@ class Transaction:
         self.__data = []
 
     def addOutput(self, address, coins):
-        self.__outputAddress = address
-        self.__outputAmount = coins
+        if(self.__outputAddress == 0.0 and self.__outputAmount == None):
+            self.__outputAddress = address
+            self.__outputAmount = coins
 
     def addMetadata(self, data):
-        self.__metaData = data
+        if(self.__metaData == None):
+            self.__metaData = data
 
         
     def sign(self, privateKey, miningReward = False):
-        
-        self.__transactionTimestamp = time.time()
 
-        self.__data.append(self.__outputAddress)
-        self.__data.append(self.__outputAmount)
-        self.__data.append(self.__transactionTimestamp)
-        self.__data.append(self.__public)
-
-        if(miningReward):
-            pass
-        else:
-            self.__signedData = SignaturesECDSA().sign(self.__data, privateKey)
+        if(self.__transactionTimestamp == None and self.__data == []):
         
-        self.__hashData = pickle.dumps(self.__data)
+            self.__transactionTimestamp = time.time()
+
+            self.__data.append(self.__outputAddress)
+            self.__data.append(self.__outputAmount)
+            self.__data.append(self.__transactionTimestamp)
+            self.__data.append(self.__public)
+
+            if(miningReward):
+                pass
+            else:
+                self.__signedData = SignaturesECDSA().sign(self.__data, privateKey)
+            
+            self.__hashData = pickle.dumps(self.__data)
     
     def getPublic(self):
         return self.__public
