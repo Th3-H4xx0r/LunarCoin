@@ -155,6 +155,8 @@ class Blockchain:
 
     def verifyBlockchainIntegrity(self):
 
+        bar = Bar('Verifying blockchain integrity', max=len(self.chain))
+
         
         valid = True
 
@@ -172,10 +174,10 @@ class Blockchain:
                     block_stringThis = pickle.dumps(self.chain[i])
                     thisHash = hashlib.sha256(block_stringThis).hexdigest()
 
-                    print(str(self.chain[i].previousBlockHash) + " : " + str(lastHash))
+                    #print(str(self.chain[i].previousBlockHash) + " : " + str(lastHash))
 
                     if(self.chain[i].previousBlockHash == lastHash):
-                        print("Hash is correct")
+                        #print("Hash is correct")
                         pass
                     
                     else:
@@ -183,9 +185,11 @@ class Blockchain:
                 
                 block_string = pickle.dumps(self.chain[i])
                 lastHash = hashlib.sha256(block_string).hexdigest()
+                bar.next()
 
 
-            print(valid)
+            bar.finish()
+            print("Blockchain is "+ str(valid))
         
         except Exception as e:
             print("Error with validating blockchain: " + str(e))

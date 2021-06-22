@@ -53,7 +53,7 @@ def getPropagatorNodes():
 
             data = r.json()
 
-            print(data)
+            #print(data)
 
             break
 
