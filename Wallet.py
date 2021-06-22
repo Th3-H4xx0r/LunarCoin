@@ -44,14 +44,16 @@ def getPropagatorNodes():
 
     data = None
 
+    print(networkNodes)
+
     for node in networkNodes:
         #print(node)
         try:
-            r = requests.get(node + 'propagator/getNodes')
+            r = requests.get(node + '/propagator/getNodes')
 
             data = r.json()
 
-            #print(data)
+            print(data)
 
             break
 
@@ -181,6 +183,8 @@ if __name__ == "__main__":
                                 nodesData = getPropagatorNodes()
 
                                 oneNodeRecv = False
+
+                                print(nodesData)
 
                                 if(nodesData != None):
                                     if(nodesData['status'] == 'success'):

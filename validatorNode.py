@@ -169,7 +169,7 @@ try:
             #while True:
             packet = new_sock.recv(10485760)
 
-            print(sys.getsizeof(packet))
+            #print(sys.getsizeof(packet))
                 #if not packet: break
             all_data = all_data + packet
             
@@ -494,7 +494,7 @@ try:
                                         #print(userCurrentBalance)
 
                                         #print(newTx.getOwnWallet())
-                                        print(userCurrentBalance)
+                                        #print(userCurrentBalance)
 
                                         #print(newTx.getOutputAmount())
 
