@@ -47,10 +47,10 @@ addrSend, wifSend = SignaturesECDSA().make_address(sendPublic.to_string())
 tic = time.perf_counter()
 
 Tx = Transaction(myPublic, addr)
-Tx.addOutput(addrSend, 0.1)
+Tx.addOutput(addrSend, 0.001)
 Tx.sign(myPrivate)
 
-reps = 3
+reps = 300
 
 
 def getPropagatorNodes():

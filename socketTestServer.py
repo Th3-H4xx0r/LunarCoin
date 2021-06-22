@@ -10,6 +10,8 @@ serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #serversocket.settimeout(5)
 # bind the socket to a public host, and a well-known port
 serversocket.bind(('localhost', 8092))
+
+#serversocket.setblocking(0)
 # become a server socket
 serversocket.listen(1)
 
@@ -29,9 +31,46 @@ while True:
 
     #while True:
 
+    timeout = 0.5
+
+
+    #make socket non blocking
+    clientsocket.setblocking(0)
+    
+    #total data partwise in an array
+    total_data=[];
+    data='';
+    
+    #beginning time
+    begin=time.time()
+    while 1:
+        #if you got some data, then break after timeout
+        if total_data and time.time()-begin > timeout:
+            break
+        
+        #if you got no data at all, wait a little longer, twice the timeout
+        elif time.time()-begin > timeout*2:
+            break
+        
+        #recv something
+        try:
+            data = clientsocket.recv(8192)
+            if data:
+                total_data.append(data)
+                #change the beginning time for measurement
+                begin=time.time()
+            else:
+                #sleep for sometime to indicate a gap
+                time.sleep(0.1)
+        except:
+            pass
+    
+        #join all parts to make final string
+        all_data = b''.join(total_data)
+
     #for i in range(10):
-    packet = clientsocket.recv(10485760)
-    print(sys.getsizeof(packet))
+    #packet = clientsocket.recv(10485760)
+    print(sys.getsizeof(all_data))
 
         #if not packet: break
     #print(packet)
@@ -42,7 +81,7 @@ while True:
             #clientsocket.close()
             #break
         #if not packet: break
-    all_data = all_data + packet
+    #all_data = all_data + packet
     
     #time.sleep(1)
     returnData = pickle.loads(all_data)

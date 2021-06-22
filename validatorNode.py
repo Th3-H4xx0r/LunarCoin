@@ -167,11 +167,51 @@ try:
             all_data = b''
 
             #while True:
-            packet = new_sock.recv(10485760)
+            #packet = new_sock.recv(10485760)
 
             #print(sys.getsizeof(packet))
                 #if not packet: break
-            all_data = all_data + packet
+            #all_data = all_data + packet
+
+            timeout = 0.1
+
+
+            #make socket non blocking
+            new_sock.setblocking(0)
+            
+            #total data partwise in an array
+            total_data=[];
+            data='';
+            
+            #beginning time
+            begin=time.time()
+            while 1:
+                #if you got some data, then break after timeout
+                if total_data and time.time()-begin > timeout:
+                    break
+                
+                #if you got no data at all, wait a little longer, twice the timeout
+                elif time.time()-begin > timeout*2:
+                    break
+                
+                #recv something
+                try:
+                    data = new_sock.recv(65536)
+                    if data:
+                        total_data.append(data)
+                        print(sys.getsizeof(data))
+                        #change the beginning time for measurement
+                        begin=time.time()
+                    else:
+                        #sleep for sometime to indicate a gap
+                        time.sleep(0.1)
+                except:
+                    pass
+            
+                #join all parts to make final string
+                all_data = b''.join(total_data)
+            
+            print(sys.getsizeof(all_data))
             
             returnData = pickle.loads(all_data)
 
