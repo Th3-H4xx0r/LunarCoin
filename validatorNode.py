@@ -199,7 +199,7 @@ try:
                     data = new_sock.recv(65536)
                     if data:
                         total_data.append(data)
-                        print(sys.getsizeof(data))
+                        #print(sys.getsizeof(data))
                         #change the beginning time for measurement
                         begin=time.time()
                     else:
@@ -211,7 +211,7 @@ try:
                 #join all parts to make final string
                 all_data = b''.join(total_data)
             
-            print(sys.getsizeof(all_data))
+            #print(sys.getsizeof(all_data))
             
             returnData = pickle.loads(all_data)
 
