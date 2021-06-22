@@ -6,7 +6,7 @@ class Connections:
     # Hardcoded
     networkNodes = [
         #'http://localhost:4993'
-        'https://network-node-us1.lunarcoin.network/',
+        'https://network-node-us1.lunarcoin.network',
     ]
 
     validatorPeers = []
