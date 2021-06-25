@@ -686,6 +686,13 @@ try:
 
                 validatorLogger.logMessage('Starting validator node', 'regular')
 
+                validatorLogger.logMessage("[INTERNAL SERVER] Running connection test", 'info')
+
+                # Runs connection test to the network
+
+                Connections().connectionTest()
+
+
                 # Syncs the blockchain
 
                 syncUtil = BlockchainSyncUtil.BlockchainSyncUtil()

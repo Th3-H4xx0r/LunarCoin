@@ -1,5 +1,9 @@
 # Imports
 import requests
+import socket
+from colorama import init 
+from termcolor import colored 
+import pickle
 
 class Connections:
 
@@ -14,10 +18,17 @@ class Connections:
     propagatorNodes = []
 
     def __init__(self):
-        pass
+        init()
 
     def getNetworkNodes(self):
         return self.networkNodes
+
+    def sendObj(self, ip_addr, inObj, port):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((ip_addr, port))
+        data = pickle.dumps(inObj)
+        s.send(data)
+        s.close()
 
     def getValidatorNodes(self, net):
 
@@ -86,3 +97,77 @@ class Connections:
                 #return []
     
         return managerNodesList
+    
+    def connectionTest(self):
+
+        networkNodeFound = False
+
+        workingNetworkNode = None
+
+        propagatorNodes = []
+
+        workingPropagatorNode = False
+
+        for node in self.networkNodes:
+            try:
+                r = requests.get(node)
+
+                data = r.json()
+
+                #print(data)
+
+                if(data['data'] == 'server pinged'):
+                    networkNodeFound = True
+                    workingNetworkNode = node
+            
+            except Exception as e:
+                pass
+        
+        # Gets propagator nodes from network node
+
+        if(workingNetworkNode != None):
+            try:
+                r = requests.get(workingNetworkNode + "/propagator/getNodes")
+
+                data = r.json()
+
+                if(data['status'] == 'success'):
+                    propagatorNodes = data['data']
+            
+            except Exception as e:
+                pass
+        
+        print(propagatorNodes)
+        # Pings propagator nodes
+
+        # [{'id': 'propagator1', 'ip': '4.tcp.ngrok.io', 'port': '14002'}]
+        for node in propagatorNodes:
+            try:
+                self.sendObj(node['ip'], b'ping', int(node['port']))
+
+                workingNetworkNode = True
+            
+            except Exception as e:
+                pass
+        
+
+        
+        print("========= Connection Test Results =========")
+
+        if(networkNodeFound):
+            print(colored('[✅] Network node connection established', 'green'))
+        
+        else:
+            print(colored('[❌] Network node connection failed', 'red'))
+        
+        if(workingPropagatorNode):
+            print(colored('[✅] Propagator node connection established', 'green'))
+        
+        else:
+            print(colored('[❌] Propagator node connection failed', 'green'))
+
+        
+        print("===========================================")
+
+
+
