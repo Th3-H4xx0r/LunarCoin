@@ -108,6 +108,12 @@ class Connections:
 
         workingPropagatorNode = False
 
+        workingManagerNode = False
+
+        managerNodes = []
+
+        testPassCount = 0
+
         for node in self.networkNodes:
             try:
                 r = requests.get(node)
@@ -137,7 +143,7 @@ class Connections:
             except Exception as e:
                 pass
         
-        print(propagatorNodes)
+        #print(propagatorNodes)
         # Pings propagator nodes
 
         # [{'id': 'propagator1', 'ip': '4.tcp.ngrok.io', 'port': '14002'}]
@@ -151,23 +157,66 @@ class Connections:
                 pass
         
 
+        # Gets manager nodes from network node
+
+        if(workingNetworkNode != None):
+            try:
+                r = requests.get(workingNetworkNode + "/manager/getNodes")
+
+                data = r.json()
+
+                if(data['status'] == 'success'):
+                    managerNodes = data['data']
+            
+            except Exception as e:
+                pass
         
-        print("========= Connection Test Results =========")
+        # Pings manager nodes
+
+        # [{'id': 'propagator1', 'ip': '4.tcp.ngrok.io', 'port': '14002'}]
+        for node in managerNodes:
+            try:
+                self.sendObj(node['ip'], b'ping', int(node['port']))
+
+                workingManagerNode = True
+            
+            except Exception as e:
+                pass
+        
+
+        
+        print("\n========= Connection Test Results =========")
 
         if(networkNodeFound):
             print(colored('[✅] Network node connection established', 'green'))
+            testPassCount = testPassCount + 1
         
         else:
             print(colored('[❌] Network node connection failed', 'red'))
         
         if(workingPropagatorNode):
             print(colored('[✅] Propagator node connection established', 'green'))
+            testPassCount = testPassCount + 1
         
         else:
-            print(colored('[❌] Propagator node connection failed', 'green'))
+            print(colored('[❌] Propagator node connection failed', 'red'))
+        
+
+        if(workingManagerNode):
+            print(colored('[✅] Manager node connection established', 'green'))
+            testPassCount = testPassCount + 1
+        
+        else:
+            print(colored('[❌] Manager node connection failed', 'red'))
 
         
-        print("===========================================")
+        print("===========================================\n")
+
+        if(testPassCount == 3):
+            return True
+        
+        else:
+            return False
 
 
 
