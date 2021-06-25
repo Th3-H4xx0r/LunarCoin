@@ -131,6 +131,8 @@ class Connections:
         
         # Gets propagator nodes from network node
 
+        #print(propagatorNodes)
+
         if(workingNetworkNode != None):
             try:
                 r = requests.get(workingNetworkNode + "/propagator/getNodes")
@@ -143,15 +145,18 @@ class Connections:
             except Exception as e:
                 pass
         
-        #print(propagatorNodes)
+        print(propagatorNodes)
         # Pings propagator nodes
 
         # [{'id': 'propagator1', 'ip': '4.tcp.ngrok.io', 'port': '14002'}]
         for node in propagatorNodes:
             try:
                 self.sendObj(node['ip'], b'ping', int(node['port']))
+                print("Obj sent successfully prop nodes")
 
-                workingNetworkNode = True
+                workingPropagatorNode = True
+
+                break
             
             except Exception as e:
                 pass
@@ -173,12 +178,17 @@ class Connections:
         
         # Pings manager nodes
 
+        print(managerNodes)
         # [{'id': 'propagator1', 'ip': '4.tcp.ngrok.io', 'port': '14002'}]
         for node in managerNodes:
             try:
                 self.sendObj(node['ip'], b'ping', int(node['port']))
 
+                print("Obj sent successfully manager nodes")
+
                 workingManagerNode = True
+
+                break
             
             except Exception as e:
                 pass
