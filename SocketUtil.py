@@ -58,14 +58,6 @@ class SocketUtil:
         return s
 
 
-    def sendObj(ip_addr, inObj, port=TCP_PORT):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((ip_addr, port))
-        data = pickle.dumps(inObj)
-        s.send(data)
-        s.close()
-
-        return False
 
     
     def updateMinerIp(ip, minerID, net):
