@@ -25,6 +25,7 @@ class Connections:
 
     def sendObj(self, ip_addr, inObj, port):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(2)
         s.connect((ip_addr, port))
         data = pickle.dumps(inObj)
         s.send(data)

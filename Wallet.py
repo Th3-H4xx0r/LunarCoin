@@ -44,12 +44,12 @@ def getPropagatorNodes():
 
     data = None
 
-    print(networkNodes)
+    #print(networkNodes)
 
     for node in networkNodes:
         #print(node)
         try:
-            r = requests.get(node + '/propagator/getNodes')
+            r = requests.get(node + '/propagator/getNodes', timeout=3)
 
             data = r.json()
 
@@ -59,7 +59,7 @@ def getPropagatorNodes():
 
 
         except Exception as e:
-            #print(e)
+            print(e)
             pass
     
     return data
@@ -194,20 +194,24 @@ if __name__ == "__main__":
 
                                         for node in nodes:
                                             try:
-                                                SocketUtil.sendObj(node['ip'], {'transaction': Tx, 'network': network}, int(node['port']))
+                                                SocketUtil.sendObj(node['ip'], {'transaction': Tx, 'network': network}, int(node['port']), 2)
+
+                                                #print("Sent to node")
                                                 oneNodeRecv = True
                                                 #print("Transaction sent to propagator node")
                                             
                                             except Exception as e:
-                                                pass
+                                                #logging.log('s')
                                                 #print("Cannot connect to propagator node: " + str(e))
+                                                pass
                                         
                                         if(oneNodeRecv == False):
                                             print("Error sending transaction. Cannot connect to the network,")
                                         
                                         else:
                                             print("Transaction sent successfully.")
-
+                                else:
+                                    print("Failed to get list of propagator nodes")
 
                             elif(confirm == "N" or confirm == "n"):
                                 pass
@@ -241,8 +245,10 @@ if __name__ == "__main__":
                             dataToSend =  b'send_user_balance_command:' + bytes(walletAddress, 'utf-8')
 
                             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            s.settimeout(2)
                             s.connect((miner['ip'], miner['port']))
                             #s.setblocking(0)
+
                             data = pickle.dumps(dataToSend)
                             s.send(data)
 

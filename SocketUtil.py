@@ -1,4 +1,5 @@
 # Imports
+import time
 from connections import Connections
 from SignaturesECDSA import SignaturesECDSA
 from Signatures import Signatures
@@ -56,6 +57,19 @@ class SocketUtil:
         s.listen()
         s.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 10485760)  
         return s
+    
+    def sendObj(ip_addr, inObj, port, timeout=None):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
+        #print("TIMEOUT: " + str(timeout))
+        if(timeout != None):
+            s.setblocking(0)
+            s.settimeout(timeout)
+
+        s.connect((ip_addr, port))
+        data = pickle.dumps(inObj)
+        s.send(data)
+        s.close()
 
 
 
