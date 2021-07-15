@@ -140,6 +140,8 @@ class Connections:
 
                 data = r.json()
 
+                print("PROP: " + str(data))
+
                 if(data['status'] == 'success'):
                     propagatorNodes = data['data']
             
@@ -160,6 +162,7 @@ class Connections:
                 break
             
             except Exception as e:
+                print(e)
                 pass
         
 
