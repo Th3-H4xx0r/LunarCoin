@@ -31,6 +31,7 @@ try:
 
     import os.path
     from os import path
+    import random
 
     init()
     # Global var
@@ -475,9 +476,40 @@ try:
                         # TODO: Transaction is not checked for same id
 
 
+                        # Generates two random nodes to send to
+
+                        nodesToSendToTemp = VALIDATOR_PEERS
+
+                        nodesToSendTo = []
+
+                        print(nodesToSendTo)
+
+                        for node in nodesToSendToTemp:
+                            if(node['status'] == 'online'):
+                                nodesToSendTo.append(node)
+                        
+                        if(len(nodesToSendTo) > 2):
+
+                            print("more than 2 nodes online, generating random number to send to")
+
+                            n1 = random.randint(0, len(nodesToSendTo) - 1)
+                            n2 = random.randint(0, len(nodesToSendTo) - 1)
+
+                            if(n2 == n1):
+                                while True:
+                                    n2 = random.randint(0, len(nodesToSendTo) - 1)
+
+                                    if(n2 != n1):
+                                        break
+                            
+                            nodesToSendTo = [nodesToSendTo[n1], nodesToSendTo[n2]]
+                        
+                        print("NODES TO SEND TO: " + str(nodesToSendTo))
+
+
                         #print(VALIDATOR_PEERS)
                         #print(newTx)
-                        for node in VALIDATOR_PEERS:
+                        for node in nodesToSendTo:
                             try:
                                 Connections().sendObjNonBlocking(node['ip'], newTx, node['port'])
                                 print("Propagated transaction to node: " + str(node['ip']) + ":" + str(node['port']))

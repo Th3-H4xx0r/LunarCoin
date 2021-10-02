@@ -31,8 +31,8 @@ class SocketUtil:
 
             #message, sig, verifyingKey
 
-            print(transaction)
-            print(public)
+            #print(transaction)
+            #print(public)
 
             verifed = SignaturesECDSA().verify(bytes(str(transaction.getData()), 'utf-8'), transaction.getSignedData(), public)
 
