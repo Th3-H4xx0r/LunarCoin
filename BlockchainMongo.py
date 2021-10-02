@@ -138,6 +138,15 @@ class BlockchainMongo:
             print(str(len(self.current_transactions))  + "/" + str(txThreshold) + " transactions left until next block")
             return False
 
+    def getBlock(self, height):
+        blockchain = []
+
+        data = self.db.Blockchaindb.find({'block_height': height})
+
+        for block in data:
+            blockchain.append(block)
+        
+        return blockchain
 
     def get_current_block_height(self):
         return self.db.Blockchain.estimated_document_count()

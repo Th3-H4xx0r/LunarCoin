@@ -15,6 +15,7 @@ db=client.LunarCoin
 #serverStatusResult=db.command("serverStatus")
 #pprint(serverStatusResult)
 
+'''
 ticTotal = time.perf_counter()
 
 
@@ -98,3 +99,8 @@ timeSpent = tocTotal - ticTotal
 print(f" read in {timeSpent} seconds")
 
 print(str(transactionsSim/timeSpent) + " tx/s")
+'''
+
+data = db.Blockchain.find({})
+
+print(data)

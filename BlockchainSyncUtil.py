@@ -104,30 +104,26 @@ class BlockchainSyncUtil:
         return None, None
 
 
-    def sendBlockchain(self, socket, blockchain):
+    def sendBlockchain(self, socket, blockchainObj):
 
         data = None
 
         try:
-            #with open('Blockchain/blockchain.dat', 'rb') as handle:
 
+            height = blockchainObj.get_current_block_height()
 
-            data = blockchain
-
-            dataSend = pickle.dumps(data)
-
-            blockchainLen = sys.getsizeof(dataSend)
-
-            print("Bytes size of blockchain: " + str(blockchainLen))
-
-
-            socket.send(pickle.dumps('chain_length:' + str(blockchainLen))) # Sends the initial length of blockchain
-
-            #print("Send chain size to node")
+            socket.send(pickle.dumps('chain_length:' + str(pickle.dumps(height)))) # Sends the initial length of blockchain
 
             time.sleep(2)
 
-            socket.send(dataSend) # Sends the blockchain
+            # Sends the blockchain - block by block
+
+            for i in range(height):
+                block = blockchainObj.getBlock(i)
+                socket.send(pickle.dumps(block)) 
+                socket.close()
+            
+            socket.send(pickle.dumps('--BLOCKCHAIN END--')) 
             socket.close()
 
         
@@ -208,7 +204,7 @@ class BlockchainSyncUtil:
 
 
 
-    def chainInitSync(self, ip, port):
+    def chainInitSync(self, ip, port, blockchainOBJ):
 
         try:
             print(colored('[MINER CORE] Syncing blockchain.','cyan'))
@@ -241,73 +237,37 @@ class BlockchainSyncUtil:
 
                 try:
 
-                    data = b''
+                    blockDataTemp = b''
 
-                    PACKET_SIZE_RECV = 65569
-
-
-                    bar = Bar('Downloading blockchain', max=(int(blockchainLength/PACKET_SIZE_RECV) + 1)) # Adds one to avoid zero-division error
-
-                    #spinner = itertools.cycle(['-', '/', '|', '\\'])
+                    bar = Bar('Downloading blockchain', max=(int(blockchainLength) + 1)) # Adds one to avoid zero-division error
 
                     while True:
-                        packet = s.recv(BUFFER_SIZE)
 
-                        if not packet: break
-                        
-                        # Shows spinner for packet loading
+                        while True:
+                            packet = s.recv(BUFFER_SIZE)
 
-                        #sys.stdout.write(next(spinner))   # write the next character
-                        #sys.stdout.flush()                # flush stdout buffer (actual character display)
-                        #sys.stdout.write('\b')            # erase the last written char
+                            if not packet: break
+                            
+                            blockDataTemp += packet
                         
+                        blockData = pickle.loads(blockDataTemp)
+                        
+                        if(blockData == '--BLOCKCHAIN END--'):
+                            break
+                        
+                        else: # Adds block to the local blockchain
+                            blockchainOBJ.saveBlock(blockData)
+                            
+
                         bar.next()
 
-                        data += packet
                     
                     bar.finish()
-
-                    #print(data)
-
-                    dataLoaded = pickle.loads(data)
-
-                    #print(dataLoaded)
-
-                    #print(dataLoaded.current_transactions)
-
-                    try:
-
-                        handle = open('Blockchain/blockchain.dat', 'wb')
-
-                        pickle.dump(dataLoaded.chain, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-                        handle.close()
-
-                    
-                    except Exception as e:
-
-                        current_directory = os.getcwd()
-
-                        final_directory = os.path.join(current_directory, r'Blockchain')
-                        if not os.path.exists(final_directory):
-                            os.makedirs(final_directory)
-                                            
-                        handle = open('Blockchain/blockchain.dat', 'wb')
-
-                        pickle.dump(dataLoaded.chain, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-                        handle.close()
-
-                        print(colored('[MINER CORE] Blockchain dir does not exist, crating directory.','cyan'))
-
 
                     print(colored('[MINER CORE] Successfully synced the blockchain','cyan'))
 
 
-                    return True, dataLoaded.current_transactions
-
-
-                    #blockVerifyList.append(data.decode())
+                    return True, [] # TODO: Add current transactions to the newly synced blockchain
 
             
                 except Exception as e1:

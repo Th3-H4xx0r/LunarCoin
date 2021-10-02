@@ -300,7 +300,7 @@ try:
 
                 #BlockchainSyncUtil.sendRecievedBlock(block, blockchainObj, new_sock)
 
-                syncUtil.sendBlockchain(new_sock, blockchainObj)
+                syncUtil.sendBlockchain(new_sock, blockchainObj.getBlockchain())
 
                 return None
 
