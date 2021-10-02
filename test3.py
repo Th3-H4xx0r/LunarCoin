@@ -33,7 +33,7 @@ tic1 = time.perf_counter()
 public_crypter = PKCS1_OAEP.new( key )
 enc_data = public_crypter.encrypt( secret_message )
 
-print(enc_data)
+#print(enc_data)
 
 toc1 = time.perf_counter()
 #with open( 'encrypted.txt', 'wb' ) as f:

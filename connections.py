@@ -11,6 +11,7 @@ class Connections:
     networkNodes = [
         #'http://localhost:4993'
         'https://network-node-us1.lunarcoin.network',
+        #'http://server1.protosystems.net'
     ]
 
     validatorPeers = []
@@ -30,6 +31,51 @@ class Connections:
         data = pickle.dumps(inObj)
         s.send(data)
         s.close()
+    
+    def sendObjNonBlocking(self, ip_addr, inObj, port):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setblocking(0)
+        s.connect((ip_addr, port))
+        data = pickle.dumps(inObj)
+        s.send(data)
+        s.close()
+
+    def getValidatorNodesWallet(self, net):
+
+        minerNodesList = []
+
+        for node in self.networkNodes:
+
+            minerNodesList = []
+
+            try:
+                r = requests.get(node + '/validator/getNodes?network=' + str(net))
+
+                #print(r)
+
+                data = r.json()
+
+                #print(data)
+
+                if(data['status'] == "success"):
+                    
+                    for miner in data['data']:
+                        minerNodesList.append({"ip": miner['ip'], "port": int(miner['port']), "status": miner['status']})
+                    
+                    break
+
+                
+                else: # Failed to get list of validators
+                    #return []
+                    pass
+            
+            except Exception as e: # Failed to get list of validators
+                print("Failed to fetch list of miners: " + str(e))
+                #return []
+            
+            #print(minerNodesList)
+        
+        return minerNodesList
 
     def getValidatorNodes(self, net):
 

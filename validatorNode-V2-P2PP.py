@@ -47,6 +47,8 @@ try:
     SPAM_MANAGEMENT_SECONDS_LEFT = 86400
     SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT = SPAM_MANAGEMENT_SECONDS_LEFT
 
+    VALIDATOR_PEERS = []
+
     walletTxFreq = {}
 
     txRecv = []
@@ -332,11 +334,11 @@ try:
 
                 #print("user balance: " +str(userCurrentBalance))
 
-                print("Sending tx")
+                #print("Sending tx")
 
                 new_sock.sendall(str(userCurrentBalance).encode('utf-8'))
 
-                print("Sent the balance")
+                #print("Sent the balance")
 
                 #print("Sent user the balance data")
 
@@ -453,6 +455,7 @@ try:
                     
                     print("Finished propogating to other nodes")
                     '''
+                
 
                     if(newTx != None):
                         #print(newTx)
@@ -460,6 +463,31 @@ try:
                         #blockchain.checkCoinsInCirculation()
 
                         validatorLogger.logMessage("[Share Recieved] Transaction share recieved - Validating...", 'success')
+
+                        ###########################################
+                        # Propogates transaction to other nodes (P2PP) - Peer to Peer Propgation Protocol
+                        ###########################################
+
+                        # TODO: Issue, transaction can be manipulated and sent many times
+
+                        validatorLogger.logMessage("[P2PP] Propogating transaction to peers", 'info')
+
+                        # TODO: Transaction is not checked for same id
+
+
+                        #print(VALIDATOR_PEERS)
+                        #print(newTx)
+                        for node in VALIDATOR_PEERS:
+                            try:
+                                Connections().sendObjNonBlocking(node['ip'], newTx, node['port'])
+                                print("Propagated transaction to node: " + str(node['ip']) + ":" + str(node['port']))
+                            
+                            except Exception as e:
+                                validatorLogger.logMessage("[Propagation Error] Error propagating transaction to node" + str(node['ip']) + ":" + str(node['port']) + " - " + str(e), 'error')
+                                
+
+                    
+
 
                         util = SocketUtil()
 
@@ -528,13 +556,13 @@ try:
 
                                 if(addrOwnWallet == newTx.getOwnWallet()):
 
-                                    print("Working 1")
+                                    #print("Working 1")
 
                                     if(newTx.getOwnWallet() != "genesis" and newTx.getOwnWallet() != "validator_reward"):
 
-                                        print("Working 2")
+                                        #print("Working 2")
 
-                                        print("NEWWWW:: " + str(newTx.getOwnWallet()))
+                                        #print("NEWWWW:: " + str(newTx.getOwnWallet()))
 
                                         userCurrentBalance = blockchain.getUserBalance(newTx.getOwnWallet())
                                     
@@ -546,17 +574,19 @@ try:
                                         #print(newTx.getOutputAmount())
 
                                         
-                                        print("Working 3 1/2")
+                                        #print("Working 3 1/2")
                                         if(userCurrentBalance >= newTx.getOutputAmount()):
-                                            print("Working 3")
+                                            #print("Working 3")
 
                                             if(valid):
 
-                                                print("Working 4")
+                                                #print("Working 4")
 
                                                 if(newTx.getOutputAddress() != newTx.getPublic()):
 
-                                                    print("Working 5")
+                                                    #print("Working 5")
+
+                                                    # Transaction is fully processed and is good to go
 
                                                     blockchain.new_transaction(newTx.getOwnWallet(), newTx.getOutputAddress(), newTx.getOutputAmount())
 
@@ -572,7 +602,7 @@ try:
 
                                                     if(newBlock):
 
-                                                        print("Working 6")
+                                                        #print("Working 6")
 
                                                         validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
 
@@ -674,6 +704,31 @@ try:
             walletTxFreq = {} # Resets wallet spam threshold periodically
             SPAM_MANAGEMENT_SECONDS_LEFT = 86400
             SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT = SPAM_MANAGEMENT_SECONDS_LEFT
+
+
+    def getpeers():
+        global VALIDATOR_PEERS
+
+        while True:
+
+            time.sleep(10) # Executes every 10 seconds
+
+            validatorLogger.logMessage("[Peer Discovery Service] Getting list of peers", 'info')
+
+            nodesData = Connections().getValidatorNodes(NETWORK)
+
+            #print(nodesData)
+
+            if(nodesData != None):
+
+                nodesFiltered = [] # Takes out own node from the list so doesn't double propagate
+
+                for node in nodesData:
+                    if(node['ip'] != NGROK_IP and node['port'] != NGROK_PORT):
+                        nodesFiltered.append(node)
+
+                VALIDATOR_PEERS = nodesFiltered
+
 
 
     if __name__ == "__main__":
@@ -796,12 +851,18 @@ try:
 
                         validatorRewardServ = threading.Thread(target=validatorRewardService)
 
+                        peerDiscoveryService = threading.Thread(target=getpeers)
+
                         # Starts the threads
                         try:
                             grok.start()
                             t1.start()
                             spamProtection.start()
-                            validatorRewardServ.start()
+                            #validatorRewardServ.start()
+
+                            time.sleep(2)
+                            validatorLogger.logMessage("Starting peer discovery service...", 'info')
+                            peerDiscoveryService.start()
                         
                         except Exception as err:
                             validatorLogger.logMessage("Node err has occured: " + str(err), 'regular')
