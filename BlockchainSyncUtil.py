@@ -1,4 +1,5 @@
 # Imports
+from BlockchainMongo import BlockchainMongo
 from connections import Connections
 import socket
 import pickle
@@ -204,7 +205,7 @@ class BlockchainSyncUtil:
 
 
 
-    def chainInitSync(self, ip, port, blockchainOBJ):
+    def chainInitSync(self, ip, port):
 
         try:
             print(colored('[MINER CORE] Syncing blockchain.','cyan'))
@@ -256,7 +257,7 @@ class BlockchainSyncUtil:
                             break
                         
                         else: # Adds block to the local blockchain
-                            blockchainOBJ.saveBlock(blockData)
+                            BlockchainMongo().saveBlockStatic(blockData)
                             
 
                         bar.next()

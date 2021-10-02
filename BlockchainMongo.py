@@ -248,6 +248,12 @@ class BlockchainMongo:
 
     def saveBlock(self, block):
         self.db.Blockchain.insert(block)
+    
+    def saveBlockStatic(block):
+        client = MongoClient('localhost')
+        db=client.LunarCoin
+        db.Blockchain.insert(block)
+
 
     def new_transaction(self, sender, recipient, amount, genesisBlock = False):
 
