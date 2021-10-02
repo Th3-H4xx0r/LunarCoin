@@ -107,25 +107,36 @@ class BlockchainSyncUtil:
 
     def sendBlockchain(self, socket, blockchainObj):
 
-        data = None
-
         try:
 
             height = blockchainObj.get_current_block_height()
 
+            print("Sending chain length")
+
             socket.send(pickle.dumps('chain_length:' + str(pickle.dumps(height)))) # Sends the initial length of blockchain
+
+            print("Sent chain length")
 
             time.sleep(2)
 
             # Sends the blockchain - block by block
 
+            print("Sending blocks")
+
             for i in range(height):
                 block = blockchainObj.getBlock(i)
                 socket.send(pickle.dumps(block)) 
                 socket.close()
+
+            print("Block sending complete")
             
             socket.send(pickle.dumps('--BLOCKCHAIN END--')) 
+
+            
             socket.close()
+            print("Socket closed")
+
+            return 0
 
         
         except Exception as e:
