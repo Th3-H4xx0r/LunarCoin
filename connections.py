@@ -70,7 +70,7 @@ class Connections:
                     pass
             
             except Exception as e: # Failed to get list of validators
-                print("Failed to fetch list of miners: " + str(e))
+                print("Failed to fetch list of validators: " + str(e))
                 #return []
             
             #print(minerNodesList)
@@ -107,7 +107,7 @@ class Connections:
                     pass
             
             except Exception as e: # Failed to get list of validators
-                print("Failed to fetch list of miners: " + str(e))
+                print("Failed to fetch list of validators: " + str(e))
                 #return []
             
             #print(minerNodesList)

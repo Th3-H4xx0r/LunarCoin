@@ -482,11 +482,16 @@ try:
 
                         nodesToSendTo = []
 
-                        print(nodesToSendTo)
+                        #print(nodesToSendTo)
 
                         for node in nodesToSendToTemp:
-                            if(node['status'] == 'online'):
-                                nodesToSendTo.append(node)
+                            #print("Filtering nodes to send to: " + str(node))
+                            try:
+                                if(node['status'] == 'online'):
+                                    nodesToSendTo.append(node)
+                            
+                            except Exception as e:
+                                print("Error with getting nodes to propagate to: " + str(e))
                         
                         if(len(nodesToSendTo) > 2):
 
@@ -504,7 +509,7 @@ try:
                             
                             nodesToSendTo = [nodesToSendTo[n1], nodesToSendTo[n2]]
                         
-                        print("NODES TO SEND TO: " + str(nodesToSendTo))
+                        # print("NODES TO SEND TO: " + str(nodesToSendTo))
 
 
                         #print(VALIDATOR_PEERS)
@@ -747,7 +752,7 @@ try:
 
             validatorLogger.logMessage("[Peer Discovery Service] Getting list of peers", 'info')
 
-            nodesData = Connections().getValidatorNodes(NETWORK)
+            nodesData = Connections().getValidatorNodesWallet(NETWORK)
 
             #print(nodesData)
 

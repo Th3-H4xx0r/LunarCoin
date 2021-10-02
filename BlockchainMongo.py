@@ -122,7 +122,7 @@ class BlockchainMongo:
                     txThreshold = txThreshold + 1
 
         #print(txThreshold)
-        print("Block threshold: " + str(txThreshold))
+        #print("Block threshold: " + str(txThreshold))
         return txThreshold
 
     def goNewBlock(self):
@@ -130,7 +130,7 @@ class BlockchainMongo:
         txThreshold = self.getBlockTXThreshold()
 
         if(len(self.current_transactions) >= txThreshold):
-            print("Going to next block")
+            #print("Going to next block")
 
             return True
 
@@ -242,7 +242,7 @@ class BlockchainMongo:
 
     def new_transaction(self, sender, recipient, amount, genesisBlock = False):
 
-        print("Lenght of transactions: " + str(len(self.current_transactions)))
+        #print("Lenght of transactions: " + str(len(self.current_transactions)))
 
         if(genesisBlock):
             self.current_transactions.append({
