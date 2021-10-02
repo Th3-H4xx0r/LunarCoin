@@ -253,6 +253,11 @@ class BlockchainMongo:
         client = MongoClient('localhost')
         db=client.LunarCoin
         db.Blockchain.insert(block)
+    
+    def deleteBlockchainStatic(block):
+        client = MongoClient('localhost')
+        db=client.LunarCoin
+        db.Blockchain.delete_many({})
 
 
     def new_transaction(self, sender, recipient, amount, genesisBlock = False):

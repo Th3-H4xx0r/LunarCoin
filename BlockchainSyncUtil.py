@@ -237,47 +237,60 @@ class BlockchainSyncUtil:
                 #print(blockchainLength)
 
                 try:
+                # Delete current blockchain if sync is found
+                    print("Deleting current blockchain...")
 
-                    blockDataTemp = b''
+                    BlockchainMongo().deleteBlockchainStatic()
 
-                    bar = Bar('Downloading blockchain', max=(int(blockchainLength) + 1)) # Adds one to avoid zero-division error
+                    try:
 
-                    while True:
+                        blockDataTemp = b''
+
+                        bar = Bar('Downloading blockchain', max=(int(blockchainLength) + 1)) # Adds one to avoid zero-division error
+
+
 
                         while True:
-                            packet = s.recv(BUFFER_SIZE)
 
-                            if not packet: break
+                            while True:
+                                packet = s.recv(BUFFER_SIZE)
+
+                                if not packet: break
+                                
+                                blockDataTemp += packet
                             
-                            blockDataTemp += packet
-                        
-                        blockData = pickle.loads(blockDataTemp)
-                        
-                        if(blockData == '--BLOCKCHAIN END--'):
-                            break
-                        
-                        else: # Adds block to the local blockchain
-                            BlockchainMongo().saveBlockStatic(blockData)
+                            blockData = pickle.loads(blockDataTemp)
                             
+                            if(blockData == '--BLOCKCHAIN END--'):
+                                break
+                            
+                            else: # Adds block to the local blockchain
+                                BlockchainMongo().saveBlockStatic(blockData)
+                                
 
-                        bar.next()
+                            bar.next()
 
-                    
-                    bar.finish()
+                        
+                        bar.finish()
 
-                    print(colored('[MINER CORE] Successfully synced the blockchain','cyan'))
+                        print(colored('[MINER CORE] Successfully synced the blockchain','cyan'))
 
 
-                    return True, [] # TODO: Add current transactions to the newly synced blockchain
+                        return True, [] # TODO: Add current transactions to the newly synced blockchain
 
+                
+                    except Exception as e1:
+                        logging.exception('message')
+                        
+                        print(colored('[MINER CORE] Error with blockchain sync has occured: ' + str(e1),'cyan'))
+                
+                
+                    s.close()
             
-                except Exception as e1:
-                    logging.exception('message')
-                    
-                    print(colored('[MINER CORE] Error with blockchain sync has occured: ' + str(e1),'cyan'))
-                
-                
-                s.close()
+                except Exception as e:
+                    print("Error with deleteing current blockchain. Unable to proceed")
+
+
 
             
             except Exception as e:
