@@ -112,7 +112,7 @@ class BlockchainMongo:
 
         TX_INTERVAL = 1000
 
-        currentBlockCount = self.get_current_block_height()
+        currentBlockCount = self.get_current_block_length()
 
         txThreshold = 1
 
@@ -139,16 +139,17 @@ class BlockchainMongo:
             return False
 
     def getBlock(self, height):
-        blockchain = []
+        dataReturn = None
 
-        data = self.db.Blockchaindb.find({'block_height': height})
+        data = self.db.Blockchain.find({'block_height': height})
 
         for block in data:
-            blockchain.append(block)
+            #print("BLOCK:" + str(block))
+            dataReturn = block
         
-        return blockchain
+        return dataReturn
 
-    def get_current_block_height(self):
+    def get_current_block_length(self):
         return self.db.Blockchain.estimated_document_count()
     
     def get_previous_block(self, currentHeight):
@@ -168,20 +169,22 @@ class BlockchainMongo:
 
             lastBlockHash = ''
 
-            currentHeight = self.get_current_block_height()
+            currentHeight = self.get_current_block_length()
 
-            if(currentHeight == 0):
+            if(currentHeight == 0): # Genesis block
                 lastBlockHash = ''
             
             else:
                 lastBlockHash = self.computeHash(self.get_previous_block(currentHeight))
+            
+            
 
 
             #block = Block(len(self.chain) + 1, time(), self.current_transactions, lastBlockHash)
 
             
             block = {
-                'block_height': self.get_current_block_height() + 1,
+                'block_height': currentHeight,
                 'timestamp': time(),
                 'transactions': self.current_transactions,
                 'previous_block': lastBlockHash,
@@ -250,14 +253,21 @@ class BlockchainMongo:
         self.db.Blockchain.insert(block)
     
     def saveBlockStatic(block):
-        client = MongoClient('localhost')
-        db=client.LunarCoin
-        db.Blockchain.insert(block)
+        #print(block)
+        try:
+            client = MongoClient('localhost')
+            db=client.LunarCoin
+            db.Blockchain.insert(block)
+        
+        except Exception as e:
+            print("Error adding block to the chain: " + str(e))
+            pass
     
-    def deleteBlockchainStatic(block):
+    def deleteBlockchainStatic():
         client = MongoClient('localhost')
         db=client.LunarCoin
         db.Blockchain.delete_many({})
+        print("Deleted current blockchain")
 
 
     def new_transaction(self, sender, recipient, amount, genesisBlock = False):

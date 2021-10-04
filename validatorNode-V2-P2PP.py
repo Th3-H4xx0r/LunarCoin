@@ -1,5 +1,7 @@
 # Imports
 
+from asyncio.tasks import FIRST_COMPLETED
+from logging import BASIC_FORMAT
 from connections import Connections
 
 
@@ -25,6 +27,7 @@ try:
     import hashlib
     import os
     import struct
+    import asyncio
 
     import BlockchainSyncUtil as BlockchainSyncUtil
     from Logger import Logger
@@ -49,6 +52,8 @@ try:
     SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT = SPAM_MANAGEMENT_SECONDS_LEFT
 
     VALIDATOR_PEERS = []
+
+    BLOCKCHAIN_SYNC_COMPLETE = False
 
     walletTxFreq = {}
 
@@ -765,11 +770,140 @@ try:
                         nodesFiltered.append(node)
 
                 VALIDATOR_PEERS = nodesFiltered
+    
 
 
+
+    async def syncBlockchain(syncUtil, syncNodeIP, syncNodePort):
+        syncComplete = await syncUtil.chainInitSync(syncNodeIP, syncNodePort)
+
+        return syncComplete
+
+    async def syncThread():
+        global SPAM_MANAGEMENT_SECONDS_LEFT
+        global BLOCKCHAIN_SYNC_COMPLETE
+        global NETWORK
+        global MINER_ID
+        global TCP_PORT
+    # Syncs the blockchain
+
+        syncUtil = BlockchainSyncUtil.BlockchainSyncUtil()
+
+        
+
+        nodesDataTemp = syncUtil.getNodes(NETWORK)
+        nodesDataList = []
+
+        # Filters out offline nodes
+        for node in nodesDataTemp['data']:
+            if(node['status'] == 'online'):
+                nodesDataList.append(node)
+        
+        nodesData = nodesDataTemp
+        nodesData['data'] = nodesDataList
+
+        print(nodesData)
+
+        currentTransactions = None
+
+        while True:
+            #print(nodesData)
+
+            # IF getNodes is None
+
+            if(nodesData == None):
+                execute = False
+                validatorLogger.logMessage('Error with connecting to network node. Restart miner and try again later.', 'regular')
+                break
+
+            #print("Repeat")
+
+            syncNodeIP, syncNodePort, nodeDataJSON = syncUtil.getRandomNode(MINER_ID, nodesData)
+
+
+            if(syncNodeIP == True and syncNodePort == True and nodeDataJSON == True): # This is the first online node
+                
+                validatorLogger.logMessage('[ONLINE] Detected as first online node', 'regular', False)
+
+                print("[ONLINE " + colored("⦾", 'green') + " ] Detected as first online node")
+
+                BLOCKCHAIN_SYNC_COMPLETE = True
+
+                break
+
+
+            elif(syncNodeIP != None and syncNodePort != None and nodeDataJSON != None): # Is 
+
+
+
+                syncComplete = await syncBlockchain(syncUtil, syncNodeIP, syncNodePort)#  # Blockchain is attempted to be synced
+
+                if(syncComplete): # If blockchain is synced
+
+                    seconds, txFreqRecv = syncUtil.syncSpamManagementClock(syncNodeIP, syncNodePort)
+
+                    #print(seconds)
+                    #print(txFreqRecv)
+
+                    if(seconds != None and txFreqRecv != None):
+                        SPAM_MANAGEMENT_SECONDS_LEFT = seconds
+                        walletTxFreq = txFreqRecv
+
+                    BLOCKCHAIN_SYNC_COMPLETE = True 
+                    #currentTransactions = currentTx
+
+
+                    break
+                    
+                else: # Sync failed
+                    # Remove this node from list
+                    nodesData['data'].remove(nodeDataJSON)
+                    pass
+
+
+            else: # Blockchain could not be synced
+                #nodesData
+                validatorLogger.logMessage('An error has occured with syncing the blockchain', 'regular')
+
+                BLOCKCHAIN_SYNC_COMPLETE = False
+
+        # Syncs with the blockchain
+
+        #while BLOCKCHAIN_SYNC_COMPLETE != True:
+        if(BLOCKCHAIN_SYNC_COMPLETE):
+            # Starts the main threads
+            t1 = threading.Thread(target=validatorServer, args=(('0.0.0.0', TCP_PORT), ))
+
+            grok = threading.Thread(target=runGrok)
+
+            # Starts spam protection service
+            spamProtection = threading.Thread(target=spamManagement)
+
+            validatorRewardServ = threading.Thread(target=validatorRewardService)
+
+            peerDiscoveryService = threading.Thread(target=getpeers)
+
+            # Starts the threads
+            try:
+                grok.start()
+                t1.start()
+                spamProtection.start()
+                #validatorRewardServ.start()
+
+                time.sleep(2)
+                validatorLogger.logMessage("Starting peer discovery service...", 'info')
+                peerDiscoveryService.start()
+            
+            except Exception as err:
+                validatorLogger.logMessage("Node err has occured: " + str(err), 'regular')
+
+        else:
+            x = input("(Press any key to exit)>>")
+            
+        
+        
 
     if __name__ == "__main__":
-
         # Checks if miner wallet exists
         if(path.exists('key.pem')):
 
@@ -804,108 +938,18 @@ try:
 
                 allTestsPassed = Connections().connectionTest()
 
+                print(allTestsPassed)
+
                 if(allTestsPassed):
 
+                    print("All tests passed")
 
-                # Syncs the blockchain
+                    try:
+                        asyncio.run(syncThread())
+                    
+                    except Exception as e:
+                        print("Error with blockchain sync thread: " + str(e))
 
-                    syncUtil = BlockchainSyncUtil.BlockchainSyncUtil()
-
-                    nodesData = syncUtil.getNodes(NETWORK)
-
-                    execute = False
-
-                    currentTransactions = None
-
-                    while True:
-
-                        #print(nodesData)
-
-                        # IF getNodes is None
-
-                        if(nodesData == None):
-                            execute = False
-                            validatorLogger.logMessage('Error with connecting to network node. Restart miner and try again later.', 'regular')
-                            break
-
-                        #print("Repeat")
-
-                        syncNodeIP, syncNodePort, nodeDataJSON = syncUtil.getRandomNode(MINER_ID, nodesData)
-
-
-                        if(syncNodeIP == True and syncNodePort == True and nodeDataJSON == True): # This is the first online node
-                            
-                            validatorLogger.logMessage('[ONLINE] Detected as first online node', 'regular', False)
-
-                            print("[ONLINE " + colored("⦾", 'green') + " ] Detected as first online node")
-
-                            execute = True
-
-                            break
-
-
-                        elif(syncNodeIP != None and syncNodePort != None and nodeDataJSON != None): # Is 
-
-                            syncComplete, currentTx = syncUtil.chainInitSync(syncNodeIP, syncNodePort) # Blockchain is attempted to be synced
-
-                            if(syncComplete): # If blockchain is synced
-
-                                seconds, txFreqRecv = syncUtil.syncSpamManagementClock(syncNodeIP, syncNodePort)
-
-                                #print(seconds)
-                                #print(txFreqRecv)
-
-                                if(seconds != None and txFreqRecv != None):
-                                    SPAM_MANAGEMENT_SECONDS_LEFT = seconds
-                                    walletTxFreq = txFreqRecv
-
-                                execute = True 
-                                currentTransactions = currentTx
-
-
-                                break
-                                
-                            else: # Sync failed
-                                # Remove this node from list
-                                nodesData['data'].remove(nodeDataJSON)
-                                pass
-
-
-                        else: # Blockchain could not be synced
-                            #nodesData
-                            validatorLogger.logMessage('An error has occured with syncing the blockchain', 'regular')
-
-                            execute = False
-
-                    if(execute):
-                        # Starts the main threads
-                        t1 = threading.Thread(target=validatorServer, args=(('0.0.0.0', TCP_PORT), ))
-
-                        grok = threading.Thread(target=runGrok)
-
-                        # Starts spam protection service
-                        spamProtection = threading.Thread(target=spamManagement)
-
-                        validatorRewardServ = threading.Thread(target=validatorRewardService)
-
-                        peerDiscoveryService = threading.Thread(target=getpeers)
-
-                        # Starts the threads
-                        try:
-                            grok.start()
-                            t1.start()
-                            spamProtection.start()
-                            #validatorRewardServ.start()
-
-                            time.sleep(2)
-                            validatorLogger.logMessage("Starting peer discovery service...", 'info')
-                            peerDiscoveryService.start()
-                        
-                        except Exception as err:
-                            validatorLogger.logMessage("Node err has occured: " + str(err), 'regular')
-
-                    else:
-                        x = input("(Press any key to exit)>>")
 
                 else:
                     validatorLogger.logMessage("Connection tests failed. Restart node or try again later", 'error')
@@ -917,6 +961,8 @@ try:
             validatorLogger.logMessage("Miner wallet does not exist. Run 'python GenerateWallet.py' and run the validator node again.", 'error')
             x = input("(Press any key to exit)>>")
 
+
+        
 except Exception as e:
     print("Error with validator: " + str(e))
     x = input("(Press any key to exit)>>")

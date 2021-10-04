@@ -272,7 +272,7 @@ class Connections:
         
         print("===========================================\n")
 
-        if(testPassCount == 2):
+        if(testPassCount >= 2):
             return True
         
         else:

@@ -15,6 +15,8 @@ import itertools, sys
 import sys
 import logging
 import time
+import traceback
+import sys
 
 init()
 
@@ -109,11 +111,11 @@ class BlockchainSyncUtil:
 
         try:
 
-            height = blockchainObj.get_current_block_height()
+            height = blockchainObj.get_current_block_length()
 
             print("Sending chain length")
 
-            socket.send(pickle.dumps('chain_length:' + str(pickle.dumps(height)))) # Sends the initial length of blockchain
+            socket.send(pickle.dumps('chain_length:' + str(height))) # Sends the initial length of blockchain
 
             print("Sent chain length")
 
@@ -125,8 +127,11 @@ class BlockchainSyncUtil:
 
             for i in range(height):
                 block = blockchainObj.getBlock(i)
+                print("SENDING BLOCK: " + str(block))
                 socket.send(pickle.dumps(block)) 
-                socket.close()
+                time.sleep(0.1)
+
+                #socket.close()
 
             print("Block sending complete")
             
@@ -216,34 +221,49 @@ class BlockchainSyncUtil:
 
 
 
-    def chainInitSync(self, ip, port):
+    async def chainInitSync(self, ip, port):
 
         try:
+
+            # Requests for blockchain sync
             print(colored('[MINER CORE] Syncing blockchain.','cyan'))
 
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((ip, port))
 
+            s.setblocking(1)
+
             dataToSend = b'blockchain_init_sync'
             data = pickle.dumps(dataToSend)
             s.send(data)
 
-            # Gets the bytes length of blockchain
 
+
+            # Gets the block length of blockchain
 
             try:
                 data = b''
 
                 packet = s.recv(BUFFER_SIZE)
 
-                
-
                 data += packet
-                #print("Got packet chain size")
+
 
                 blockchainLength = pickle.loads(data)
 
+                #print("Got packet chain size 1: " + str(blockchainLength))
+
+                #saveBlockStatic() takes 1 positional argument but 2 were given
+
+
+
+
                 blockchainLength = int(blockchainLength[blockchainLength.find(":") + 1:])
+
+                if(blockchainLength == 0):
+                    blockchainLength = 1
+
+                print("Got packet chain size: " + str(blockchainLength))
 
                 #print(blockchainLength)
 
@@ -251,47 +271,56 @@ class BlockchainSyncUtil:
                 # Delete current blockchain if sync is found
                     print("Deleting current blockchain...")
 
-                    BlockchainMongo().deleteBlockchainStatic()
+                    BlockchainMongo.deleteBlockchainStatic()
 
                     try:
 
-                        blockDataTemp = b''
+                        print("Waiting to get blockchain")
 
-                        bar = Bar('Downloading blockchain', max=(int(blockchainLength) + 1)) # Adds one to avoid zero-division error
+                        
 
+                        bar = Bar('Downloading blockchain', max=(int(blockchainLength))) # Adds one to avoid zero-division error
 
 
                         while True:
+                            #print("getting block")
+                            blockDataTemp = b''
 
                             while True:
-                                packet = s.recv(BUFFER_SIZE)
+                                blockPacket = s.recv(BUFFER_SIZE)
 
-                                if not packet: break
+                                if not blockPacket: break
                                 
-                                blockDataTemp += packet
+                                blockDataTemp += blockPacket
                             
                             blockData = pickle.loads(blockDataTemp)
+
                             
                             if(blockData == '--BLOCKCHAIN END--'):
+                                print("BLOCKCHAIN END SYNC")
                                 break
                             
                             else: # Adds block to the local blockchain
-                                BlockchainMongo().saveBlockStatic(blockData)
+                                print("RECIEVED BLOCK: " + str(blockData))
+                                BlockchainMongo.saveBlockStatic(blockData)
                                 
 
                             bar.next()
 
                         
                         bar.finish()
+                        s.close()
 
                         print(colored('[MINER CORE] Successfully synced the blockchain','cyan'))
 
 
-                        return True, [] # TODO: Add current transactions to the newly synced blockchain
+                        return True # TODO: Add current transactions to the newly synced blockchain
 
                 
                     except Exception as e1:
-                        logging.exception('message')
+                        #logging.exception('message')
+
+                        print(traceback.format_exc())
                         
                         print(colored('[MINER CORE] Error with blockchain sync has occured: ' + str(e1),'cyan'))
                 
@@ -299,13 +328,14 @@ class BlockchainSyncUtil:
                     s.close()
             
                 except Exception as e:
-                    print("Error with deleteing current blockchain. Unable to proceed")
+                    print("Error with deleteing current blockchain. Unable to proceed: " + str(e))
 
 
 
             
             except Exception as e:
-                print("Error with getting blockchain length")
+                print(traceback.format_exc())
+                print("Error with getting blockchain length: " + str(e))
 
 
                 
