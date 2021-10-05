@@ -305,9 +305,29 @@ try:
 
                 #BlockchainSyncUtil.sendRecievedBlock(block, blockchainObj, new_sock)
 
-                syncUtil.sendBlockchain(new_sock, blockchainObj)
+                #syncUtil.sendBlockchain(new_sock, blockchainObj)
+                syncUtil.sendBlockchain_HEADER(new_sock, blockchainObj)
 
                 return None
+            
+            elif('block_sync' in str(returnData)):
+                print(returnData)
+                index = str(returnData).index(":")
+
+                height = returnData[index - 1:].decode("utf-8") 
+
+                #print("HEIGHT: " + str(height))
+
+
+                validatorLogger.logMessage('Block sync with height: ' + str(height) + ' requested from miner: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
+                #block = returnData
+
+                #BlockchainSyncUtil.verifyBlock()
+
+                #BlockchainSyncUtil.sendRecievedBlock(block, blockchainObj, new_sock)
+
+                #syncUtil.sendBlockchain(new_sock, blockchainObj)
+                syncUtil.sendBlockchain_BLOCK(new_sock, blockchainObj, height)
 
 
             elif('send_transactions_list' in str(returnData)):
@@ -915,7 +935,7 @@ try:
             if(NETWORK == "testnet"):
                 validatorLogger.logMessage("[VALIDATOR CORE][WARNING] Validator node is running in testnet mode. If you want to run in mainnet, change the 'network' option to 'mainnet' in the config.json", 'warning')
 
-            time.sleep(3)
+            #time.sleep(3)
 
             if(loadComplete):
 

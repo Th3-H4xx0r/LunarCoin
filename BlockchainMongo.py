@@ -141,7 +141,7 @@ class BlockchainMongo:
     def getBlock(self, height):
         dataReturn = None
 
-        data = self.db.Blockchain.find({'block_height': height})
+        data = self.db.Blockchain.find({'block_height': int(height)})
 
         for block in data:
             #print("BLOCK:" + str(block))

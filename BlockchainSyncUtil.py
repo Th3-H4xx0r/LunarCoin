@@ -18,11 +18,13 @@ import time
 import traceback
 import sys
 
+from datetime import datetime
+
 init()
 
 # Global variables
 
-BUFFER_SIZE = 65536
+BUFFER_SIZE = 6553611
 
 class BlockchainSyncUtil:
 
@@ -107,39 +109,15 @@ class BlockchainSyncUtil:
         return None, None
 
 
-    def sendBlockchain(self, socket, blockchainObj):
+    def sendBlockchain_HEADER(self, socket, blockchainObj):
 
         try:
 
             height = blockchainObj.get_current_block_length()
 
-            print("Sending chain length")
+            socket.sendall(pickle.dumps('chain_length:' + str(height))) # Sends the initial length of blockchain
 
-            socket.send(pickle.dumps('chain_length:' + str(height))) # Sends the initial length of blockchain
-
-            print("Sent chain length")
-
-            time.sleep(2)
-
-            # Sends the blockchain - block by block
-
-            print("Sending blocks")
-
-            for i in range(height):
-                block = blockchainObj.getBlock(i)
-                print("SENDING BLOCK: " + str(block))
-                socket.send(pickle.dumps(block)) 
-                time.sleep(0.1)
-
-                #socket.close()
-
-            print("Block sending complete")
-            
-            socket.send(pickle.dumps('--BLOCKCHAIN END--')) 
-
-            
-            socket.close()
-            print("Socket closed")
+            #print("Sent chain length")
 
             return 0
 
@@ -147,6 +125,36 @@ class BlockchainSyncUtil:
         except Exception as e:
 
             print("Error with sending blockchain: " + str(e))
+
+            dataSend = pickle.dumps(None)
+
+            socket.send(dataSend)
+            socket.close()
+    
+    def sendBlockchain_BLOCK(self, socket, blockchainObj, BLOCK_HEIGHT):
+
+        try:
+
+            block = blockchainObj.getBlock(BLOCK_HEIGHT)
+
+            #print(BLOCK_HEIGHT)
+
+            #print(block)
+            socket.sendall(pickle.dumps(block)) 
+            socket.close()
+
+            
+            now = datetime.now()
+
+            current_time = now.strftime("%H:%M:%S")
+            print("Sent block with height: " + str(block['block_height']) + " At time: " + str(current_time))
+        
+            return 0
+
+        
+        except Exception as e:
+
+            print("Error with sending block: " + str(e))
 
             dataSend = pickle.dumps(None)
 
@@ -231,11 +239,11 @@ class BlockchainSyncUtil:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((ip, port))
 
-            s.setblocking(1)
+            #s.setblocking(0)
 
             dataToSend = b'blockchain_init_sync'
             data = pickle.dumps(dataToSend)
-            s.send(data)
+            s.sendall(data)
 
 
 
@@ -251,11 +259,11 @@ class BlockchainSyncUtil:
 
                 blockchainLength = pickle.loads(data)
 
+                s.close()
+
                 #print("Got packet chain size 1: " + str(blockchainLength))
 
                 #saveBlockStatic() takes 1 positional argument but 2 were given
-
-
 
 
                 blockchainLength = int(blockchainLength[blockchainLength.find(":") + 1:])
@@ -275,35 +283,55 @@ class BlockchainSyncUtil:
 
                     try:
 
-                        print("Waiting to get blockchain")
+                        print("Waiting to get blockchain.")
 
-                        
 
                         bar = Bar('Downloading blockchain', max=(int(blockchainLength))) # Adds one to avoid zero-division error
 
+                        
 
-                        while True:
-                            #print("getting block")
+                        for i in range(blockchainLength):
+                            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            s.connect((ip, port))
+
                             blockDataTemp = b''
+
+                            #print("getting block: " + str(i))
+                            
+
+                            dataToSend = b'block_sync:' + bytes(str(i), 'utf-8')
+                            data = pickle.dumps(dataToSend)
+                            s.sendall(data)
+                            
 
                             while True:
                                 blockPacket = s.recv(BUFFER_SIZE)
+                                blockDataTemp += blockPacket
+
+                                #print(blockPacket)
 
                                 if not blockPacket: break
                                 
-                                blockDataTemp += blockPacket
-                            
+
+                            #now = datetime.now()
+
+                            #current_time = now.strftime("%H:%M:%S")
+                            #print("Current Time =", current_time)
+
                             blockData = pickle.loads(blockDataTemp)
 
                             
-                            if(blockData == '--BLOCKCHAIN END--'):
-                                print("BLOCKCHAIN END SYNC")
-                                break
+                            #if(blockData == '--BLOCKCHAIN END--'):
+                                #print("BLOCKCHAIN END SYNC")
+                                #break
                             
-                            else: # Adds block to the local blockchain
-                                print("RECIEVED BLOCK: " + str(blockData))
-                                BlockchainMongo.saveBlockStatic(blockData)
-                                
+                            #else: # Adds block to the local blockchain
+                            #print("RECIEVED BLOCK: " + str(blockData))
+                            BlockchainMongo.saveBlockStatic(blockData)
+                            
+                            #print("BLOCK PROCESSING DONE")
+
+                            s.close()
 
                             bar.next()
 

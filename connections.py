@@ -34,7 +34,8 @@ class Connections:
     
     def sendObjNonBlocking(self, ip_addr, inObj, port):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.setblocking(0)
+        #s.setblocking(0)
+        
         s.connect((ip_addr, port))
         data = pickle.dumps(inObj)
         s.send(data)
