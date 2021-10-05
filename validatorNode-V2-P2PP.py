@@ -311,7 +311,7 @@ try:
                 return None
             
             elif('block_sync' in str(returnData)):
-                print(returnData)
+                #print(returnData)
                 index = str(returnData).index(":")
 
                 height = returnData[index - 1:].decode("utf-8") 
@@ -415,6 +415,8 @@ try:
                 return pickle.loads(all_data)
         #else:
             #return None
+        
+            new_sock.close()
         
         except Exception as e:
             validatorLogger.logMessage("[FATAL ERROR] Error recieving object from client: " + str(e), 'error')
@@ -541,7 +543,7 @@ try:
                         #print(newTx)
                         for node in nodesToSendTo:
                             try:
-                                Connections().sendObjNonBlocking(node['ip'], newTx, node['port'])
+                                Connections().sendObj(node['ip'], newTx, node['port'])
                                 print("Propagated transaction to node: " + str(node['ip']) + ":" + str(node['port']))
                             
                             except Exception as e:

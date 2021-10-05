@@ -29,7 +29,7 @@ class Connections:
         s.settimeout(2)
         s.connect((ip_addr, port))
         data = pickle.dumps(inObj)
-        s.send(data)
+        s.sendall(data)
         s.close()
     
     def sendObjNonBlocking(self, ip_addr, inObj, port):
