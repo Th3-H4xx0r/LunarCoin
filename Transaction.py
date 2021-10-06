@@ -2,6 +2,8 @@
 from SignaturesECDSA import SignaturesECDSA
 import time
 import pickle
+import os,binascii
+import hashlib
 
 class Transaction:
 
@@ -15,6 +17,8 @@ class Transaction:
     __data = []
     __ownWallet = None
     __hashData = None
+    __transactionID = None
+    
 
 
 
@@ -26,6 +30,7 @@ class Transaction:
         self.__signedData = None
         self.__ownWallet = wallet
         self.__data = []
+        self.__transactionID = (b'0x' + binascii.b2a_hex(os.urandom(48))).decode()
 
     def addOutput(self, address, coins):
         if(self.__outputAddress == None and self.__outputAmount == None):
@@ -53,7 +58,8 @@ class Transaction:
             else:
                 self.__signedData = SignaturesECDSA().sign(self.__data, privateKey)
             
-            self.__hashData = pickle.dumps(self.__data)
+            hashRaw = hashlib.sha256(pickle.dumps(self.__data))
+            self.__hashData = hashRaw.hexdigest()
     
     def getPublic(self):
         return self.__public
@@ -78,6 +84,12 @@ class Transaction:
     
     def getData(self):
         return self.__data
+    
+    def getTransactionID(self):
+        return self.__transactionID
+    
+    def getTimestamp(self):
+        return self.__transactionTimestamp
     
 
     def __repr__(self):

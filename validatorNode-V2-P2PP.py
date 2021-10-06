@@ -6,6 +6,8 @@ from connections import Connections
 
 
 try:
+    import traceback
+    import sys
     from SignaturesECDSA import SignaturesECDSA
     import socket
     import pickle
@@ -54,6 +56,8 @@ try:
     VALIDATOR_PEERS = []
 
     BLOCKCHAIN_SYNC_COMPLETE = False
+
+    NODE_VERSION = '' # TODO: Add node version to be sent on IHS    
 
     walletTxFreq = {}
 
@@ -314,20 +318,15 @@ try:
                 #print(returnData)
                 index = str(returnData).index(":")
 
-                height = returnData[index - 1:].decode("utf-8") 
+                index_dash = str(returnData).index("-")
 
-                #print("HEIGHT: " + str(height))
+                height = returnData[index - 1:index_dash - 2].decode("utf-8") 
 
+                height_end = returnData[index_dash - 1:].decode("utf-8") 
 
-                validatorLogger.logMessage('Block sync with height: ' + str(height) + ' requested from miner: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
-                #block = returnData
+                validatorLogger.logMessage('Block sync with height: ' + str(height) +  ' to height ' + str(height_end) + ' requested from miner: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
 
-                #BlockchainSyncUtil.verifyBlock()
-
-                #BlockchainSyncUtil.sendRecievedBlock(block, blockchainObj, new_sock)
-
-                #syncUtil.sendBlockchain(new_sock, blockchainObj)
-                syncUtil.sendBlockchain_BLOCK(new_sock, blockchainObj, height)
+                syncUtil.sendBlockchain_BLOCK(new_sock, blockchainObj, height, height_end)
 
 
             elif('send_transactions_list' in str(returnData)):
@@ -362,7 +361,7 @@ try:
 
                 #print("Sending tx")
 
-                new_sock.sendall(str(userCurrentBalance).encode('utf-8'))
+                new_sock.sendall(str(userCurrentBalance[0]).encode('utf-8'))
 
                 #print("Sent the balance")
 
@@ -436,6 +435,8 @@ try:
             global break_now
             global walletTxFreq
             global txRecv
+            global NGROK_PORT
+            global NGROK_IP
 
             blockchain = BlockchainMongo()
 
@@ -492,211 +493,250 @@ try:
 
                         validatorLogger.logMessage("[Share Recieved] Transaction share recieved - Validating...", 'success')
 
-                        ###########################################
+                        ########################################################################################
                         # Propogates transaction to other nodes (P2PP) - Peer to Peer Propgation Protocol
-                        ###########################################
+                        ########################################################################################
 
-                        # TODO: Issue, transaction can be manipulated and sent many times
-
-                        validatorLogger.logMessage("[P2PP] Propogating transaction to peers", 'info')
-
-                        # TODO: Transaction is not checked for same id
-
-
-                        # Generates two random nodes to send to
+                        duplicateTransaction = False
 
                         nodesToSendToTemp = VALIDATOR_PEERS
 
-                        nodesToSendTo = []
+                        # Checks if transaction packet is already validated by this node
+                        peers_recieved = newTx.getNodes()
 
-                        #print(nodesToSendTo)
+                        for node in peers_recieved:
+                            if(node == {'ip': NGROK_IP, 'port': NGROK_PORT}):
+                                duplicateTransaction = True
 
-                        for node in nodesToSendToTemp:
-                            #print("Filtering nodes to send to: " + str(node))
-                            try:
-                                if(node['status'] == 'online'):
-                                    nodesToSendTo.append(node)
-                            
-                            except Exception as e:
-                                print("Error with getting nodes to propagate to: " + str(e))
-                        
-                        if(len(nodesToSendTo) > 2):
+                        if(duplicateTransaction == False):
 
-                            print("more than 2 nodes online, generating random number to send to")
+                            # Adds current node to the recieved list on transaction packet
 
-                            n1 = random.randint(0, len(nodesToSendTo) - 1)
-                            n2 = random.randint(0, len(nodesToSendTo) - 1)
+                            newTx.updateCompletedNode({'ip': NGROK_IP, 'port': NGROK_PORT})
 
-                            if(n2 == n1):
-                                while True:
-                                    n2 = random.randint(0, len(nodesToSendTo) - 1)
+                            #{'ip': '4.tcp.ngrok.io', 'port': 15107, 'status': 'offline'}
 
-                                    if(n2 != n1):
-                                        break
-                            
-                            nodesToSendTo = [nodesToSendTo[n1], nodesToSendTo[n2]]
-                        
-                        # print("NODES TO SEND TO: " + str(nodesToSendTo))
+                            nodesToSendTo = []
+
+                            #print(nodesToSendTo)
+
+                            # Filters out offline nodes from peers list
+                            for node in nodesToSendToTemp:
+                                #print("Filtering nodes to send to: " + str(node))
+                                try:
+                                    if(node['status'] == 'online'):
+                                        nodesToSendTo.append(node)
+                                
+                                except Exception as e:
+                                    print("Error with getting nodes to propagate to: " + str(e))
 
 
-                        #print(VALIDATOR_PEERS)
-                        #print(newTx)
-                        for node in nodesToSendTo:
-                            try:
-                                Connections().sendObj(node['ip'], newTx, node['port'])
-                                print("Propagated transaction to node: " + str(node['ip']) + ":" + str(node['port']))
-                            
-                            except Exception as e:
-                                validatorLogger.logMessage("[Propagation Error] Error propagating transaction to node" + str(node['ip']) + ":" + str(node['port']) + " - " + str(e), 'error')
+                            # Removes peers that have already recieved the transaction
+
+                            peers_recieved = newTx.getNodes()
+
+                            for node_recv in peers_recieved:
+                                for node_peer in nodesToSendTo:
+                                    if(node_peer['ip'] == node_recv['ip'] and node_peer['port'] == node_recv['port']):
+                                        # Removes the peer from the propagation list
+                                        try:
+                                            nodesToSendTo.remove(node)
+                                        except Exception as e:
+                                            pass
                                 
 
-                    
+                            # TODO: Issue, transaction can be manipulated and sent many times
+
+                            validatorLogger.logMessage("[P2PP] Propogating transaction to peers", 'info')
+
+                            # TODO: Transaction is not checked for same id
+
+                            # Generates two random nodes to propogate to
+
+                            if(len(nodesToSendTo) > 2):
+
+                                print("more than 2 nodes online, generating random number to send to")
+
+                                n1 = random.randint(0, len(nodesToSendTo) - 1)
+                                n2 = random.randint(0, len(nodesToSendTo) - 1)
+
+                                if(n2 == n1):
+                                    while True:
+                                        n2 = random.randint(0, len(nodesToSendTo) - 1)
+
+                                        if(n2 != n1):
+                                            break
+                                
+                                nodesToSendTo = [nodesToSendTo[n1], nodesToSendTo[n2]]
+                            
+                            # print("NODES TO SEND TO: " + str(nodesToSendTo))
 
 
-                        util = SocketUtil()
-
-                        if(newTx.getMetaData() == 'validator_reward'): # For validator reward transaction
-
-                            valid = util.verifyTransaction(newTx, newTx.getPublic())
-
-                            if(valid): # Checks if TX is valid
-
-                                addrOwnWallet, wif = SignaturesECDSA().make_address(newTx.getPublic().to_string())
-
-                                if(addrOwnWallet == 'LC1D9x7UovnwqekVXtKg5BsykBybf9ZsHErh'): #Checks if reward TX is from manager node wallet
-
-                                    validatorLogger.logMessage("[Share Accepted] Validator reward transaction is valid", 'success')
-
-                                    #if(blockchain.checkCoinsInCirculation() + newTx.getOutputAmount() <= 146692378): # TODO: FIX THIS
-
-                                    blockchain.new_transaction('validator_reward', newTx.getOutputAddress(), newTx.getOutputAmount())
-
-                                    addTxToList(newTx)
-
-                                    newBlock = blockchain.goNewBlock()
-
-                                    if(newBlock):
-                                        
-                                        validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
-
-                                        blockchain.new_block() # Creates new block if block meets all requirements
+                            #print(VALIDATOR_PEERS)
+                            #print(newTx)
+                            for node in nodesToSendTo:
+                                try:
+                                    Connections().sendObj(node['ip'], newTx, node['port'])
+                                    print("Propagated transaction to node: " + str(node['ip']) + ":" + str(node['port']))
+                                
+                                except Exception as e:
+                                    validatorLogger.logMessage("[Propagation Error] Error propagating transaction to node" + str(node['ip']) + ":" + str(node['port']) + " - " + str(e), 'error')
                                     
-                                    #else:
-                                        #validatorLogger.logMessage("[Share Rejected] Coin limit reached", 'info-red')
 
-                                
-                                else:
-                                    validatorLogger.logMessage("[Share Rejected] Validator reward transaction is fraud (incorrect signed address)", 'info-red')
-                            
-                            else:
-                                validatorLogger.logMessage("[Share Rejected] Validator reward transaction is not valid", 'info-red')
+                        
 
+                            newTx = newTx.getTransaction()
+                            util = SocketUtil()
 
-                        else: # For regular trasaction
+                            if(newTx.getMetaData() == 'validator_reward'): # For validator reward transaction
 
-
-                            addrSimplified = newTx.getOwnWallet()
-
-                            #addrSimplified = addrSimplified.replace(b'-----BEGIN PUBLIC KEY-----\n', b'')
-                            #addrSimplified = addrSimplified.replace(b'\n-----END PUBLIC KEY-----\n', b'')
-
-                            # Handles spam management
-
-                            if (walletTxFreq.get(addrSimplified) != None):
-                                walletTxFreq[addrSimplified] = walletTxFreq[addrSimplified] + 1
-                            else:
-                                walletTxFreq[addrSimplified] = 1
-
-                            
-                            if(walletTxFreq.get(addrSimplified) > 200000000000): # If wallet spams
-                                validatorLogger.logMessage("[Share Rejected] Wallet address is executing too many transactions", 'warning')
-
-                            else: # If wallet does not spam
-
-                                #print(newTx)
                                 valid = util.verifyTransaction(newTx, newTx.getPublic())
 
-                                addrOwnWallet, wif = SignaturesECDSA().make_address(newTx.getPublic().to_string())
+                                if(valid): # Checks if TX is valid
 
-                                if(addrOwnWallet == newTx.getOwnWallet()):
+                                    addrOwnWallet, wif = SignaturesECDSA().make_address(newTx.getPublic().to_string())
 
-                                    #print("Working 1")
+                                    if(addrOwnWallet == 'LC1D9x7UovnwqekVXtKg5BsykBybf9ZsHErh'): #Checks if reward TX is from manager node wallet
 
-                                    if(newTx.getOwnWallet() != "genesis" and newTx.getOwnWallet() != "validator_reward"):
+                                        validatorLogger.logMessage("[Share Accepted] Validator reward transaction is valid", 'success')
 
-                                        #print("Working 2")
+                                        #if(blockchain.checkCoinsInCirculation() + newTx.getOutputAmount() <= 146692378): # TODO: FIX THIS
 
-                                        #print("NEWWWW:: " + str(newTx.getOwnWallet()))
+                                        blockchain.new_transaction('validator_reward', newTx.getOutputAddress(), newTx.getOutputAmount())
 
-                                        userCurrentBalance = blockchain.getUserBalance(newTx.getOwnWallet())
-                                    
-                                        #print(userCurrentBalance)
+                                        addTxToList(newTx)
 
-                                        #print(newTx.getOwnWallet())
-                                        #print(userCurrentBalance)
+                                        newBlock = blockchain.goNewBlock()
 
-                                        #print(newTx.getOutputAmount())
+                                        if(newBlock):
+                                            
+                                            validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
 
+                                            blockchain.new_block() # Creates new block if block meets all requirements
                                         
-                                        #print("Working 3 1/2")
-                                        if(userCurrentBalance >= newTx.getOutputAmount()):
-                                            #print("Working 3")
+                                        #else:
+                                            #validatorLogger.logMessage("[Share Rejected] Coin limit reached", 'info-red')
 
-                                            if(valid):
-
-                                                #print("Working 4")
-
-                                                if(newTx.getOutputAddress() != newTx.getPublic()):
-
-                                                    #print("Working 5")
-
-                                                    # Transaction is fully processed and is good to go
-
-                                                    blockchain.new_transaction(newTx.getOwnWallet(), newTx.getOutputAddress(), newTx.getOutputAmount())
-
-
-                                                    # Adds transaction hash to list
-
-                                                    #tx_string = json.dumps(newTx, sort_keys=True).encode()
-                                                    #tx_hash = hashlib.sha256(tx_string).hexdigest()
-
-                                                    addTxToList(newTx)
-
-                                                    newBlock = blockchain.goNewBlock()
-
-                                                    if(newBlock):
-
-                                                        #print("Working 6")
-
-                                                        validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
-
-                                                        blockchain.new_block() # Creates new block if block meets all requirements\\
-
-
-                                                        #verifyBlock(blockchain.last_block_blockchain(), db)
-                                                    
-                                                    validatorLogger.logMessage("[Share Accepted] Share validated", 'success')
-
-                                                else:
-                                                    validatorLogger.logMessage("[Share Rejected] User attempting to send coins to themself.", 'info-yellow')
-
-                                            #print(block)
-                                        
-                                        else:
-
-                                            validatorLogger.logMessage("[Share Rejected] User balance is too low to make transaction", 'info-yellow')
                                     
                                     else:
-
-                                        validatorLogger.logMessage("[Share Rejected] Fraud transaction detected", 'info-yellow')
-
-
+                                        validatorLogger.logMessage("[Share Rejected] Validator reward transaction is fraud (incorrect signed address)", 'info-red')
+                                
                                 else:
-                                    validatorLogger.logMessage("[Share Rejected] Wallet address does not match public key", 'info-yellow')
+                                    validatorLogger.logMessage("[Share Rejected] Validator reward transaction is not valid", 'info-red')
 
+
+                            else: # For regular trasaction
+
+
+                                addrSimplified = newTx.getOwnWallet()
+
+                                #addrSimplified = addrSimplified.replace(b'-----BEGIN PUBLIC KEY-----\n', b'')
+                                #addrSimplified = addrSimplified.replace(b'\n-----END PUBLIC KEY-----\n', b'')
+
+                                # Handles spam management
+
+                                if (walletTxFreq.get(addrSimplified) != None):
+                                    walletTxFreq[addrSimplified] = walletTxFreq[addrSimplified] + 1
+                                else:
+                                    walletTxFreq[addrSimplified] = 1
+
+                                
+                                if(walletTxFreq.get(addrSimplified) > 200000000000): # If wallet spams
+                                    validatorLogger.logMessage("[Share Rejected] Wallet address is executing too many transactions", 'warning')
+
+                                else: # If wallet does not spam
+
+                                    #print(newTx)
+                                    valid = util.verifyTransaction(newTx, newTx.getPublic())
+
+                                    addrOwnWallet, wif = SignaturesECDSA().make_address(newTx.getPublic().to_string())
+
+                                    if(addrOwnWallet == newTx.getOwnWallet()):
+
+                                        #print("Working 1")
+
+                                        if(newTx.getOwnWallet() != "genesis" and newTx.getOwnWallet() != "validator_reward"):
+
+                                            #print("Working 2")
+
+                                            #print("NEWWWW:: " + str(newTx.getOwnWallet()))
+
+                                            userCurrentBalance, duplicateTx = blockchain.getUserBalance(newTx.getOwnWallet(), newTx.getTransactionID())
+                                        
+                                            #print(userCurrentBalance)
+
+                                            #print(newTx.getOwnWallet())
+                                            #print(userCurrentBalance)
+
+                                            #print(newTx.getOutputAmount())
+                                            #print("Working 3 1/2")
+
+                                            if(duplicateTx == False):
+                                                if(userCurrentBalance >= newTx.getOutputAmount()):
+                                                    #print("Working 3")
+
+                                                    if(valid):
+
+                                                        #print("Working 4")
+
+                                                        if(newTx.getOutputAddress() != newTx.getPublic()):
+
+                                                            #print("Working 5")
+
+                                                            # Transaction is fully processed and is good to go
+
+                                                            #sender, recipient, amount, transactionID, timestamp, hashVal
+
+                                                            blockchain.new_transaction(newTx.getOwnWallet(), newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
+
+
+                                                            # Adds transaction hash to list
+
+                                                            #tx_string = json.dumps(newTx, sort_keys=True).encode()
+                                                            #tx_hash = hashlib.sha256(tx_string).hexdigest()
+
+                                                            addTxToList(newTx)
+
+                                                            newBlock = blockchain.goNewBlock()
+
+                                                            if(newBlock):
+
+                                                                #print("Working 6")
+
+                                                                validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
+
+                                                                blockchain.new_block() # Creates new block if block meets all requirements\\
+
+
+                                                                #verifyBlock(blockchain.last_block_blockchain(), db)
+                                                            
+                                                            validatorLogger.logMessage("[Share Accepted] Share validated", 'success')
+
+                                                        else:
+                                                            validatorLogger.logMessage("[Share Rejected] User attempting to send coins to themself.", 'info-yellow')
+                                                
+                                                else:
+
+                                                    validatorLogger.logMessage("[Share Rejected] User balance is too low to make transaction", 'info-yellow')
+                                            else:
+                                                # IS a duplicate transaction
+                                                validatorLogger.logMessage("[Share Rejected] Transaction is duplicate", 'info-yellow')
+
+                                            
+                                        else:
+
+                                            validatorLogger.logMessage("[Share Rejected] Fraud transaction detected", 'info-yellow')
+
+
+                                    else:
+                                        validatorLogger.logMessage("[Share Rejected] Wallet address does not match public key", 'info-yellow')
+
+                        else:
+                            validatorLogger.logMessage("[Share Rejected] Duplicate transaction recieved", 'info-yellow')
 
                 except Exception as e:
                     validatorLogger.logMessage("[FATAL ERROR] Error occured with recieving data. " + str(e), 'error')
+                    print(print(traceback.format_exc()))
                     #logging.log('message')
 
         except Exception as e:

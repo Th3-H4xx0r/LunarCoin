@@ -1,0 +1,17 @@
+Protocols
+P2PP - Peer to Peer Propagation Protocol
+IHS - Initial Handshake Protocol
+ISP - Initial Sync Protocol (5 blocks at a time)
+Lunar Protocol
+
+1 at a time - 1:43
+5 at a time - idk
+10 at a time - 17sec
+100 at a time - 4 sec
+
+
+Nodes
+Mission Control Node (aka. Network Node or Supernode)
+Lander Node (aka. Validator Node)
+Orbiter Node (aka. Manager Node)
+

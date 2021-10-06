@@ -211,6 +211,9 @@ if __name__ == "__main__":
                                 bar.finish()
                                 '''
 
+                                # Converts transaction to TXPacket
+                                TxPacket = TransactionPacket(Tx)
+
                                 nodesDataTemp = Connections().getValidatorNodesWallet(network)
 
                                 nodesData = []
@@ -261,7 +264,7 @@ if __name__ == "__main__":
                                     for node in nodesToSendTo:
                                         try:
 
-                                            SocketUtil.sendObj(node['ip'], Tx, int(node['port']), 2)
+                                            SocketUtil.sendObj(node['ip'], TxPacket, int(node['port']), 2)
 
                                             #print("Sent to node")
                                             oneNodeRecv = True

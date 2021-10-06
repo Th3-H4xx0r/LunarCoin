@@ -586,7 +586,6 @@ try:
                                                 else:
                                                     validatorLogger.logMessage("[Share Rejected] User attempting to send coins to themself.", 'info-yellow')
 
-                                            #print(block)
                                         
                                         else:
 

@@ -131,23 +131,27 @@ class BlockchainSyncUtil:
             socket.send(dataSend)
             socket.close()
     
-    def sendBlockchain_BLOCK(self, socket, blockchainObj, BLOCK_HEIGHT):
+    def sendBlockchain_BLOCK(self, socket, blockchainObj, BLOCK_HEIGHT_START, BLOCK_HEIGHT_END):
+
+        BLOCK_HEIGHT_START = int(BLOCK_HEIGHT_START)
+        BLOCK_HEIGHT_END = int(BLOCK_HEIGHT_END)
 
         try:
 
-            block = blockchainObj.getBlock(BLOCK_HEIGHT)
+            blocks = []
 
-            #print(BLOCK_HEIGHT)
+            for i in range(BLOCK_HEIGHT_START, BLOCK_HEIGHT_END+1):
+                block = blockchainObj.getBlock(i)
+                blocks.append(block)
 
-            #print(block)
-            socket.sendall(pickle.dumps(block)) 
+            socket.sendall(pickle.dumps(blocks)) 
             socket.close()
 
             
             now = datetime.now()
 
             current_time = now.strftime("%H:%M:%S")
-            print("Sent block with height: " + str(block['block_height']) + " At time: " + str(current_time))
+            #print("Sent block with height: " + str(block['block_height']) + " At time: " + str(current_time))
         
             return 0
 
@@ -155,6 +159,7 @@ class BlockchainSyncUtil:
         except Exception as e:
 
             print("Error with sending block: " + str(e))
+            #print(traceback.format_exc())
 
             dataSend = pickle.dumps(None)
 
@@ -231,6 +236,9 @@ class BlockchainSyncUtil:
 
     async def chainInitSync(self, ip, port):
 
+        
+        #TODO: Verify blockchain integrity after sync
+
         try:
 
             # Requests for blockchain sync
@@ -270,10 +278,14 @@ class BlockchainSyncUtil:
 
                 if(blockchainLength == 0):
                     blockchainLength = 1
+                
+                breakUpIterations = int((blockchainLength-(blockchainLength%100))/100) + 1
+
+                iterIndex = 0
+
+                                
 
                 print("Got packet chain size: " + str(blockchainLength))
-
-                #print(blockchainLength)
 
                 try:
                 # Delete current blockchain if sync is found
@@ -286,20 +298,22 @@ class BlockchainSyncUtil:
                         print("Waiting to get blockchain.")
 
 
-                        bar = Bar('Downloading blockchain', max=(int(blockchainLength))) # Adds one to avoid zero-division error
+                        bar = Bar('Downloading blockchain', max=(int(breakUpIterations))) # Adds one to avoid zero-division error
 
                         
 
-                        for i in range(blockchainLength):
+                        for i in range(breakUpIterations):
                             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                             s.connect((ip, port))
 
                             blockDataTemp = b''
-
-                            #print("getting block: " + str(i))
                             
 
-                            dataToSend = b'block_sync:' + bytes(str(i), 'utf-8')
+                            dataToSend = None
+
+                            dataToSend = b'block_sync:' + bytes(str(iterIndex), 'utf-8') + b'-' + bytes(str(iterIndex + 99), 'utf-8')
+                            iterIndex+=100
+                            
                             data = pickle.dumps(dataToSend)
                             s.sendall(data)
                             
@@ -308,28 +322,23 @@ class BlockchainSyncUtil:
                                 blockPacket = s.recv(BUFFER_SIZE)
                                 blockDataTemp += blockPacket
 
-                                #print(blockPacket)
-
                                 if not blockPacket: break
                                 
-
-                            #now = datetime.now()
-
-                            #current_time = now.strftime("%H:%M:%S")
-                            #print("Current Time =", current_time)
 
                             blockData = pickle.loads(blockDataTemp)
 
                             
-                            #if(blockData == '--BLOCKCHAIN END--'):
-                                #print("BLOCKCHAIN END SYNC")
-                                #break
-                            
                             #else: # Adds block to the local blockchain
-                            #print("RECIEVED BLOCK: " + str(blockData))
-                            BlockchainMongo.saveBlockStatic(blockData)
+
+
+                            for block in blockData:
+                                try:
+                                    if(block != None):
+                                        BlockchainMongo.saveBlockStatic(block)
+                                    
+                                except Exception as e:
+                                    print("ERROR: " + str(e))
                             
-                            #print("BLOCK PROCESSING DONE")
 
                             s.close()
 
@@ -341,6 +350,7 @@ class BlockchainSyncUtil:
 
                         print(colored('[MINER CORE] Successfully synced the blockchain','cyan'))
 
+ 
 
                         return True # TODO: Add current transactions to the newly synced blockchain
 
@@ -348,7 +358,7 @@ class BlockchainSyncUtil:
                     except Exception as e1:
                         #logging.exception('message')
 
-                        print(traceback.format_exc())
+                        #print(traceback.format_exc())
                         
                         print(colored('[MINER CORE] Error with blockchain sync has occured: ' + str(e1),'cyan'))
                 
@@ -362,7 +372,7 @@ class BlockchainSyncUtil:
 
             
             except Exception as e:
-                print(traceback.format_exc())
+                #print(traceback.format_exc())
                 print("Error with getting blockchain length: " + str(e))
 
 

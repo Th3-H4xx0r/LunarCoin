@@ -1,6 +1,7 @@
 # Imports
 import hashlib
 import json
+from os import dup
 from threading import current_thread
 from time import time
 import pickle
@@ -34,11 +35,20 @@ class BlockchainMongo:
 
             if('Blockchain' in self.db.list_collection_names()): # Checks if blockchain exists
                 # Exists
-                pass
+
+                if(self.db.Blockchain.estimated_document_count() == 0): # Checks if collection is not empty
+                    print("Creating blockchain genesis block. Current chain is currupted or does not exist")
+
+                    # Creates genesis block
+
+                    self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, '0x000000000000000000000000000000000000000000000000', time(), '0x0', True)
+                    self.new_block(previous_hash=None)
+                
+                else:
+                    pass
 
             else:
                 self.db["Blockchain"] # Creates blockchain
-
 
 
                 print("Blockchain is corrupted or file does not exist.")
@@ -49,7 +59,9 @@ class BlockchainMongo:
 
                 myPrivate, myPublic = SignaturesECDSA().loadKey()
 
-                self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, True)
+                #sender, recipient, amount, transactionID, timestamp, hashVal
+
+                self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, '0x000000000000000000000000000000000000000000000000', time(), '0x0', True)
                 self.new_block(previous_hash=None)
 
                 #self.saveBlock(block)
@@ -78,7 +90,6 @@ class BlockchainMongo:
         balance = 0
 
         for block in unser:
-            #print(block)
 
             transactions = block.transactions
 
@@ -204,7 +215,8 @@ class BlockchainMongo:
         except Exception as e:
             print("Error with adding block to the chain: " + str(e))
 
-    def verifyBlockchainIntegrity(self):
+    def verifyBlockchainIntegrity(self): 
+
 
         bar = Bar('Verifying blockchain integrity', max=len(self.chain))
 
@@ -253,14 +265,13 @@ class BlockchainMongo:
         self.db.Blockchain.insert(block)
     
     def saveBlockStatic(block):
-        #print(block)
         try:
             client = MongoClient('localhost')
             db=client.LunarCoin
             db.Blockchain.insert(block)
         
         except Exception as e:
-            print("Error adding block to the chain: " + str(e))
+            print("Error adding block to the chain: " + str(block['block_height']))
             pass
     
     def deleteBlockchainStatic():
@@ -270,7 +281,7 @@ class BlockchainMongo:
         print("Deleted current blockchain")
 
 
-    def new_transaction(self, sender, recipient, amount, genesisBlock = False):
+    def new_transaction(self, sender, recipient, amount, transactionID, timestamp, hashVal, genesisBlock = False):
 
         #print("Lenght of transactions: " + str(len(self.current_transactions)))
 
@@ -279,6 +290,9 @@ class BlockchainMongo:
                 'sender': sender,
                 'recipient': recipient,
                 'amount': amount,
+                'transactionID': transactionID,
+                'timestamp': timestamp,
+                'hash': '0x0' #TODO: Add hash
             })
 
             
@@ -288,6 +302,9 @@ class BlockchainMongo:
                 'sender': sender,
                 'recipient': recipient,
                 'amount': amount,
+                'transactionID': transactionID,
+                'timestamp': timestamp,
+                'hash': hashVal
             })
 
             #return self.last_block.index + 1
@@ -315,7 +332,9 @@ class BlockchainMongo:
         return hashlib.sha256(block_string).hexdigest()
 
 
-    def getUserBalance(self, myPublic):
+    def getUserBalance(self, myPublic, checkTransactionID=None):
+
+        duplicate = False
 
         try:
 
@@ -340,6 +359,9 @@ class BlockchainMongo:
                 for tx in transactions:
                     if(tx['sender'] == myPublic):
 
+                        if(tx['transactionID'] == checkTransactionID):
+                            duplicate = True
+
                         try:
                             balance = balance - tx['amount']
                         
@@ -355,6 +377,9 @@ class BlockchainMongo:
                 for tx in transactions:
                     if(tx['recipient'] == myPublic):
 
+                        if(tx['transactionID'] == checkTransactionID):
+                            duplicate = True
+
                         try:
                             balance = balance + tx['amount']
                         
@@ -363,7 +388,7 @@ class BlockchainMongo:
             
 
             #print("BALANCE: " + str(balance))
-            return balance
+            return balance, duplicate
 
         except Exception as e:
             print(colored("[FATAL ERROR] Error with fetching user balance: " + str(e), "red"))
