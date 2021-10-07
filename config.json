@@ -1,5 +1,6 @@
 {
-    "minerID": "defaultPranavLaptop",
+    "minerID": "defaultPranavLaptop1",
     "ngrokAuthToken": "1sbjL6HgcrNZeVi61XPymtYEisD_xaXYnSwRckKbJiUmBfVg",
-    "network": "testnet"
+    "network": "testnet",
+    "connection_mode": "ngrok"
 }

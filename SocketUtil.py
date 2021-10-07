@@ -107,6 +107,35 @@ class SocketUtil:
                 #"ip": ip,
                 #"port": int(port)
             #})
+            
         
         return rtnStatement
+    
+
+    def updateMinerIpTCP_MODE(ip, port, minerID, net):
+
+        networkNodes = Connections().getNetworkNodes()
+
+        rtnStatement = False
+
+        for node in networkNodes:
+            try:
+                r = requests.get(node + '/validator/update?ip=' + str(ip) + "&port=" + str(port) + "&id=" + str(minerID) + "&network=" + str(net))
+                #print("Updated miner ip: " + str(r.json()))
+                rtnStatement = True
+                break
+
+            except Exception as e:
+                print("[FATAL ERROR] Network node is offline: " + str(e))
+                rtnStatement = False
+
+            #doc = db.collection(u'Miner Nodes').document(minerID)
+
+            #doc.set({
+                #"ip": ip,
+                #"port": int(port)
+            #})
+        
+        return rtnStatement
+
 

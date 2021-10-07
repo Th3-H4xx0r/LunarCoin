@@ -34,17 +34,17 @@ class BlockchainSyncUtil:
     '''
     def payMinerReward(self, public):
 
-        # TODO: Work on adding miner reward
+        # TODO: Work on adding validator reward
 
-        minerNodesList = SocketUtil.getMinerNodes()
+        validatorNodesList = SocketUtil.getMinerNodes()
 
-        bar = Bar('Processing miner reward transaction', max=len(minerNodesList))
+        bar = Bar('Processing validator reward transaction', max=len(validatorNodesList))
 
-        for i in range(len(minerNodesList)):
+        for i in range(len(validatorNodesList)):
             try:
 
-                #if(minerNodesList[i]['ip'] != ip and minerNodesList[i]['port'] != port):
-                SocketUtil.sendObj(minerNodesList[i]['ip'], Tx, minerNodesList[i]['port'])
+                #if(validatorNodesList[i]['ip'] != ip and validatorNodesList[i]['port'] != port):
+                SocketUtil.sendObj(validatorNodesList[i]['ip'], Tx, validatorNodesList[i]['port'])
 
             except Exception as e:
                 pass
@@ -55,13 +55,13 @@ class BlockchainSyncUtil:
 
 
 
-        print(colored("[MINER CORE] Paying validator reward", "yellow"))
+        print(colored("[VALIDATOR CORE] Paying validator reward", "yellow"))
 
 
 '''
     def syncSpamManagementClock(self, ip, port):
         try:
-            print(colored('[MINER CORE] Syncing spam management service.','cyan'))
+            print(colored('[VALIDATOR CORE] Syncing spam management service.','cyan'))
 
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((ip, port))
@@ -103,7 +103,7 @@ class BlockchainSyncUtil:
  
 
         except Exception as e:
-            print(colored('[MINER CORE] Error with connecting to an validator node for spam management sync data: ' + str(e),'cyan'))
+            print(colored('[VALIDATOR CORE] Error with connecting to an validator node for spam management sync data: ' + str(e),'cyan'))
 
         
         return None, None
@@ -242,7 +242,7 @@ class BlockchainSyncUtil:
         try:
 
             # Requests for blockchain sync
-            print(colored('[MINER CORE] Syncing blockchain.','cyan'))
+            print(colored('[VALIDATOR CORE] Syncing blockchain.','cyan'))
 
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((ip, port))
@@ -348,7 +348,7 @@ class BlockchainSyncUtil:
                         bar.finish()
                         s.close()
 
-                        print(colored('[MINER CORE] Successfully synced the blockchain','cyan'))
+                        print(colored('[VALIDATOR CORE] Successfully synced the blockchain','cyan'))
 
  
 
@@ -360,7 +360,7 @@ class BlockchainSyncUtil:
 
                         #print(traceback.format_exc())
                         
-                        print(colored('[MINER CORE] Error with blockchain sync has occured: ' + str(e1),'cyan'))
+                        print(colored('[VALIDATOR CORE] Error with blockchain sync has occured: ' + str(e1),'cyan'))
                 
                 
                     s.close()
@@ -380,7 +380,7 @@ class BlockchainSyncUtil:
 
 
         except Exception as e:
-            print(colored('[MINER CORE] Error with connecting to an validator node: ' + str(e),'cyan'))
+            print(colored('[VALIDATOR CORE] Error with connecting to an validator node: ' + str(e),'cyan'))
 
         
         return False, None
@@ -392,7 +392,7 @@ class BlockchainSyncUtil:
         socket.send(data)
         socket.close()
 
-        print("Sent miner node current version of block")
+        print("Sent validator node current version of block")
 
 
 

@@ -30,6 +30,7 @@ try:
     import os
     import struct
     import asyncio
+    import requests
 
     import BlockchainSyncUtil as BlockchainSyncUtil
     from Logger import Logger
@@ -47,8 +48,8 @@ try:
     NGROK_AUTH_TOKEN = None
     MINER_ID = None
 
-    NGROK_IP = None
-    NGROK_PORT = None
+    NODE_IP = None
+    NODE_PORT = None
     NETWORK = None
     SPAM_MANAGEMENT_SECONDS_LEFT = 86400
     SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT = SPAM_MANAGEMENT_SECONDS_LEFT
@@ -58,6 +59,8 @@ try:
     BLOCKCHAIN_SYNC_COMPLETE = False
 
     NODE_VERSION = '' # TODO: Add node version to be sent on IHS    
+
+    CONNECTION_MODE = 'tcp'
 
     walletTxFreq = {}
 
@@ -73,6 +76,7 @@ try:
         global MINER_ID
         global NETWORK
         global validatorLogger
+        global CONNECTION_MODE
 
         try:
             with open('config.json', 'r') as file:
@@ -118,12 +122,28 @@ try:
                         return False
 
                 except Exception as e:
-                    validatorLogger.logMessage("Error with loading config.json: key network does not exist", 'error')
+                    validatorLogger.logMessage("Error with loading config.json: key network does not exist: " + str(e), 'error')
+                    return False
+                
+
+                try: # Checks if connection mode
+                    CONNECTION_MODE = data['connection_mode']
+
+                    
+                    if(isinstance(CONNECTION_MODE, str) and (CONNECTION_MODE == "tcp" or CONNECTION_MODE == "ngrok")): # Checks if network is proper
+                        pass
+                    
+                    else: 
+                        validatorLogger.logMessage("Error with loading config.json: key connection_mode is not of type string or is not 'tcp' or 'ngrok'", 'error')
+                        return False
+
+                except Exception as e:
+                    validatorLogger.logMessage("Error with loading config.json: key connection_mode does not exist: " + str(e), 'error')
                     return False
 
 
                 # If all values successfull load
-                validatorLogger.logMessage("[MINER CORE] Loaded Miner Configs from config.json", 'success')
+                validatorLogger.logMessage("[VALIDATOR CORE] Loaded validator Configs from config.json", 'success')
                 return True
 
         
@@ -137,28 +157,53 @@ try:
 
         global db
         global MINER_ID
-        global NGROK_IP
-        global NGROK_PORT
+        global NODE_IP
+        global NODE_PORT
         global NETWORK
+        global CONNECTION_MODE
+        global TCP_PORT
 
         # 1sbjL6HgcrNZeVi61XPymtYEisD_xaXYnSwRckKbJiUmBfVg   ---  token for mcendercraftnetwork@gmail.com
 
-        try:
-            ngrok.set_auth_token(NGROK_AUTH_TOKEN) # token for krishnatechpranav@gmail.com
-            tunnel = ngrok.connect(TCP_PORT, "tcp")
-            validatorLogger.logMessage("[Internal Server] Running ngrok connection server: " + str(tunnel.public_url), 'regular')
+        if(CONNECTION_MODE == 'ngrok'):
 
-            NGROK_IP, NGROK_PORT = SocketUtil.updateMinerIp(tunnel.public_url, MINER_ID, NETWORK)
+            try:
+                ngrok.set_auth_token(NGROK_AUTH_TOKEN) # token for krishnatechpranav@gmail.com
+                tunnel = ngrok.connect(TCP_PORT, "tcp")
+                validatorLogger.logMessage("[Internal Server] Running ngrok connection server: " + str(tunnel.public_url), 'regular')
 
-            if(NGROK_IP == None and NGROK_PORT == None):
-                validatorLogger.logMessage("[Offline] Cannot connect to network node. Your node will not be connected to the rest of the network, restart this node or try again later.", 'error')
-                print(colored("[Offline]") + " Cannot connect to network node. Your node will not be connected to the rest of the network, restart this node or try again later.")
+                NODE_IP, NODE_PORT = SocketUtil.updateMinerIp(tunnel.public_url, MINER_ID, NETWORK)
+
+                if(NODE_IP == None and NODE_PORT == None):
+                    validatorLogger.logMessage("[Offline] Cannot connect to network node. Your node will not be connected to the rest of the network, restart this node or try again later. Exiting...", 'error')
+                    time.sleep(3)
+                    os._exit(0)
+
+            except Exception as er:
+                validatorLogger.logMessage(er, 'error')
+                time.sleep(3)
                 os._exit(0)
 
-        except Exception as er:
-            validatorLogger.logMessage(er, 'error')
-            os._exit(0)
+        elif(CONNECTION_MODE == 'tcp'):
+            NODE_IP = requests.get('https://api.ipify.org').content.decode('utf8')
+            NODE_PORT = TCP_PORT
 
+            success = SocketUtil.updateMinerIpTCP_MODE(NODE_IP, TCP_PORT, MINER_ID, NETWORK)
+
+            if(success):
+                validatorLogger.logMessage("[NODE CONNECTION] Started connection for node with address " + str(NODE_IP) + ":" + str(TCP_PORT) + ". IMPORTANT: Configure your router to port-forward this port and point to this machine.", "info-yellow")
+            
+            else:
+                print("Error with establishing a connection with the network node. Exiting...")
+                time.sleep(3)
+                os._exit(0)
+
+
+
+        else:
+            validatorLogger.logMessage("[OFFLINE] Connection mode is not defined or valid. Exiting...", "error")
+            time.sleep(3)
+            os._exit(0)
 
     def recvObj(socket, blockchainObj, syncUtil):
         global txRecv
@@ -435,8 +480,8 @@ try:
             global break_now
             global walletTxFreq
             global txRecv
-            global NGROK_PORT
-            global NGROK_IP
+            global NODE_PORT
+            global NODE_IP
 
             blockchain = BlockchainMongo()
 
@@ -505,14 +550,14 @@ try:
                         peers_recieved = newTx.getNodes()
 
                         for node in peers_recieved:
-                            if(node == {'ip': NGROK_IP, 'port': NGROK_PORT}):
+                            if(node == {'ip': NODE_IP, 'port': NODE_PORT}):
                                 duplicateTransaction = True
 
                         if(duplicateTransaction == False):
 
                             # Adds current node to the recieved list on transaction packet
 
-                            newTx.updateCompletedNode({'ip': NGROK_IP, 'port': NGROK_PORT})
+                            newTx.updateCompletedNode({'ip': NODE_IP, 'port': NODE_PORT})
 
                             #{'ip': '4.tcp.ngrok.io', 'port': 15107, 'status': 'offline'}
 
@@ -746,8 +791,8 @@ try:
         global txRecv
         global NETWORK
         global MINER_ID
-        global NGROK_PORT
-        global NGROK_IP
+        global NODE_PORT
+        global NODE_IP
         global wall
 
         while True:
@@ -771,7 +816,7 @@ try:
                     
                     #for node in nodes:
 
-                    data = {'walletAddress': walletAddress, 'transactions': txRecv, 'minerID': MINER_ID, 'network': NETWORK, 'ip': NGROK_IP, 'port': NGROK_PORT}
+                    data = {'walletAddress': walletAddress, 'transactions': txRecv, 'minerID': MINER_ID, 'network': NETWORK, 'ip': NODE_IP, 'port': NODE_PORT}
 
                     managers = Connections().getManagerNodes()
                     validatorLogger.logMessage("[MINER CORE] Sending request for validator reward", 'info')
@@ -828,7 +873,7 @@ try:
                 nodesFiltered = [] # Takes out own node from the list so doesn't double propagate
 
                 for node in nodesData:
-                    if(node['ip'] != NGROK_IP and node['port'] != NGROK_PORT):
+                    if(node['ip'] != NODE_IP and node['port'] != NODE_PORT):
                         nodesFiltered.append(node)
 
                 VALIDATOR_PEERS = nodesFiltered
