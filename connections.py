@@ -152,10 +152,6 @@ class Connections:
 
         workingNetworkNode = None
 
-        propagatorNodes = []
-
-        workingPropagatorNode = False
-
         workingManagerNode = False
 
         managerNodes = []
@@ -175,41 +171,6 @@ class Connections:
                     workingNetworkNode = node
             
             except Exception as e:
-                pass
-        
-        # Gets propagator nodes from network node
-
-        #print(propagatorNodes)
-
-        if(workingNetworkNode != None):
-            try:
-                r = requests.get(workingNetworkNode + "/propagator/getNodes")
-
-                data = r.json()
-
-                print("PROP: " + str(data))
-
-                if(data['status'] == 'success'):
-                    propagatorNodes = data['data']
-            
-            except Exception as e:
-                pass
-        
-        print(propagatorNodes)
-        # Pings propagator nodes
-
-        # [{'id': 'propagator1', 'ip': '4.tcp.ngrok.io', 'port': '14002'}]
-        for node in propagatorNodes:
-            try:
-                self.sendObj(node['ip'], b'ping', int(node['port']))
-                print("Obj sent successfully prop nodes")
-
-                workingPropagatorNode = True
-
-                break
-            
-            except Exception as e:
-                print(e)
                 pass
         
 
@@ -254,14 +215,6 @@ class Connections:
         
         else:
             print(colored('[❌] Network node connection failed', 'red'))
-        
-        if(workingPropagatorNode):
-            print(colored('[✅] Propagator node connection established', 'green'))
-            testPassCount = testPassCount + 1
-        
-        else:
-            print(colored('[❌] Propagator node connection failed', 'red'))
-        
 
         if(workingManagerNode):
             print(colored('[✅] Manager node connection established', 'green'))
