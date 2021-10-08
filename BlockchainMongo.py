@@ -17,12 +17,13 @@ from progress.bar import Bar
 from SignaturesECDSA import SignaturesECDSA
 from pymongo import MongoClient
 
+
 init()
 
 class BlockchainMongo:
 
     x = 0
-    current_transactions = []
+    current_transactions_mempool = []
 
     currentBlockCount = 0
 
@@ -67,7 +68,7 @@ class BlockchainMongo:
                 #self.saveBlock(block)
 
             
-            self.current_transactions = []
+            self.current_transactions_mempool = []
                 
 
            #chain = self.db.Transactions.estimated_document_count()
@@ -116,6 +117,28 @@ class BlockchainMongo:
             
         return balance
 
+    def blockConsensusProtocol(self, block, peers):
+
+        # If more than 50% of the nodes accept the block, it is added to the chain
+
+        for peer in peers:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((peer['ip'], peer['port']))
+
+
+            data = pickle.dumps(block)
+
+            s.sendall(data)
+
+            # Peers send back their block and a confirmation
+
+            
+
+
+
+
+
+
 
     def getBlockTXThreshold(self):
 
@@ -140,13 +163,13 @@ class BlockchainMongo:
 
         txThreshold = self.getBlockTXThreshold()
 
-        if(len(self.current_transactions) >= txThreshold):
+        if(len(self.current_transactions_mempool) >= txThreshold):
             #print("Going to next block")
 
             return True
 
         else:
-            print(str(len(self.current_transactions))  + "/" + str(txThreshold) + " transactions left until next block")
+            print(str(len(self.current_transactions_mempool))  + "/" + str(txThreshold) + " transactions left until next block")
             return False
 
     def getBlock(self, height):
@@ -197,13 +220,13 @@ class BlockchainMongo:
             block = {
                 'block_height': currentHeight,
                 'timestamp': time(),
-                'transactions': self.current_transactions,
+                'transactions': self.current_transactions_mempool,
                 'previous_block': lastBlockHash,
             }
             
 
             # Reset the current list of transactions
-            self.current_transactions = []
+            self.current_transactions_mempool = []
 
 
             #self.chain.append(block)
@@ -286,7 +309,7 @@ class BlockchainMongo:
         #print("Lenght of transactions: " + str(len(self.current_transactions)))
 
         if(genesisBlock):
-            self.current_transactions.append({
+            self.current_transactions_mempool.append({
                 'sender': sender,
                 'recipient': recipient,
                 'amount': amount,
@@ -298,7 +321,7 @@ class BlockchainMongo:
             
         else:
 
-            self.current_transactions.append({
+            self.current_transactions_mempool.append({
                 'sender': sender,
                 'recipient': recipient,
                 'amount': amount,
