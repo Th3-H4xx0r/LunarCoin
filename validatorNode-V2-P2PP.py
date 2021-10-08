@@ -427,6 +427,24 @@ try:
                 new_sock.send(pickle.dumps({'secondsLeft': SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT, 'walletsList': walletTxFreq}))
 
                 return None
+            
+
+                # TODO: For block confirmation
+                '''
+                            elif('block_confirmation' in str(returnData)):
+                    # Confirms block
+
+                    validatorLogger.logMessage('[BLOCK CONFIRMATION] Block confirmation requested', 'info')
+
+                    index = str(returnData).index(":")
+
+                    blockReq = pickle.loads(returnData[index + 1:])
+
+                    print(blockReq)
+
+                    
+                '''
+
 
             
             elif('ping' in str(returnData)): # Get user balance and send to user
@@ -482,6 +500,7 @@ try:
             global txRecv
             global NODE_PORT
             global NODE_IP
+            global VALIDATOR_PEERS
 
             blockchain = BlockchainMongo()
 
@@ -750,7 +769,7 @@ try:
 
                                                                 validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
 
-                                                                blockchain.new_block() # Creates new block if block meets all requirements\\
+                                                                blockchain.new_block(VALIDATOR_PEERS) # Creates new block if block meets all requirements\\
 
 
                                                                 #verifyBlock(blockchain.last_block_blockchain(), db)

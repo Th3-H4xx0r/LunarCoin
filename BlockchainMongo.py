@@ -63,7 +63,7 @@ class BlockchainMongo:
                 #sender, recipient, amount, transactionID, timestamp, hashVal
 
                 self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, '0x000000000000000000000000000000000000000000000000', time(), '0x0', True)
-                self.new_block(previous_hash=None)
+                self.new_block(None, previous_hash=None)
 
                 #self.saveBlock(block)
 
@@ -126,13 +126,27 @@ class BlockchainMongo:
             s.connect((peer['ip'], peer['port']))
 
 
-            data = pickle.dumps(block)
+            data = pickle.dumps(b'block_confirmation:' + pickle.dumps(block))
+
 
             s.sendall(data)
 
             # Peers send back their block and a confirmation
 
+            blockTemp = b''
+
+            while True:
+                packet = s.recv(6553611)
+                blockTemp += packet
+                if not packet: break
             
+            blockData = pickle.loads(blockTemp)
+
+            print(blockData)
+
+            
+
+
 
 
 
@@ -197,7 +211,7 @@ class BlockchainMongo:
         return block
 
 
-    def new_block(self, previous_hash=None):
+    def new_block(self, VALIDATOR_PEERS, previous_hash=None):
 
         try:
 
@@ -211,12 +225,23 @@ class BlockchainMongo:
             else:
                 lastBlockHash = self.computeHash(self.get_previous_block(currentHeight))
             
-            
-
 
             #block = Block(len(self.chain) + 1, time(), self.current_transactions, lastBlockHash)
 
+            # TODO: FOR block confirmation
+            '''
+                        block_tmp = {
+                'block_height': currentHeight,
+                'transactions': self.current_transactions_mempool,
+                'previous_block': lastBlockHash,
+            }
+
+            if(VALIDATOR_PEERS != None):
+                self.blockConsensusProtocol(block_tmp, VALIDATOR_PEERS)
             
+
+            '''
+
             block = {
                 'block_height': currentHeight,
                 'timestamp': time(),
@@ -225,11 +250,13 @@ class BlockchainMongo:
             }
             
 
-            # Reset the current list of transactions
+            # Reset the current mempool of transactions
             self.current_transactions_mempool = []
 
 
             #self.chain.append(block)
+
+
 
             self.saveBlock(block)
 
