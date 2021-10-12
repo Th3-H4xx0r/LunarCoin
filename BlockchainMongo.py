@@ -347,6 +347,7 @@ class BlockchainMongo:
 
             
         else:
+            
 
             self.current_transactions_mempool.append({
                 'sender': sender,

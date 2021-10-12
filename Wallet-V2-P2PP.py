@@ -34,6 +34,11 @@ myPrivateSigning, myVerifyingKey = SignaturesECDSA().loadKey()
 walletAddress, wif = SignaturesECDSA().make_address(myVerifyingKey.to_string())
 #walletAddress = "LC" + walletAddress
 
+#SECP256k1
+
+print(myPrivateSigning.to_string())
+print(myVerifyingKey.to_string())
+
 #print(myPublicSigning)
 #print(type(myPublicSigning))
 
