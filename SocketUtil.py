@@ -1,5 +1,6 @@
 # Imports
 import time
+import traceback
 from connections import Connections
 from SignaturesECDSA import SignaturesECDSA
 from Signatures import Signatures
@@ -34,7 +35,17 @@ class SocketUtil:
             #print(transaction)
             #print(public)
 
-            verifed = SignaturesECDSA().verify(bytes(str(transaction.getData()), 'utf-8'), transaction.getSignedData(), public)
+            verified = False
+
+            print(transaction.getTxType())
+
+            if(transaction.getTxType() == 'mobile'):
+                print("mobile transaction")
+                verifed = SignaturesECDSA().verify(transaction.getMobileSignedData(), bytes.fromhex(transaction.getSignedData()), public)
+
+            else:
+                print("regular transaction")
+                verifed = SignaturesECDSA().verify(bytes(str(transaction.getData()), 'utf-8'), transaction.getSignedData(), public)
 
             #print(verifed)
 
@@ -52,6 +63,7 @@ class SocketUtil:
         
         except Exception as e: # On error
             print(" Error occured verifyTransaction - SocketUtil.py: " + str(e))
+            print(traceback.format_exc())
             return False
 
     def newServerConnection(ip_addr, port=TCP_PORT):

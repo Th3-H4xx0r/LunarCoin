@@ -31,6 +31,9 @@ try:
     import struct
     import asyncio
     import requests
+    from hashlib import sha256
+    from TransactionPacket import TransactionPacket
+    import ecdsa
 
     import BlockchainSyncUtil as BlockchainSyncUtil
     from Logger import Logger
@@ -271,215 +274,259 @@ try:
             
             #print(sys.getsizeof(all_data))
 
-            print(all_data)
+            #print(all_data)
 
-            if(str(all_data) != b''):
+            if(all_data != b''):
+
+                #####################################
+                # Mobile Transaction Handler
+                #####################################
+
+                if('mobile_transaction' in str(all_data)):
+                    validatorLogger.logMessage('[Share Recieved] Mobile transaction recieved', 'regular')
+
+                    useData = all_data.decode("utf-8") 
+
+                    #print(type(useData))
+
+                    index = useData.index(":/:")
+                    
+                    indexEOS = useData.index("EOS")
+
+                    finalData = useData[index + 3:indexEOS]
+
+                    #finalData = "'" + finalData + "'"
+
+                    #print("FINAL DATA FILTERED")
+
+                    jsonParsed = json.loads(finalData)
+
+                    tx_public = ecdsa.VerifyingKey.from_string(bytes.fromhex(jsonParsed['public_key']), curve=ecdsa.SECP256k1, hashfunc=sha256)
+    
+                    tx_timestamp = jsonParsed['timestamp']
+                    tx_outputAddr = jsonParsed['recipient']
+                    tx_amount = jsonParsed['output']
+                    tx_signature = jsonParsed['signature']
+                    tx_id = jsonParsed['transactionID']
+                    tx_wallet = SignaturesECDSA().make_address(tx_public.to_string())
+
+                    mobileTx = Transaction(tx_public, tx_wallet, tx_timestamp, tx_outputAddr, tx_amount, tx_signature, tx_id, jsonParsed['public_key'])
+
+                    txPacket = TransactionPacket(mobileTx)
+
+                    return txPacket
+
+
+                    #(self, public, timestamp, outputAddr, amount, signature, txID, wallet):
+
+                    #{"recipient":"LC1234","output":10.0,"public_key":"045feff91e0171e2fa0c96863e0b4054747e10e295854b91a5af274c0d2bde908f4f3f9f5a74f6b232b42c1ac3f9d4cb628420fb518bddbe0a7cb8b8a869cd8644","transactionID":"0xSiGc-Fy6RKbmKcsL-_b-00l_rB4PFv0MtaE-2cdIQr38a4ms6oWLeAmqq_uZnWKU","signature":"3090594baad2e5dd00390eb9b184fbdfb453ca6bdef90c9183274196e7acff53d08803f85d3a881e9801d8a265411f5fa234543feec9a89627ccb05591283720"}
+                
+                else:
 
             
-                returnData = pickle.loads(all_data)
+                    returnData = pickle.loads(all_data)
 
-                #print(returnData)
+                    #print(returnData)
 
 
-                '''
-                if('validator_reward_transaction' in str(returnData)): # If tx is miner transaction
-                    print("Validator reward tx")
+                    '''
+                    if('validator_reward_transaction' in str(returnData)): # If tx is miner transaction
+                        print("Validator reward tx")
 
-                    rtnDataSTR = str(returnData)
-                    minerPublic = bytes(rtnDataSTR[rtnDataSTR.find(":") + 1: rtnDataSTR.find("&&&")], 'utf-8').decode('unicode-escape').encode("ISO-8859-1")
+                        rtnDataSTR = str(returnData)
+                        minerPublic = bytes(rtnDataSTR[rtnDataSTR.find(":") + 1: rtnDataSTR.find("&&&")], 'utf-8').decode('unicode-escape').encode("ISO-8859-1")
 
-                    txList = eval(rtnDataSTR[rtnDataSTR.find("&&&")+3:len(rtnDataSTR) - 1])
-                    
-                    txValidatedCnt = 0
-                    txAccuracy = 0.1
-
-                    for i in range(len(txRecv)):
-                        try:
-                            if(txRecv[i] in txList):
-                                txValidatedCnt += 1
+                        txList = eval(rtnDataSTR[rtnDataSTR.find("&&&")+3:len(rtnDataSTR) - 1])
                         
-                        except:
+                        txValidatedCnt = 0
+                        txAccuracy = 0.1
+
+                        for i in range(len(txRecv)):
+                            try:
+                                if(txRecv[i] in txList):
+                                    txValidatedCnt += 1
+                            
+                            except:
+                                pass
+                        
+                        #print("VALIDATED: " + str(txValidatedCnt))
+
+                        #print("LEN OF TX RECV: " + str(len(txRecv)))
+
+                        print(txList)
+                        print(txRecv)
+
+                        try:
+                            txAccuracy = txValidatedCnt/len(txRecv) * 100
+                        
+                        except Exception as e: #Zero division error
+                            print(e)
                             pass
-                    
-                    #print("VALIDATED: " + str(txValidatedCnt))
 
-                    #print("LEN OF TX RECV: " + str(len(txRecv)))
+                        PAY_VALIDATOR_REWARD = False
 
-                    print(txList)
-                    print(txRecv)
+                        if(len(txList) == 0 and len(txRecv) == 0): # IF both lists are empty (no transactions made)
+                            PAY_VALIDATOR_REWARD = True
+                        
+                        elif(len(txList) <= 4): # If transactions count is low
+                            if(txAccuracy >= 50.0):
+                                PAY_VALIDATOR_REWARD = True
 
-                    try:
-                        txAccuracy = txValidatedCnt/len(txRecv) * 100
-                    
-                    except Exception as e: #Zero division error
-                        print(e)
-                        pass
 
-                    PAY_VALIDATOR_REWARD = False
-
-                    if(len(txList) == 0 and len(txRecv) == 0): # IF both lists are empty (no transactions made)
-                        PAY_VALIDATOR_REWARD = True
-                    
-                    elif(len(txList) <= 4): # If transactions count is low
-                        if(txAccuracy >= 50.0):
+                        elif(txAccuracy >= 80.0): # Regular transaction count
                             PAY_VALIDATOR_REWARD = True
 
+                        #print(txList)
+                        print(txAccuracy)
 
-                    elif(txAccuracy >= 80.0): # Regular transaction count
-                        PAY_VALIDATOR_REWARD = True
-
-                    #print(txList)
-                    print(txAccuracy)
-
-                    #print(minerPublic)
-
-                    if(PAY_VALIDATOR_REWARD == True):
-                        Tx = Transaction("validator_reward")
-                        Tx.addOutput(minerPublic, 100)
                         #print(minerPublic)
-                        Tx.sign(minerPublic, True) 
 
-                        print(colored("[VALIDATOR REWARD] Paying miner reward", "yellow"))
+                        if(PAY_VALIDATOR_REWARD == True):
+                            Tx = Transaction("validator_reward")
+                            Tx.addOutput(minerPublic, 100)
+                            #print(minerPublic)
+                            Tx.sign(minerPublic, True) 
 
-                        return Tx
-                    
-                    else:
+                            print(colored("[VALIDATOR REWARD] Paying miner reward", "yellow"))
 
-                        print(colored("[VALIDATOR REWARD] Not paying miner reward as miner proof of work is not sufficient", "yellow"))
-                        return None
-                '''
+                            return Tx
+                        
+                        else:
 
-
-                if('blockchain_init_sync' in str(returnData)): # Get user balance and send to user
-                    validatorLogger.logMessage('Blockchain sync requested from miner: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
-
-                    #block = returnData
-
-                    #BlockchainSyncUtil.verifyBlock()
-
-                    #BlockchainSyncUtil.sendRecievedBlock(block, blockchainObj, new_sock)
-
-                    #syncUtil.sendBlockchain(new_sock, blockchainObj)
-                    syncUtil.sendBlockchain_HEADER(new_sock, blockchainObj)
-
-                    return None
-                
-                elif('block_sync' in str(returnData)):
-                    #print(returnData)
-                    index = str(returnData).index(":")
-
-                    index_dash = str(returnData).index("-")
-
-                    height = returnData[index - 1:index_dash - 2].decode("utf-8") 
-
-                    height_end = returnData[index_dash - 1:].decode("utf-8") 
-
-                    validatorLogger.logMessage('Block sync with height: ' + str(height) +  ' to height ' + str(height_end) + ' requested from miner: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
-
-                    syncUtil.sendBlockchain_BLOCK(new_sock, blockchainObj, height, height_end)
-
-
-                elif('send_transactions_list' in str(returnData)):
-                    
-                    dat = pickle.dumps(txRecv)
-
-                    new_sock.send(dat)
-
-                    #print(txRecv)
-
-                    #print("Sending transactions list")
-
-                    return None
-
-                elif('send_user_balance_command' in str(returnData)): # Get user balance and send to user
-
-                    validatorLogger.logMessage('[WALLET REQUEST] Wallet request for balance', 'info-blue')
-
-                    #time.sleep(1)
-
-                    publicUser = ''
-
-                    #Blockchain.getUserBalance(publicUser)
-
-                    index = str(returnData).index(":")
-
-                    publicKey = returnData[index - 1:]
-
-                    userCurrentBalance = blockchainObj.getUserBalance(publicKey)
-
-                    #print("user balance: " +str(userCurrentBalance))
-
-                    #print("Sending tx")
-
-                    new_sock.sendall(str(userCurrentBalance[0]).encode('utf-8'))
-
-                    #print("Sent the balance")
-
-                    #print("Sent user the balance data")
-
-                    validatorLogger.logMessage('[WALLET REQUEST ACCEPTED] Wallet request for balance sent to wallet', 'info-blue')
-
-
-
-                    #print("send_user_balance_command for public key: " + str(publicKey))
-                    return None
-                
-                elif('sync_spam_management' in str(returnData)): # Get user balance and send to user
-
-                    validatorLogger.logMessage('[VALIDATOR REQUEST] Validator request for sync spam management', 'info')
-
-
-                    new_sock.send(pickle.dumps({'secondsLeft': SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT, 'walletsList': walletTxFreq}))
-
-                    return None
-                
-
-                    # TODO: For block confirmation
+                            print(colored("[VALIDATOR REWARD] Not paying miner reward as miner proof of work is not sufficient", "yellow"))
+                            return None
                     '''
-                                elif('block_confirmation' in str(returnData)):
-                        # Confirms block
 
-                        validatorLogger.logMessage('[BLOCK CONFIRMATION] Block confirmation requested', 'info')
+
+                    if('blockchain_init_sync' in str(returnData)): # Get user balance and send to user
+                        validatorLogger.logMessage('Blockchain sync requested from miner: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
+
+                        #block = returnData
+
+                        #BlockchainSyncUtil.verifyBlock()
+
+                        #BlockchainSyncUtil.sendRecievedBlock(block, blockchainObj, new_sock)
+
+                        #syncUtil.sendBlockchain(new_sock, blockchainObj)
+                        syncUtil.sendBlockchain_HEADER(new_sock, blockchainObj)
+
+                        return None
+                    
+                    elif('block_sync' in str(returnData)):
+                        #print(returnData)
+                        index = str(returnData).index(":")
+
+                        index_dash = str(returnData).index("-")
+
+                        height = returnData[index - 1:index_dash - 2].decode("utf-8") 
+
+                        height_end = returnData[index_dash - 1:].decode("utf-8") 
+
+                        validatorLogger.logMessage('Block sync with height: ' + str(height) +  ' to height ' + str(height_end) + ' requested from miner: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
+
+                        syncUtil.sendBlockchain_BLOCK(new_sock, blockchainObj, height, height_end)
+
+
+                    elif('send_transactions_list' in str(returnData)):
+                        
+                        dat = pickle.dumps(txRecv)
+
+                        new_sock.send(dat)
+
+                        #print(txRecv)
+
+                        #print("Sending transactions list")
+
+                        return None
+
+                    elif('send_user_balance_command' in str(returnData)): # Get user balance and send to user
+
+                        validatorLogger.logMessage('[WALLET REQUEST] Wallet request for balance', 'info-blue')
+
+                        #time.sleep(1)
+
+                        publicUser = ''
+
+                        #Blockchain.getUserBalance(publicUser)
 
                         index = str(returnData).index(":")
 
-                        blockReq = pickle.loads(returnData[index + 1:])
+                        publicKey = returnData[index - 1:]
 
-                        print(blockReq)
+                        userCurrentBalance = blockchainObj.getUserBalance(publicKey)
 
-                        
-                    '''
+                        #print("user balance: " +str(userCurrentBalance))
+
+                        #print("Sending tx")
+
+                        new_sock.sendall(str(userCurrentBalance[0]).encode('utf-8'))
+
+                        #print("Sent the balance")
+
+                        #print("Sent user the balance data")
+
+                        validatorLogger.logMessage('[WALLET REQUEST ACCEPTED] Wallet request for balance sent to wallet', 'info-blue')
 
 
-                
-                elif('ping' in str(returnData)): # Get user balance and send to user
-                    #print('Validator pinged')
 
-                    #block = returnData
+                        #print("send_user_balance_command for public key: " + str(publicKey))
+                        return None
+                    
+                    elif('sync_spam_management' in str(returnData)): # Get user balance and send to user
 
-                    #BlockchainSyncUtil.verifyBlock()
+                        validatorLogger.logMessage('[VALIDATOR REQUEST] Validator request for sync spam management', 'info')
 
-                    #BlockchainSyncUtil.sendRecievedBlock(block, blockchainObj, new_sock)
 
-                    time.sleep(0.5)
+                        new_sock.send(pickle.dumps({'secondsLeft': SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT, 'walletsList': walletTxFreq}))
 
-                    managers = Connections().getManagerNodes()
+                        return None
+                    
 
-                    #print(colored("[MINER CORE] Sending request for validator reward", "cyan"))
+                        # TODO: For block confirmation
+                        '''
+                                    elif('block_confirmation' in str(returnData)):
+                            # Confirms block
 
-                    for manager in managers:
-                        try:
-                            SocketUtil.sendObj(manager['ip'], 'pong:' + str(MINER_ID), manager['port'])
+                            validatorLogger.logMessage('[BLOCK CONFIRMATION] Block confirmation requested', 'info')
 
-                        except:
-                            pass
+                            index = str(returnData).index(":")
 
-                    #new_sock.send(str('pong').encode('utf-8'))
+                            blockReq = pickle.loads(returnData[index + 1:])
 
-                    return None
-                
-                else:
-                    return pickle.loads(all_data)
+                            print(blockReq)
+
+                            
+                        '''
+
+                    
+                    elif('ping' in str(returnData)): # Get user balance and send to user
+                        #print('Validator pinged')
+
+                        #block = returnData
+
+                        #BlockchainSyncUtil.verifyBlock()
+
+                        #BlockchainSyncUtil.sendRecievedBlock(block, blockchainObj, new_sock)
+
+                        time.sleep(0.5)
+
+                        managers = Connections().getManagerNodes()
+
+                        #print(colored("[MINER CORE] Sending request for validator reward", "cyan"))
+
+                        for manager in managers:
+                            try:
+                                SocketUtil.sendObj(manager['ip'], 'pong:' + str(MINER_ID), manager['port'])
+
+                            except:
+                                pass
+
+                        #new_sock.send(str('pong').encode('utf-8'))
+
+                        return None
+                    
+                    else:
+                        return pickle.loads(all_data)
             #else:
                 #return None
             
@@ -487,7 +534,7 @@ try:
         
         except Exception as e:
             validatorLogger.logMessage("[FATAL ERROR] Error recieving object from client: " + str(e), 'error')
-            logging.exception('message')
+            print(traceback.format_exc())
             return None
 
     def addTxToList(tx):
@@ -718,19 +765,29 @@ try:
                                     #print(newTx)
                                     valid = util.verifyTransaction(newTx, newTx.getPublic())
 
-                                    addrOwnWallet, wif = SignaturesECDSA().make_address(newTx.getPublic().to_string())
+                                    madeWalletAddr, wif = SignaturesECDSA().make_address(newTx.getPublic().to_string())
 
-                                    if(addrOwnWallet == newTx.getOwnWallet()):
+                                    getOwnWalletFunc = newTx.getOwnWallet()
+
+                                    if(newTx.getMetaData() == 'mobile'): #TODO: giving tuple for some reason FIX
+                                        getOwnWalletFunc = getOwnWalletFunc[0]
+                                    
+
+                                    print(madeWalletAddr)
+                                    print(getOwnWalletFunc)
+
+
+                                    if(madeWalletAddr == getOwnWalletFunc):
 
                                         #print("Working 1")
 
-                                        if(newTx.getOwnWallet() != "genesis" and newTx.getOwnWallet() != "validator_reward"):
+                                        if(getOwnWalletFunc != "genesis" and getOwnWalletFunc != "validator_reward"):
 
                                             #print("Working 2")
 
                                             #print("NEWWWW:: " + str(newTx.getOwnWallet()))
 
-                                            userCurrentBalance, duplicateTx = blockchain.getUserBalance(newTx.getOwnWallet(), newTx.getTransactionID())
+                                            userCurrentBalance, duplicateTx = blockchain.getUserBalance(getOwnWalletFunc, newTx.getTransactionID())
                                         
                                             #print(userCurrentBalance)
 
@@ -756,7 +813,7 @@ try:
 
                                                             #sender, recipient, amount, transactionID, timestamp, hashVal
 
-                                                            blockchain.new_transaction(newTx.getOwnWallet(), newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
+                                                            blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
 
 
                                                             # Adds transaction hash to list
