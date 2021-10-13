@@ -2,6 +2,7 @@
 
 from asyncio.tasks import FIRST_COMPLETED
 from logging import BASIC_FORMAT
+from re import A
 from connections import Connections
 
 
@@ -274,7 +275,7 @@ try:
             
             #print(sys.getsizeof(all_data))
 
-            #print(all_data)
+            print(all_data)
 
             if(all_data != b''):
 
@@ -302,9 +303,23 @@ try:
                     jsonParsed = json.loads(finalData)
 
                     tx_public = ecdsa.VerifyingKey.from_string(bytes.fromhex(jsonParsed['public_key']), curve=ecdsa.SECP256k1, hashfunc=sha256)
-    
+
+                    print(tx_public.to_string())
+
+                    tx_send_public = None
+
+                    try:
+                        tx_send_public = SignaturesECDSA().make_address(ecdsa.VerifyingKey.from_string(bytes.fromhex(jsonParsed['recipient']), curve=ecdsa.SECP256k1, hashfunc=sha256).to_string())  
+                    
+                    except Exception as e:
+                        print("FAILED TO PARSE RECIPIENT ADDRESS: " + str(e))
+                        tx_send_public = jsonParsed['recipient']
+
+                    
+                    print(tx_send_public)
+                    
                     tx_timestamp = jsonParsed['timestamp']
-                    tx_outputAddr = jsonParsed['recipient']
+                    tx_outputAddr = tx_send_public #
                     tx_amount = jsonParsed['output']
                     tx_signature = jsonParsed['signature']
                     tx_id = jsonParsed['transactionID']
@@ -321,6 +336,55 @@ try:
 
                     #{"recipient":"LC1234","output":10.0,"public_key":"045feff91e0171e2fa0c96863e0b4054747e10e295854b91a5af274c0d2bde908f4f3f9f5a74f6b232b42c1ac3f9d4cb628420fb518bddbe0a7cb8b8a869cd8644","transactionID":"0xSiGc-Fy6RKbmKcsL-_b-00l_rB4PFv0MtaE-2cdIQr38a4ms6oWLeAmqq_uZnWKU","signature":"3090594baad2e5dd00390eb9b184fbdfb453ca6bdef90c9183274196e7acff53d08803f85d3a881e9801d8a265411f5fa234543feec9a89627ccb05591283720"}
                 
+                elif('makeAddr' in str(all_data)):
+
+
+                    validatorLogger.logMessage('[Address Request] Make address request received', 'regular')
+
+                    useData = all_data.decode("utf-8") 
+
+                    #print(type(useData))
+
+                    index = useData.index(":/:")
+                    
+                    indexEOS = useData.index("EOS")
+
+                    finalData = useData[index + 3:indexEOS]
+
+                    tx_public = ecdsa.VerifyingKey.from_string(bytes.fromhex(finalData), curve=ecdsa.SECP256k1, hashfunc=sha256)
+                    
+                    addr = SignaturesECDSA().make_address(tx_public.to_string())
+
+                    print(addr[0])
+
+                    new_sock.send(bytes(addr[0], 'utf-8'))
+                
+                elif('send_user_balance_command_mobile' in str(all_data)):
+
+                    try:
+
+
+                        validatorLogger.logMessage('[WALLET REQUEST] Wallet request for balance MOBILE', 'info-blue')
+
+
+                        useData = all_data.decode("utf-8") 
+
+                        index = useData.index(":")
+                        
+                        publicKey = useData[index + 1:]
+                        
+                        userCurrentBalance = blockchainObj.getUserBalance(publicKey)
+
+                            #print("user balance: " +str(userCurrentBalance))
+
+                            #print("Sending tx")
+
+                        new_sock.sendall(str(userCurrentBalance[0]).encode('utf-8'))
+
+                    except Exception as e:
+                        pass
+
+                    
                 else:
 
             

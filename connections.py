@@ -9,8 +9,8 @@ class Connections:
 
     # Hardcoded
     networkNodes = [
-        #'http://localhost:4993'
-        'https://network-node-us1.lunarcoin.network',
+        'http://10.0.0.13:4993'
+        #'https://network-node-us1.lunarcoin.network',
         #'http://server1.protosystems.net'
     ]
 
