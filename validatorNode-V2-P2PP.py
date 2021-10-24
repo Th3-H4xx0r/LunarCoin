@@ -305,21 +305,9 @@ try:
                     tx_public = ecdsa.VerifyingKey.from_string(bytes.fromhex(jsonParsed['public_key']), curve=ecdsa.SECP256k1, hashfunc=sha256)
 
                     print(tx_public.to_string())
-
-                    tx_send_public = None
-
-                    try:
-                        tx_send_public = SignaturesECDSA().make_address(ecdsa.VerifyingKey.from_string(bytes.fromhex(jsonParsed['recipient']), curve=ecdsa.SECP256k1, hashfunc=sha256).to_string())  
-                    
-                    except Exception as e:
-                        print("FAILED TO PARSE RECIPIENT ADDRESS: " + str(e))
-                        tx_send_public = jsonParsed['recipient']
-
-                    
-                    print(tx_send_public)
                     
                     tx_timestamp = jsonParsed['timestamp']
-                    tx_outputAddr = tx_send_public #
+                    tx_outputAddr = jsonParsed['recipient']
                     tx_amount = jsonParsed['output']
                     tx_signature = jsonParsed['signature']
                     tx_id = jsonParsed['transactionID']
@@ -363,7 +351,6 @@ try:
 
                     try:
 
-
                         validatorLogger.logMessage('[WALLET REQUEST] Wallet request for balance MOBILE', 'info-blue')
 
 
@@ -373,13 +360,15 @@ try:
                         
                         publicKey = useData[index + 1:]
                         
-                        userCurrentBalance = blockchainObj.getUserBalance(publicKey)
+                        userCurrentBalance = blockchainObj.getUserBalance(publicKey, False, True)
 
-                            #print("user balance: " +str(userCurrentBalance))
+                        #print("user balance: " +str(userCurrentBalance))
 
                             #print("Sending tx")
 
-                        new_sock.sendall(str(userCurrentBalance[0]).encode('utf-8'))
+                        returnVar = str(userCurrentBalance[0]) + "://:" + str({"transactions": userCurrentBalance[2]})
+
+                        new_sock.sendall(returnVar.encode('utf-8'))
 
                     except Exception as e:
                         pass

@@ -3,6 +3,9 @@ import pickle
 import time
 from time import sleep
 import sys
+import threading
+
+x = 1
 
 # create an INET, STREAMing socket
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -10,6 +13,19 @@ serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #serversocket.settimeout(5)
 # bind the socket to a public host, and a well-known port
 serversocket.bind(('localhost', 8092))
+
+def sendUpdate():
+    global serversocket
+    global x
+
+    while True:
+        print("Sending update")
+        x = x + 1
+        serversocket.sendall(pickle.dumps('print({x})'))
+
+        time.sleep(4)
+
+t1 = threading.Thread(target=sendUpdate)
 
 #serversocket.setblocking(0)
 # become a server socket
@@ -84,13 +100,18 @@ while True:
     #all_data = all_data + packet
     
     #time.sleep(1)
-    returnData = pickle.loads(all_data)
+
+    try:
+        returnData = pickle.loads(all_data)
+    
+    except:
+        pass
 
     #print(returnData)
 
     #time.sleep(1)
 
     #time.sleep(2)
-    clientsocket.send(pickle.dumps('1000'))
+    #clientsocket.send(pickle.dumps('1000'))
 
     clientsocket.close()

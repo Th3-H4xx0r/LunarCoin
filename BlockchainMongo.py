@@ -16,6 +16,7 @@ import socket
 from progress.bar import Bar
 from SignaturesECDSA import SignaturesECDSA
 from pymongo import MongoClient
+import datetime
 
 
 init()
@@ -383,9 +384,11 @@ class BlockchainMongo:
         return hashlib.sha256(block_string).hexdigest()
 
 
-    def getUserBalance(self, myPublic, checkTransactionID=None):
+    def getUserBalance(self, myPublic, checkTransactionID=None, mobileGet=False):
 
         duplicate = False
+
+        transactionsInfo = []
 
         try:
 
@@ -412,6 +415,13 @@ class BlockchainMongo:
 
                         if(tx['transactionID'] == checkTransactionID):
                             duplicate = True
+                        
+
+                        if(mobileGet):
+                            dateTimeObj = datetime.datetime.fromtimestamp(tx['timestamp'])
+                            formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
+
+                            transactionsInfo.append({"type" : "outgoing", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": outTxBlock['block_height']})
 
                         try:
                             balance = balance - tx['amount']
@@ -431,6 +441,12 @@ class BlockchainMongo:
                         if(tx['transactionID'] == checkTransactionID):
                             duplicate = True
 
+                        if(mobileGet):
+                            dateTimeObj = datetime.datetime.fromtimestamp(tx['timestamp'])
+                            formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
+                        
+                            transactionsInfo.append({"type" : "incoming", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": incomingTxBlock['block_height']})
+
                         try:
                             balance = balance + tx['amount']
                         
@@ -439,7 +455,13 @@ class BlockchainMongo:
             
 
             #print("BALANCE: " + str(balance))
-            return balance, duplicate
+
+            if(mobileGet):
+                return balance, duplicate, transactionsInfo
+            
+            else:
+                return balance, duplicate
+
 
         except Exception as e:
             print(colored("[FATAL ERROR] Error with fetching user balance: " + str(e), "red"))

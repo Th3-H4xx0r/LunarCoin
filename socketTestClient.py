@@ -5,6 +5,7 @@ import socket
 from Signatures import Signatures
 
 import pickle
+import threading
 import time
 
 # Create a client socket
@@ -22,10 +23,10 @@ clientSocket.connect(("localhost",8092));
 
 # Send data to server
 
-dataToSend =  b'send_user_balance_command:sadfasdfasdf' * 1024 * 100
-data = pickle.dumps(dataToSend)
+##dataToSend =  b'send_user_balance_command:sadfasdfasdf' * 1024 * 100
+#data = pickle.dumps(dataToSend)
 
-clientSocket.send(data);
+#clientSocket.send(data);
 #clientSocket.send(b'')
 
 #clientSocket.close()
@@ -36,12 +37,39 @@ clientSocket.send(data);
 #time.sleep(2)
 # Receive data from server
 #time.sleep(1)
-dataFromServer = clientSocket.recv(1024);
+
+while True:
+    #recv something
+
+    timeout = 0.1
+    #beginning time
+    all_data = b''
+    begin=time.time()
+
+    total_data=[];
+    data='';
+
+
+    while True:
+        try:
+            packet = clientSocket.recv(8192)
+            
+            if data and packet != b'':
+                total_data.append(data)
+            else: break
+                
+        except:
+            pass
+
+    #join all parts to make final string
+    all_data = b''.join(total_data)
+
+    print(all_data)
 
  
 
 # Print to the console
 
-print(pickle.loads(dataFromServer));
+#print(pickle.loads(dataFromServer));
 
-clientSocket.close()
+#clientSocket.close()
