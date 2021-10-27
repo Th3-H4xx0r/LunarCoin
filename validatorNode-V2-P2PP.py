@@ -537,7 +537,6 @@ try:
 
                         invoiceDetails = pickle.loads(codecs.decode(str(returnData[index + 1:]).encode(), "base64")) #pickle.loads(bytes(str(returnData[index + 1:]), 'utf-8'))
 
-
                         blockchainObj.create_invoice(invoiceDetails['invoiceID'], invoiceDetails['amount'], invoiceDetails['fromAddr'], invoiceDetails['toAddr'], invoiceDetails['expDate'], invoiceDetails['signature'], invoiceDetails['publicHex'])
 
                         #invoiceID, amount, fromAddr, toAddr, expDate, signature, publicKey
@@ -550,7 +549,9 @@ try:
 
                         index = str(returnData).index(":")
 
-                        walletAddr =  returnData[index + 1:]
+                        walletAddr =  returnData[index - 1:]
+
+                        print(walletAddr)
 
 
                         invoices = blockchainObj.get_invoices(walletAddr)
@@ -567,9 +568,9 @@ try:
 
                         index = str(returnData).index(":")
 
-                        walletAddr =  returnData[index + 1:]
+                        walletAddr =  returnData[index - 1:]
 
-                        invoices = blockchainObj.get_invoices(walletAddr, pendingIncoming=True)
+                        invoices = blockchainObj.get_invoices(walletAddr, False)
 
                         new_sock.sendall(pickle.dumps(invoices))
 
@@ -921,6 +922,9 @@ try:
 
                                                             blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
 
+
+                                                            if('invoice_send_to' in newTx.getMetaData()):
+                                                                pass
 
                                                             # Adds transaction hash to list
 

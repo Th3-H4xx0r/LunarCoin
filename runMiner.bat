@@ -1,1 +1,1 @@
-python Miner.py
+python validatorNode-V2-P2PP.py

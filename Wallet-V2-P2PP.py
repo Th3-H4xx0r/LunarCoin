@@ -105,8 +105,128 @@ def getValidatorNodes(network):
     
     return nodes
 
-        
 
+
+def sendTransaction(addr, amount, metatData = None):
+    Tx = Transaction(myVerifyingKey, walletAddress)
+    Tx.addOutput(addr, amount)
+
+    if(metatData != None):
+        Tx.addMetadata(metatData)
+
+    Tx.sign(myPrivateSigning)
+
+    #print(Tx)
+
+
+    print(colored("====== Transaction confirmation ======\nSend to: " + addr + "\nAmount: " + str(amount) + "\n====================", 'green'))
+    
+    confirm = input("Execute transaction (Y/N)?>> ")
+
+    if(confirm == "Y" or confirm == "y"):
+
+        '''
+
+        bar = Bar('Sending transaction', max=len(minerNodesList))
+
+        for i in range(len(minerNodesList)):
+
+            #print(colored("Sending transaction for processing to miner node: " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'yellow'))
+
+            txPacket = TransactionPacket()
+            try:
+                SocketUtil.sendObj(minerNodesList[i]['ip'], Tx, minerNodesList[i]['port'])
+                #print(colored("Sent to miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'green'))
+
+            except:
+                #print(colored("Miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']) +" is offline", 'red'))
+                pass
+                
+            i = i + 1
+
+            bar.next()
+
+        
+        bar.finish()
+        '''
+
+        # Converts transaction to TXPacket
+        TxPacket = TransactionPacket(Tx)
+
+        nodesDataTemp = Connections().getValidatorNodesWallet(network)
+
+        nodesData = []
+
+        # Filters out inactive nodes
+
+
+        for node in nodesDataTemp:
+            if(node['status'] == 'online'):
+                nodesData.append(node)
+        
+        print("Filtered out inactive nodes")
+
+        oneNodeRecv = False
+
+        if(nodesData != None):
+            #if(nodesData['status'] == 'success'):
+            nodesToSendTo = nodesData
+
+            # Picks two random nodes to send to
+
+            print("Nodes: " + str(nodesToSendTo))
+
+            # If there are more than 2 online nodes
+            #   - Skips if there are zero nodes online
+            #   - If only one node is online, sends to that one only
+
+            print("Generating two random nodes to send to")
+
+            if(len(nodesToSendTo) > 2):
+                print("Over two nodes")
+                n1 = random.randint(0, len(nodesToSendTo) - 1)
+                n2 = random.randint(0, len(nodesToSendTo) - 1)
+
+                if(n2 == n1):
+                    while True:
+                        n2 = random.randint(0, len(nodesToSendTo) - 1)
+
+                        if(n2 != n1):
+                            break
+                
+                nodesToSendTo = [nodesToSendTo[n1], nodesToSendTo[n2]]
+            
+            elif(len(nodesToSendTo) == 1):
+                print("only one node to send to")
+                
+
+            for node in nodesToSendTo:
+                try:
+
+                    SocketUtil.sendObj(node['ip'], TxPacket, int(node['port']), 2)
+
+                    #print("Sent to node")
+                    oneNodeRecv = True
+                    #print("Transaction sent to propagator node")
+                
+                except Exception as e:
+                    #logging.log('s')
+                    #print("Cannot connect to propagator node: " + str(e))
+                    pass
+            
+            if(oneNodeRecv == False):
+                print("Error sending transaction. Cannot connect to the network,")
+            
+            else:
+                print("Transaction sent successfully.")
+        else:
+            print("Failed to get list of propagator nodes")
+
+    elif(confirm == "N" or confirm == "n"):
+        pass
+        
+    else:
+        print("Selection does not match Y or N")
 
 
 if __name__ == "__main__":
@@ -183,121 +303,7 @@ if __name__ == "__main__":
                     if(validInput == True):
 
                         if(addr and amount):    
-                            Tx = Transaction(myVerifyingKey, walletAddress)
-                            Tx.addOutput(addr, amount)
-                            Tx.sign(myPrivateSigning)
-
-                            #print(Tx)
-
-                        
-                            print(colored("====== Transaction confirmation ======\nSend to: " + addr + "\nAmount: " + str(amount) + "\n====================", 'green'))
-                            
-                            confirm = input("Execute transaction (Y/N)?>> ")
-
-                            if(confirm == "Y" or confirm == "y"):
-
-                                '''
-
-                                bar = Bar('Sending transaction', max=len(minerNodesList))
-
-                                for i in range(len(minerNodesList)):
-
-                                    #print(colored("Sending transaction for processing to miner node: " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'yellow'))
-
-                                    txPacket = TransactionPacket()
-                                    try:
-                                        SocketUtil.sendObj(minerNodesList[i]['ip'], Tx, minerNodesList[i]['port'])
-                                        #print(colored("Sent to miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']), 'green'))
-
-                                    except:
-                                        #print(colored("Miner node " + str(minerNodesList[i]['ip']) + ":" + str(minerNodesList[i]['port']) +" is offline", 'red'))
-                                        pass
-                                        
-                                    i = i + 1
-
-                                    bar.next()
-
-                                
-                                bar.finish()
-                                '''
-
-                                # Converts transaction to TXPacket
-                                TxPacket = TransactionPacket(Tx)
-
-                                nodesDataTemp = Connections().getValidatorNodesWallet(network)
-
-                                nodesData = []
-
-                                # Filters out inactive nodes
-
-
-                                for node in nodesDataTemp:
-                                    if(node['status'] == 'online'):
-                                        nodesData.append(node)
-                                
-                                print("Filtered out inactive nodes")
-
-                                oneNodeRecv = False
-
-                                if(nodesData != None):
-                                    #if(nodesData['status'] == 'success'):
-                                    nodesToSendTo = nodesData
-
-                                    # Picks two random nodes to send to
-
-                                    print("Nodes: " + str(nodesToSendTo))
-
-                                    # If there are more than 2 online nodes
-                                    #   - Skips if there are zero nodes online
-                                    #   - If only one node is online, sends to that one only
-
-                                    print("Generating two random nodes to send to")
-
-                                    if(len(nodesToSendTo) > 2):
-                                        print("Over two nodes")
-                                        n1 = random.randint(0, len(nodesToSendTo) - 1)
-                                        n2 = random.randint(0, len(nodesToSendTo) - 1)
-
-                                        if(n2 == n1):
-                                            while True:
-                                                n2 = random.randint(0, len(nodesToSendTo) - 1)
-
-                                                if(n2 != n1):
-                                                    break
-                                        
-                                        nodesToSendTo = [nodesToSendTo[n1], nodesToSendTo[n2]]
-                                    
-                                    elif(len(nodesToSendTo) == 1):
-                                        print("only one node to send to")
-                                        
-
-                                    for node in nodesToSendTo:
-                                        try:
-
-                                            SocketUtil.sendObj(node['ip'], TxPacket, int(node['port']), 2)
-
-                                            #print("Sent to node")
-                                            oneNodeRecv = True
-                                            #print("Transaction sent to propagator node")
-                                        
-                                        except Exception as e:
-                                            #logging.log('s')
-                                            #print("Cannot connect to propagator node: " + str(e))
-                                            pass
-                                    
-                                    if(oneNodeRecv == False):
-                                        print("Error sending transaction. Cannot connect to the network,")
-                                    
-                                    else:
-                                        print("Transaction sent successfully.")
-                                else:
-                                    print("Failed to get list of propagator nodes")
-
-                            elif(confirm == "N" or confirm == "n"):
-                                pass
-                                
-                            else:
-                                print("Selection does not match Y or N")
+                            sendTransaction(addr, amount)
 
 
             #  Gets balance of wallet
@@ -661,7 +667,7 @@ if __name__ == "__main__":
 
 
                     
-                    #print(invoices)
+                    print(invoices)
 
                     invoices = pickle.loads(invoices)
 
@@ -798,14 +804,18 @@ if __name__ == "__main__":
                         try:
                             invoiceChosen = int(input("Choose an invoice using the indexes listed above(ie. 0, 1, 2)>>"))
 
-                            if(invoiceChosen >= 0 and invoiceChosen < len(invoices)):
+                            if((invoiceChosen >= 0 and invoiceChosen < len(invoices))):
                                 print("Paying for invoice number : " + str(invoiceChosen))
+
+                                sendTransaction(invoices[invoiceChosen]['fromAddr'], invoices[invoiceChosen]['amount'], 'invoice_send_to:' + str(invoices[invoiceChosen]['invoiceID']) + "://:" + str(invoices[invoiceChosen]['fromAddr']))
+                            
+                            else:
+                                print(colored("Invoice index is out of range", "yellow"))
                         
                         except Exception as e:
                             print(colored("ERROR! Try again or input a proper numeric value", "red"))
 
-                        else:
-                            print(colored("Invoice index is out of range", "yellow"))
+                        
                     
                     else:
                         print(colored("No pending incoming invoices", "yellow"))

@@ -520,30 +520,39 @@ class BlockchainMongo:
 
         if(invoiceValid):
 
-            status = "valid"
+            if(fromAddr != toAddr):
 
-            if(expDate != 'none'):
+                status = "valid"
 
-                expDateTime = datetime.datetime.fromtimestamp(expDate)
-                expTimstampUTC = expDateTime.replace(tzinfo=datetime.timezone.utc)
+                if(expDate != 'none'):
 
-                status = "valid" if(datetime.datetime.now(datetime.timezone.utc).timestamp() < expTimstampUTC.timestamp()) else "invalid"
+                    expDateTime = datetime.datetime.fromtimestamp(expDate)
+                    expTimstampUTC = expDateTime.replace(tzinfo=datetime.timezone.utc)
 
-            invoiceDetails = {
-                "invoiceID": invoiceID,
-                "amount": amount,
-                "fromAddr": fromAddr, 
-                "toAddr": toAddr,
-                "expTimestamp": expDate, 
-                "status": status,
-            }
+                    status = "valid" if(datetime.datetime.now(datetime.timezone.utc).timestamp() < expTimstampUTC.timestamp()) else "invalid"
 
-            self.db.InvoicePool.insert(invoiceDetails)
+                invoiceDetails = {
+                    "invoiceID": invoiceID,
+                    "amount": amount,
+                    "fromAddr": fromAddr, 
+                    "toAddr": toAddr,
+                    "expTimestamp": expDate, 
+                    "status": status,
+                }
+
+                self.db.InvoicePool.insert(invoiceDetails)
+
+            else:
+                print(colored("[INVOICE REJECTED] Cannot send invoice to themself", "red"))
         
         else:
             print("[INVOICE REJECTED] Invoice signature is invalid")
     
-    def get_invoices(self, fromAddr, pendingIncoming=False):
+    def get_invoices(self, fromAddr, pendingIncoming=True):
+        
+
+        fromAddr = fromAddr.decode('utf-8')
+
         print(fromAddr)
         invoices = []
 
@@ -552,19 +561,36 @@ class BlockchainMongo:
         #print(invoicesDataFrom.documents)
         #print(invoicesDataTo.documents)
 
-        for invoice in invoicesDataFrom:
-            print(invoice)
-            invoices.append(invoice)
+        if(pendingIncoming):
+            for invoice in invoicesDataFrom:
+                print(invoice)
+                invoices.append(invoice)
         
 
-        if(pendingIncoming):
-            invoicesDataTo = self.db.InvoicePool.find({"toAddr": fromAddr })
-            
-            for invoice in invoicesDataTo:
-                invoices.append(invoice)
+        
+        invoicesDataTo = self.db.InvoicePool.find({"toAddr": fromAddr })
+        
+        for invoice in invoicesDataTo:
+            invoices.append(invoice)
+        
+        print(invoices)
         
         return invoices
 
+    def remove_invoice_from_pool(self, invoiceID, addr):
+        invoices = []
+
+        invoicesData = self.db.InvoicePool.find({"toAddr": addr, "invoiceID": invoiceID})
+
+        #print(invoicesDataFrom.documents)
+        #print(invoicesDataTo.documents)
+
+        for invoice in invoicesData:
+            print(invoice)
+            invoices.append(invoice)
+        
+        #TODO: IMPLEEMENT CHECKING AND THEN REMOVE THE INVOICE
+        
 
 
         
