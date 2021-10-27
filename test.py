@@ -61,35 +61,40 @@ def write_test(file, block_size, blocks_count):
 
     return took
 
-def read_test(file):
+def read_test(file, itr):
     print("Reading file")
 
-    #f = os.open(file, os.O_RDONLY, 0o777) # low-level I/O
-    start = time()
+    times = []
+
+    for i in range(itr):
+        #f = os.open(file, os.O_RDONLY, 0o777) # low-level I/O
+        start = time()
 
 
-    #fileContent = open(file)
-
-
-
-    #ret = os.read(f,1024)
-
-    fo = open(file, "r+")
-    x = fo.read();
+        #fileContent = open(file)
 
 
 
-    #print(x)
-    # Close opend file
-    fo.close()
+        #ret = os.read(f,1024)
 
-    t = time() - start
+        fo = open(file, "r+")
+        x = fo.read();
 
-    #os.close(f)
 
-    
 
-    print(sys.getsizeof(x))
+        #print(x)
+        # Close opend file
+        fo.close()
+
+        t = time() - start
+
+        times.append(t)
+
+        #os.close(f)
+
+        
+
+        print(sys.getsizeof(x))
 
 
     #os.close(f)
@@ -97,23 +102,29 @@ def read_test(file):
 
     #os.remove(f"{file}") 
 
-    return t
+    return times
 
 
 byteSize = 1048576/17
 dataToWrite_MB = 100 # 100 MB
-itr = 1
+itr = 5
 fileName = 'disk_bench_temp.dat'
 
 print("Running write test")
 results = write_test(fileName, byteSize * dataToWrite_MB, itr)
-read_test = read_test(fileName)
+read_test = read_test(fileName, itr)
 
 print(results)
 
 avgTotal = 0
+avgReadTime = 0
 
-print("READ TEST: " + str((dataToWrite_MB*itr)/read_test) + " MB/s")
+print(read_test)
+
+for readTime in read_test:
+    avgReadTime += readTime
+
+print("READ TEST: " + str((dataToWrite_MB*itr)/(avgReadTime)) + " MB/s")
 
 for result in results:
     avgTotal += result

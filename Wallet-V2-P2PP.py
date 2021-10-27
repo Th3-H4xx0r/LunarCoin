@@ -16,6 +16,11 @@ import requests
 from connections import Connections
 import time
 import random
+import datetime
+import json
+import ecdsa
+from hashlib import sha256
+import codecs
 
 minerNodesList = []
 BUFFER_SIZE = 1024
@@ -131,7 +136,7 @@ if __name__ == "__main__":
 
             #print(myPublic)
 
-            inp = input("Send (s) - view blanance(b) - view wallet address(v) - (q) to quit >>")
+            inp = input("Send (s) - View blanance(b) - View wallet address(v) - Send invoice (i) - Get pending invoices (gi) - (q) to quit >>")
 
             #try:
 
@@ -421,10 +426,293 @@ if __name__ == "__main__":
                 
 
                 
-        
+            elif(inp == 'i'):
+
+                toAddr = input("Recipient >>")
+                amount = float(input("Amount >>"))
+                expireBool = input("Expire date (y or n)>>")
+
+                expDate = 'none'
+                expTimestamp = 0
+
+                execute = True
+
+                datetime_object = "Never"
+
+                if(expireBool == 'y'):
+                    try:
+                        expDate = input("Enter the expire date in the format (MM/DD/YYYY HH:MMa) (a is for AM or PM>>")
+                        datetime_object = datetime.datetime.strptime(expDate,"%m/%d/%Y %H:%M%p") #"10/29/2021 08:28PM"
+                        expTimestamp = datetime_object.timestamp()
+                    
+                    except Exception as e:
+                        print("Date is incorrectly formatted:  " + str(e))
+                        execute = False
+                
+                else:
+                    expTimestamp = "none"
+                    
+                if(toAddr != '' and toAddr != None and amount != 0 and amount != None and expireBool != '' and expireBool != None and expDate != '' and expDate != None and execute):
+                    execute = True 
+                else:
+                    execute = False
+                
+                print(colored("====== Invoice confirmation ======\nSend to: " + toAddr + "\nAmount: " + str(amount) + "\nExpire Date: " + str(datetime_object) + "\n====================", 'green'))
+                            
+                confirm = input("Execute transaction (y/n)?>> ")
+
+                if(confirm.lower() == 'y'):
+                    # send
+
+                    invoiceID = "asdf"
+
+                     #invoiceDetails['invoiceID'], invoiceDetails['amount'], invoiceDetails['fromAddr'], invoiceDetails['toAddr'], invoiceDetails['expDate'], invoiceDetails['signature'], invoiceDetails['publicHex']
+                    dataToSign = str(invoiceID) #+ str(amount) + str(walletAddress) + str(toAddr) + str(expTimestamp) + str(myVerifyingKey.to_string().hex())
+
+                    #dataToSign = dataToSign.encode('utf-8')
+
+                    #print("DATA: " + str(dataToSign))
+
+                    signature = SignaturesECDSA().sign(dataToSign, myPrivateSigning) #data, pk
+
+                    #print("SIGNATURE: " + str(signature.hex()))
+
+                    #print("PUBLIC KEY HEX: " + str(myVerifyingKey.to_string().hex()))
+
+
+                    #publicKey = ecdsa.VerifyingKey.from_string(bytes.fromhex(myVerifyingKey.to_string().hex()), curve=ecdsa.SECP256k1, hashfunc=sha256)
+
+                    #sigHex = signature.hex()
+                    
+                    #try:
+                    #invoiceValid = SignaturesECDSA().verify(dataToSign.encode('utf-8'), bytes.fromhex(sigHex), publicKey)
+
+                    #print(invoiceValid)
+                    
+                    #except:
+                    #rint("INVALID")
+
+                    invoiceObj = {
+                        "invoiceID": invoiceID,
+                        "amount": amount,
+                        "fromAddr": walletAddress,
+                        "toAddr": toAddr,
+                        "expDate": expTimestamp,
+                        "signature": signature.hex(),
+                        "publicHex": pickle.dumps(myVerifyingKey)
+
+                    }
+
+                    #print(invoiceObj)
+
+                    dataSend = pickle.dumps(invoiceObj)
+
+                    nodesDataTemp = Connections().getValidatorNodesWallet(network)
+
+                    nodesData = []
+
+                    # Filters out inactive nodes
+
+
+                    for node in nodesDataTemp:
+                        if(node['status'] == 'online'):
+                            nodesData.append(node)
+                    
+                    print("Filtered out inactive nodes")
+
+                    oneNodeRecv = False
+
+                    if(nodesData != None):
+                        #if(nodesData['status'] == 'success'):
+                        nodesToSendTo = nodesData
+
+                        # Picks two random nodes to send to
+
+                        print("Nodes: " + str(nodesToSendTo))
+
+                        # If there are more than 2 online nodes
+                        #   - Skips if there are zero nodes online
+                        #   - If only one node is online, sends to that one only
+
+                        print("Generating two random nodes to send to")
+
+                        if(len(nodesToSendTo) > 2):
+                            print("Over two nodes")
+                            n1 = random.randint(0, len(nodesToSendTo) - 1)
+                            n2 = random.randint(0, len(nodesToSendTo) - 1)
+
+                            if(n2 == n1):
+                                while True:
+                                    n2 = random.randint(0, len(nodesToSendTo) - 1)
+
+                                    if(n2 != n1):
+                                        break
+                            
+                            nodesToSendTo = [nodesToSendTo[n1], nodesToSendTo[n2]]
+                        
+                        elif(len(nodesToSendTo) == 1):
+                            print("only one node to send to")
+                            
+
+                        for node in nodesToSendTo:
+                            try:
+
+                                SocketUtil.sendObj(node['ip'], "generate_invoice:" + codecs.encode(dataSend, "base64").decode(), int(node['port']), 2)
+
+                                #print("Sent to node")
+                                oneNodeRecv = True
+                                #print("Transaction sent to propagator node")
+                            
+                            except Exception as e:
+                                #logging.log('s')
+                                #print("Cannot connect to propagator node: " + str(e))
+                                pass
+                        
+                        if(oneNodeRecv == False):
+                            print("Error sending transaction. Cannot connect to the network,")
+                
+
+
+ 
+                #invoiceDetails['invoiceID'], invoiceDetails['amount'], invoiceDetails['fromAddr'], invoiceDetails['toAddr'], invoiceDetails['expdate'], invoiceDetails['signature'], invoiceDetails['publicHex']
         #except Exception as e:
             #print(colored("An error has occured: " + str(e), 'red'))
 
+        #  Gets pending invoices
+
+            elif(inp == "gi"):
+
+                minerNodesListTemp = Connections().getValidatorNodesWallet(network)
+
+                minerNodesList = []
+
+                #print(minerNodesList)
+
+                # Removes offline nodes
+
+                for node in minerNodesListTemp:
+                    if(node['status'] == 'online'):
+                        minerNodesList.append(node)
+
+                if(len(minerNodesList) == 0):
+                    print(colored("No online nodes detected. Failed to fetch pending invoices", "yellow"))
+
+                else:
+                    bar = Bar('Fetching invoices', max=len(minerNodesList))
+
+                    invoices = []
+
+                    indexToFetch = random.randint(0, len(minerNodesList) - 1)
+
+                    try:
+
+                        dataToSend =  b'get_invoices:' + bytes(walletAddress, 'utf-8')
+
+                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        s.settimeout(2)
+                        s.connect((minerNodesList[indexToFetch]['ip'], minerNodesList[indexToFetch]['port']))
+                        #s.setblocking(0)
+
+                        data = pickle.dumps(dataToSend)
+                        s.send(data)
+
+                        #print("Sent data")
+
+                        #time.sleep(1)
+
+
+                        
+                        try:
+
+        
+                            data = s.recv(BUFFER_SIZE)
+
+                            #print(data)
+
+                            invoices = data
+
+                            #print(invoices)
+
+                            #balance = 10
+
+                        
+                        except:
+                            pass
+                        
+                        #time.sleep(1)
+                        #s.close()
+
+
+                    except Exception as e:
+                        #print("Miner node is not active")
+                        #print(e)
+                        pass
+
+
+                        bar.next()
+
+                    bar.finish()
+
+                    sys.stdout.write("\033[F")
+                    sys.stdout.write("\033[K")
+
+
+                        #print()   
+
+
+                    
+                    #print(invoices)
+
+                    invoices = pickle.loads(invoices)
+
+                    filteredInvoicesSent = []
+                    filteredInvoicesReceived = []
+
+                    for invoice in invoices:
+
+                        ##print(invoice)
+                        if(invoice['fromAddr'] == walletAddress):
+                            print(invoice)
+                            filteredInvoicesSent.append(invoice)
+                        
+                        elif(invoice['toAddr'] == walletAddress):
+                            print(invoice)
+                            filteredInvoicesReceived.append(invoice)
+
+                    
+                    try:
+                        print(colored("Current invoices:\nPENDING SENT INVOICES:\n", 'yellow'))
+
+
+                        for i in filteredInvoicesSent:
+                            print("    ==========\n    To: " + str(i['toAddr']) + "\n    Amount: " + str(i['amount']) + "LC\n    InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']))
+
+                        print(colored("PENDING RECIEVED INVOICES:\n", 'yellow'))
+
+                        for i in filteredInvoicesReceived:
+                            print("    ==========\nFrom: " + str(i['fromAddr']) + "\n    Amount: " + str(i['amount']) + "LC\n   InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']))
+                    
+                    except Exception as e:
+                        print(colored("Error loading invoices: " + str(e) , 'red'))
+
+
+
+                    '''
+                    try:
+                        
+                        balance = Blockchain.getUserBalance(myPublic, apiServer, False)  
+
+                        print("Current balance: " + colored(str(balance) + " coins", 'yellow'))
+
+                    except Exception as e:
+                        if(str(e) == "[Errno 2] No such file or directory: 'blockchain.dat'"):
+                            print("Blockchain file does not exist")
+                        else:
+                            print("An error has occured: " + str(e))
+
+                #   Quits wallet interface
+
+                '''
     else:
         print("Input not recognized")
     

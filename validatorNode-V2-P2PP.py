@@ -35,6 +35,7 @@ try:
     from hashlib import sha256
     from TransactionPacket import TransactionPacket
     import ecdsa
+    import codecs
 
     import BlockchainSyncUtil as BlockchainSyncUtil
     from Logger import Logger
@@ -275,7 +276,7 @@ try:
             
             #print(sys.getsizeof(all_data))
 
-            print(all_data)
+            #print(all_data)
 
             if(all_data != b''):
 
@@ -372,6 +373,7 @@ try:
 
                     except Exception as e:
                         pass
+                    
 
                     
                 else:
@@ -524,6 +526,41 @@ try:
 
                         #print("send_user_balance_command for public key: " + str(publicKey))
                         return None
+                    
+                    elif('generate_invoice' in str(returnData)): # Get user balance and send to user
+
+                        validatorLogger.logMessage('[INVOICE REQUEST] Request to generate invoice', 'info-blue')
+
+                        index = str(returnData).index(":")
+
+                        #print(bytes(str(returnData[index + 1:]), 'utf-8'))
+
+                        invoiceDetails = pickle.loads(codecs.decode(str(returnData[index + 1:]).encode(), "base64")) #pickle.loads(bytes(str(returnData[index + 1:]), 'utf-8'))
+
+
+                        blockchainObj.create_invoice(invoiceDetails['invoiceID'], invoiceDetails['amount'], invoiceDetails['fromAddr'], invoiceDetails['toAddr'], invoiceDetails['expDate'], invoiceDetails['signature'], invoiceDetails['publicHex'])
+
+                        #invoiceID, amount, fromAddr, toAddr, expDate, signature, publicKey
+
+                        return None
+
+                    elif('get_invoices' in str(returnData)): # Get user balance and send to user
+
+                        validatorLogger.logMessage('[INVOICE REQUEST] Request to get invoices', 'info-blue')
+
+                        index = str(returnData).index(":")
+
+                        walletAddr =  returnData[index + 1:]
+
+
+                        invoices = blockchainObj.get_invoices(walletAddr)
+
+                        new_sock.sendall(pickle.dumps(invoices))
+
+                        #invoiceID, amount, fromAddr, toAddr, expDate, signature, publicKey
+
+                        return None
+
                     
                     elif('sync_spam_management' in str(returnData)): # Get user balance and send to user
 

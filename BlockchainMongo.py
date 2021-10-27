@@ -17,6 +17,8 @@ from progress.bar import Bar
 from SignaturesECDSA import SignaturesECDSA
 from pymongo import MongoClient
 import datetime
+import ecdsa
+from hashlib import sha256
 
 
 init()
@@ -74,6 +76,13 @@ class BlockchainMongo:
 
            #chain = self.db.Transactions.estimated_document_count()
 
+
+            ###########################
+            ## InvoicePool Initilization
+            ###########################
+
+            if('InvoicePool' not in self.db.list_collection_names()): # Checks if InvoicePool exists
+                self.db["InvoicePool"] # Creates InvoicePool
             
         except Exception as e:
             print("Fatal error with blockchain init: " + str(e))
@@ -465,5 +474,93 @@ class BlockchainMongo:
 
         except Exception as e:
             print(colored("[FATAL ERROR] Error with fetching user balance: " + str(e), "red"))
+
+    ####################
+    # Invoice support
+    ####################
+
+    def create_invoice(self, invoiceID, amount, fromAddr, toAddr, expDate, signature, public):
+
+        #publicKey = ecdsa.VerifyingKey.from_string(bytes.fromhex(public), curve=ecdsa.SECP256k1, hashfunc=sha256)
+
+        #print(publicKey)
+
+        #print(invoiceID)
+
+        originalMessage = str(invoiceID) #+ str(amount) + str(fromAddr) + str(toAddr) + str(expDate) + str(public)
+        #str(invoiceID) + str(amount) + str(walletAddress) + str(toAddr) + str(expDate) + str(myVerifyingKey.to_string().hex())
+
+        #print(originalMessage)
+
+        #print(bytes(originalMessage, 'utf-8'))
+
+        #print(bytes.fromhex(signature))
+
+        #print(signature)
+
+        #print( bytes.fromhex(signature))
+
+        # print
+
+
+        print("DATA: " + str(originalMessage.encode('utf-8')))
+
+        print("SIGNATURE: " + str(bytes.fromhex(signature)))
+
+        invoiceValid = False
+
+        try:
+
+            invoiceValid = SignaturesECDSA().verify(originalMessage.encode('utf-8'), bytes.fromhex(signature), pickle.loads(public))
+        
+        except:
+            pass
+
+        #verify(self, message, sig, verifyingKey):
+
+        if(invoiceValid):
+
+            status = "valid"
+
+            if(expDate != 'none'):
+
+                expDateTime = datetime.datetime.fromtimestamp(expDate)
+                expTimstampUTC = expDateTime.replace(tzinfo=datetime.timezone.utc)
+
+                status = "valid" if(datetime.datetime.now(datetime.timezone.utc).timestamp() < expTimstampUTC.timestamp()) else "invalid"
+
+            invoiceDetails = {
+                "invoiceID": invoiceID,
+                "amount": amount,
+                "fromAddr": fromAddr, 
+                "toAddr": toAddr,
+                "expTimestamp": expDate, 
+                "status": status,
+            }
+
+            self.db.InvoicePool.insert(invoiceDetails)
+        
+        else:
+            print("[INVOICE REJECTED] Invoice signature is invalid")
+    
+    def get_invoices(self, fromAddr):
+        print(fromAddr)
+        invoices = []
+        invoicesDataFrom = self.db.InvoicePool.find({"invoiceID": "asdf" })
+        invoicesDataTo = self.db.InvoicePool.find({"toAddr": fromAddr })
+
+        #print(invoicesDataFrom.documents)
+        #print(invoicesDataTo.documents)
+
+        for invoice in invoicesDataFrom:
+            print(invoice)
+            invoices.append(invoice)
+        
+        for invoice in invoicesDataTo:
+            invoices.append(invoice)
+        
+        return invoices
+
+
 
         

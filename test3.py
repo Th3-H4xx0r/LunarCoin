@@ -1,60 +1,42 @@
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP
-import time
-import os.path
-from os import path
+from SignaturesECDSA import SignaturesECDSA
+import ecdsa
+from hashlib import sha256
+import socket
+import json
+import hashlib
+import pickle
 
-secret_message = b'ATTACK AT DAWN' * 30
+#pk = ecdsa.SigningKey.from_string(bytes.fromhex('c4d2c2a1cdeb1e3bb5746172f468268b94a9c892a106402435a1371800311121'), curve=ecdsa.SECP256k1)
 
-key = None
-loadReq = False
-if(path.exists('testKEY.pem') != True):
-    tic = time.perf_counter()
+#verifying = pk.get_verifying_key()
+
+#print("VERIFYING KEY: " + str(verifying.to_string().hex()))
+
+#print(hashlib.sha256(b"hello").hexdigest())
 
 
-    ### First, make a key and save it
-    key = RSA.generate(4096)
-    with open( 'testKEY.pem', 'wb' ) as f:
-        f.write( key.exportKey( 'PEM' ))
-    
-    ### Then use key to encrypt and save our message
+vk = ecdsa.VerifyingKey.from_string(bytes.fromhex(
+    'a757df5e261c3e2c1378a3b4b7bc755619183d3a19dea5063915ad5b30a4f7b9368fc0c2f7827e3913ed7759f299ba60529b2dc646d83307cc4b9f2d40fb849c'
+    ), curve=ecdsa.SECP256k1, hashfunc=sha256)
 
-    print("Key generation done")
 
-    toc = time.perf_counter()
 
-else:
-    loadReq = True
-    with open('testKEY.pem', 'rb') as f:
-        key = RSA.importKey(f.read())
 
-tic1 = time.perf_counter()
+signature = '228febac04aa2aa4f88288a20d17bfae128b209d1d25ede0b255023307f7342007bbdbe97f05bef231161d9c397113a1f2f23c5415466677c6db0b187c14dcd0'
+message = b'asdf'
+           #LC123410.01634019.5576489998045feff91e0171e2fa0c96863e0b4054747e10e295854b91a5af274c0d2bde908f4f3f9f5a74f6b232b42c1ac3f9d4cb628420fb518bddbe0a7cb8b8a869cd86440xfuitUDWmLkyQwK8ooZb3aTRQgAQPDHd3d1sgd2pvAZRo66VGHhbLpEu1IRWFN52a2BO5nlCwGg010DN7FV3h03oTqyfLcrp8
 
-public_crypter = PKCS1_OAEP.new( key )
-enc_data = public_crypter.encrypt( secret_message )
+#verified = vk.verify(bytes.fromhex(signature), message)
+#print(verified) # True
 
-#print(enc_data)
+#print("VERIFYING HEX: " + str(vk.to_string().hex()))
 
-toc1 = time.perf_counter()
-#with open( 'encrypted.txt', 'wb' ) as f:
-#    f.write( enc_data )
+#signature = pk.sign(bytes('2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824', 'utf-8'))
 
-### And later on load and decode
-#with open( 'mykey.pem', 'r' ) as f:
-#    key = RSA.importKey( f.read() )
+#print(signature.hex())
 
-#with open( 'encrypted.txt', 'rb' ) as f:
-#    encrypted_data = f.read()
+x = pickle.dumps({"key": pickle.dumps(vk)})
 
-tic2 = time.perf_counter()
-public_crypter =  PKCS1_OAEP.new( key )
-decrypted_data = public_crypter.decrypt( enc_data )
-
-#print(decrypted_data)
-
-toc2 = time.perf_counter()
-
-if(loadReq == False):    
-    print(f"Created key in {toc - tic:0.4f} seconds")
-print(f"Encrypted in {toc1 - tic1:0.4f} seconds")
-print(f"Decrypted in {toc2 - tic2:0.4f} seconds")
+y = pickle.loads(x)
+print(y)
+print(pickle.loads(y['key']))
