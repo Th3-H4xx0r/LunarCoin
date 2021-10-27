@@ -543,11 +543,11 @@ class BlockchainMongo:
         else:
             print("[INVOICE REJECTED] Invoice signature is invalid")
     
-    def get_invoices(self, fromAddr):
+    def get_invoices(self, fromAddr, pendingIncoming=False):
         print(fromAddr)
         invoices = []
-        invoicesDataFrom = self.db.InvoicePool.find({"invoiceID": "asdf" })
-        invoicesDataTo = self.db.InvoicePool.find({"toAddr": fromAddr })
+
+        invoicesDataFrom = self.db.InvoicePool.find({"fromAddr": fromAddr })
 
         #print(invoicesDataFrom.documents)
         #print(invoicesDataTo.documents)
@@ -556,8 +556,12 @@ class BlockchainMongo:
             print(invoice)
             invoices.append(invoice)
         
-        for invoice in invoicesDataTo:
-            invoices.append(invoice)
+
+        if(pendingIncoming):
+            invoicesDataTo = self.db.InvoicePool.find({"toAddr": fromAddr })
+            
+            for invoice in invoicesDataTo:
+                invoices.append(invoice)
         
         return invoices
 

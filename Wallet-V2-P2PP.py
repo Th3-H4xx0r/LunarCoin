@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
             #print(myPublic)
 
-            inp = input("Send (s) - View blanance(b) - View wallet address(v) - Send invoice (i) - Get pending invoices (gi) - (q) to quit >>")
+            inp = input("Send (s) - View blanance(b) - View wallet address(v) - Send invoice (i) - Get pending invoices (gi) - Pay pending invoice (pi) - (q) to quit >>")
 
             #try:
 
@@ -685,34 +685,131 @@ if __name__ == "__main__":
 
 
                         for i in filteredInvoicesSent:
-                            print("    ==========\n    To: " + str(i['toAddr']) + "\n    Amount: " + str(i['amount']) + "LC\n    InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']))
+                            print("    ==========\n    To: " + str(i['toAddr']) + "\n    Amount: " + str(i['amount']) + " LC\n    InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']))
 
                         print(colored("PENDING RECIEVED INVOICES:\n", 'yellow'))
 
                         for i in filteredInvoicesReceived:
-                            print("    ==========\nFrom: " + str(i['fromAddr']) + "\n    Amount: " + str(i['amount']) + "LC\n   InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']))
+                            print("    ==========\n    To: " + str(i['toAddr']) + "\n    Amount: " + str(i['amount']) + " LC\n    InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']))
                     
                     except Exception as e:
                         print(colored("Error loading invoices: " + str(e) , 'red'))
 
+            elif(inp == "pi"):
 
+                minerNodesListTemp = Connections().getValidatorNodesWallet(network)
 
-                    '''
+                minerNodesList = []
+
+                #print(minerNodesList)
+
+                # Removes offline nodes
+
+                for node in minerNodesListTemp:
+                    if(node['status'] == 'online'):
+                        minerNodesList.append(node)
+
+                if(len(minerNodesList) == 0):
+                    print(colored("No online nodes detected. Failed to fetch pending invoices", "yellow"))
+
+                else:
+                    bar = Bar('Fetching invoices', max=len(minerNodesList))
+
+                    invoices = []
+
+                    indexToFetch = random.randint(0, len(minerNodesList) - 1)
+
                     try:
-                        
-                        balance = Blockchain.getUserBalance(myPublic, apiServer, False)  
 
-                        print("Current balance: " + colored(str(balance) + " coins", 'yellow'))
+                        dataToSend =  b'get__invoices_pending_incoming:' + bytes(walletAddress, 'utf-8')
+
+                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        s.settimeout(2)
+                        s.connect((minerNodesList[indexToFetch]['ip'], minerNodesList[indexToFetch]['port']))
+                        #s.setblocking(0)
+
+                        data = pickle.dumps(dataToSend)
+                        s.send(data)
+
+                        #print("Sent data")
+
+                        #time.sleep(1)
+
+
+                        
+                        try:
+
+        
+                            data = s.recv(BUFFER_SIZE)
+
+                            #print(data)
+
+                            invoices = data
+
+                            #print(invoices)
+
+                            #balance = 10
+
+                        
+                        except:
+                            pass
+                        
+                        #time.sleep(1)
+                        #s.close()
+
 
                     except Exception as e:
-                        if(str(e) == "[Errno 2] No such file or directory: 'blockchain.dat'"):
-                            print("Blockchain file does not exist")
+                        #print("Miner node is not active")
+                        #print(e)
+                        pass
+
+
+                        bar.next()
+
+                    bar.finish()
+
+                    sys.stdout.write("\033[F")
+                    sys.stdout.write("\033[K")
+
+
+                        #print()   
+
+
+                    
+                    #print(invoices)
+
+                    invoices = pickle.loads(invoices)
+
+                    if(len(invoices) > 0):
+
+                        try:
+                            print(colored("PENDING RECIEVED INVOICES:\n", 'yellow'))
+
+                            idx = 0
+
+                            for i in invoices:
+                                print("    ==========\n    Index: " + str(idx) + "\n    To: " + str(i['toAddr']) + "\n    Amount: " + str(i['amount']) + " LC\n    InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']))
+                                idx += 1
+
+                        except Exception as e:
+                            print(colored("Error loading invoices: " + str(e) , 'red'))
+                        
+
+                        try:
+                            invoiceChosen = int(input("Choose an invoice using the indexes listed above(ie. 0, 1, 2)>>"))
+
+                            if(invoiceChosen >= 0 and invoiceChosen < len(invoices)):
+                                print("Paying for invoice number : " + str(invoiceChosen))
+                        
+                        except Exception as e:
+                            print(colored("ERROR! Try again or input a proper numeric value", "red"))
+
                         else:
-                            print("An error has occured: " + str(e))
+                            print(colored("Invoice index is out of range", "yellow"))
+                    
+                    else:
+                        print(colored("No pending incoming invoices", "yellow"))
 
-                #   Quits wallet interface
-
-                '''
     else:
         print("Input not recognized")
     

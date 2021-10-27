@@ -560,6 +560,22 @@ try:
                         #invoiceID, amount, fromAddr, toAddr, expDate, signature, publicKey
 
                         return None
+                    
+                    elif('get__invoices_pending_incoming' in str(returnData)): # Get user balance and send to user
+
+                        validatorLogger.logMessage('[INVOICE REQUEST] Request to get pending incoming invoices', 'info-blue')
+
+                        index = str(returnData).index(":")
+
+                        walletAddr =  returnData[index + 1:]
+
+                        invoices = blockchainObj.get_invoices(walletAddr, pendingIncoming=True)
+
+                        new_sock.sendall(pickle.dumps(invoices))
+
+                        #invoiceID, amount, fromAddr, toAddr, expDate, signature, publicKey
+
+                        return None
 
                     
                     elif('sync_spam_management' in str(returnData)): # Get user balance and send to user
