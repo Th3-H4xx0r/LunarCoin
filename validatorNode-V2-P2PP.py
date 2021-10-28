@@ -1,6 +1,7 @@
 # Imports
 
 from asyncio.tasks import FIRST_COMPLETED
+from hashlib import new
 from logging import BASIC_FORMAT
 from re import A
 from connections import Connections
@@ -920,33 +921,64 @@ try:
 
                                                             #sender, recipient, amount, transactionID, timestamp, hashVal
 
-                                                            blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
-
+                                                            execute = True
 
                                                             if('invoice_send_to' in newTx.getMetaData()):
-                                                                pass
+                                                                
+                                                                metaData = newTx.getMetaData()
+
+                                                                invoiceIdGet = newTx.getMetaData()
+                                                                colonIndex = str(metaData).find(":")
+                                                                secondElementIndex = str(metaData).find("://:")
+
+                                                                invoiceIdGet = metaData[colonIndex + 1: secondElementIndex]
+
+                                                                print(invoiceIdGet)
+
+                                                                invoiceFromAddr = metaData[secondElementIndex+4:]
+
+                                                                print(invoiceFromAddr)
+
+                                                                if(invoiceFromAddr == newTx.getOutputAddress()):
+                                                                    
+                                                                    removeInvResult = blockchain.remove_invoice_from_pool(invoiceIdGet, newTx.getOutputAddress(), newTx.getOwnWallet())
+                                                                    print(removeInvResult)
+                                                                
+                                                                else:
+                                                                    validatorLogger.logMessage("[Share Rejected] Invoice signature or metadata is corrupt", 'info-yellow')
+                                                                    execute = False
+                                                                
+
+
+
+
+                                                                #blockchain.remove_invoice_from_pool(newTx.getOwnWallet(), getOwnWalletFunc)
 
                                                             # Adds transaction hash to list
 
                                                             #tx_string = json.dumps(newTx, sort_keys=True).encode()
                                                             #tx_hash = hashlib.sha256(tx_string).hexdigest()
 
-                                                            addTxToList(newTx)
+                                                            if(execute):
 
-                                                            newBlock = blockchain.goNewBlock()
+                                                                blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
 
-                                                            if(newBlock):
+                                                                addTxToList(newTx)
 
-                                                                #print("Working 6")
+                                                                newBlock = blockchain.goNewBlock()
 
-                                                                validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
+                                                                if(newBlock):
 
-                                                                blockchain.new_block(VALIDATOR_PEERS) # Creates new block if block meets all requirements\\
+                                                                    #print("Working 6")
+
+                                                                    validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
+
+                                                                    blockchain.new_block(VALIDATOR_PEERS) # Creates new block if block meets all requirements\\
 
 
-                                                                #verifyBlock(blockchain.last_block_blockchain(), db)
-                                                            
-                                                            validatorLogger.logMessage("[Share Accepted] Share validated", 'success')
+                                                                    #verifyBlock(blockchain.last_block_blockchain(), db)
+                                                                
+                                                                validatorLogger.logMessage("[Share Accepted] Share validated", 'success')
 
                                                         else:
                                                             validatorLogger.logMessage("[Share Rejected] User attempting to send coins to themself.", 'info-yellow')

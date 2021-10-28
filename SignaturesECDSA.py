@@ -8,6 +8,7 @@ import os
 import pickle
 from ecdsa import SigningKey, SECP256k1
 from ecdsa import VerifyingKey
+import binascii
 
 class SignaturesECDSA:
 
@@ -141,3 +142,9 @@ class SignaturesECDSA:
         
         addr = "LC" + addr  # Adds the 'LC' to the start of the address
         return addr, wif
+    
+    def generateRandomID_98_digit(self):
+        return (b'0x' + binascii.b2a_hex(os.urandom(48))).decode()
+    
+    def generateHex82igit(self):
+        return (b'0x' + binascii.b2a_hex(os.urandom(40))).decode()

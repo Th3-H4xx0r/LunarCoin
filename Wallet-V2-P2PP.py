@@ -470,7 +470,7 @@ if __name__ == "__main__":
                 if(confirm.lower() == 'y'):
                     # send
 
-                    invoiceID = "asdf"
+                    invoiceID = "INV" + str(SignaturesECDSA().generateHex82igit())
 
                      #invoiceDetails['invoiceID'], invoiceDetails['amount'], invoiceDetails['fromAddr'], invoiceDetails['toAddr'], invoiceDetails['expDate'], invoiceDetails['signature'], invoiceDetails['publicHex']
                     dataToSign = str(invoiceID) #+ str(amount) + str(walletAddress) + str(toAddr) + str(expTimestamp) + str(myVerifyingKey.to_string().hex())
@@ -606,7 +606,7 @@ if __name__ == "__main__":
                 else:
                     bar = Bar('Fetching invoices', max=len(minerNodesList))
 
-                    invoices = []
+                    invoices = b''
 
                     indexToFetch = random.randint(0, len(minerNodesList) - 1)
 
@@ -625,30 +625,30 @@ if __name__ == "__main__":
                         #print("Sent data")
 
                         #time.sleep(1)
-
-
                         
-                        try:
+                        while True:
+                            try:
 
-        
-                            data = s.recv(BUFFER_SIZE)
+            
+                                data = s.recv(BUFFER_SIZE)
 
-                            #print(data)
+                                #print(data)
 
-                            invoices = data
+                                if data: 
+                                    invoices += data
+                                else:
+                                    break
 
-                            #print(invoices)
+                                #print(data)
 
-                            #balance = 10
+                                #print(invoices)
 
-                        
-                        except:
-                            pass
-                        
-                        #time.sleep(1)
-                        #s.close()
-
-
+                                #balance = 10
+                            except:
+                                pass
+                            
+                            #time.sleep(1)
+                            #s.close()
                     except Exception as e:
                         #print("Miner node is not active")
                         #print(e)
@@ -668,6 +668,8 @@ if __name__ == "__main__":
 
                     
                     print(invoices)
+
+                    #invoices = ''.join(invoices).decode('utf-8')
 
                     invoices = pickle.loads(invoices)
 
@@ -691,12 +693,12 @@ if __name__ == "__main__":
 
 
                         for i in filteredInvoicesSent:
-                            print("    ==========\n    To: " + str(i['toAddr']) + "\n    Amount: " + str(i['amount']) + " LC\n    InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']))
+                            print("    ===========================================================\n    To: " + str(i['toAddr']) + "\n    Amount: " + str(i['amount']) + " LC\n    InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']) + "\n    ===========================================================")
 
                         print(colored("PENDING RECIEVED INVOICES:\n", 'yellow'))
 
                         for i in filteredInvoicesReceived:
-                            print("    ==========\n    To: " + str(i['toAddr']) + "\n    Amount: " + str(i['amount']) + " LC\n    InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']))
+                            print("    ===========================================================\n    To: " + str(i['toAddr']) + "\n    Amount: " + str(i['amount']) + " LC\n    InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']) + "\n    ===========================================================")
                     
                     except Exception as e:
                         print(colored("Error loading invoices: " + str(e) , 'red'))
@@ -721,7 +723,7 @@ if __name__ == "__main__":
                 else:
                     bar = Bar('Fetching invoices', max=len(minerNodesList))
 
-                    invoices = []
+                    invoices = b''
 
                     indexToFetch = random.randint(0, len(minerNodesList) - 1)
 
@@ -743,27 +745,29 @@ if __name__ == "__main__":
 
 
                         
-                        try:
+                        while True:
+                            try:
 
-        
-                            data = s.recv(BUFFER_SIZE)
+            
+                                data = s.recv(BUFFER_SIZE)
 
-                            #print(data)
+                                #print(data)
 
-                            invoices = data
+                                if data: 
+                                    invoices += data
+                                else:
+                                    break
 
-                            #print(invoices)
+                                #print(data)
 
-                            #balance = 10
+                                #print(invoices)
 
-                        
-                        except:
-                            pass
-                        
-                        #time.sleep(1)
-                        #s.close()
-
-
+                                #balance = 10
+                            except:
+                                pass
+                            
+                            #time.sleep(1)
+                            #s.close()
                     except Exception as e:
                         #print("Miner node is not active")
                         #print(e)
@@ -782,7 +786,9 @@ if __name__ == "__main__":
 
 
                     
-                    #print(invoices)
+                    print(invoices)
+
+                    #invoices = ''.join(invoices).decode('utf-8')
 
                     invoices = pickle.loads(invoices)
 
@@ -794,7 +800,7 @@ if __name__ == "__main__":
                             idx = 0
 
                             for i in invoices:
-                                print("    ==========\n    Index: " + str(idx) + "\n    To: " + str(i['toAddr']) + "\n    Amount: " + str(i['amount']) + " LC\n    InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']))
+                                print("    ===========================================================\n    Index: " + str(idx) + "\n    To: " + str(i['toAddr']) + "\n    Amount: " + str(i['amount']) + " LC\n    InvoiceID: " + str(i['invoiceID']) + "\n    Expires: " + str(i['expTimestamp']) + "\n   ===========================================================")
                                 idx += 1
 
                         except Exception as e:

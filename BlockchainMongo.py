@@ -509,38 +509,59 @@ class BlockchainMongo:
 
         invoiceValid = False
 
+        # Verifies invoice signature
+
         try:
 
-            invoiceValid = SignaturesECDSA().verify(originalMessage.encode('utf-8'), bytes.fromhex(signature), pickle.loads(public))
+            invoiceValid = SignaturesECDSA().verify(originalMessage.encode('utf-8'), bytes.fromhex(signature), pickle.loads(public)) 
         
         except:
             pass
 
-        #verify(self, message, sig, verifyingKey):
 
         if(invoiceValid):
 
             if(fromAddr != toAddr):
 
-                status = "valid"
+                if(len(invoiceID) == 85):
 
-                if(expDate != 'none'):
+                    status = "valid"
 
-                    expDateTime = datetime.datetime.fromtimestamp(expDate)
-                    expTimstampUTC = expDateTime.replace(tzinfo=datetime.timezone.utc)
+                    if(expDate != 'none'):
 
-                    status = "valid" if(datetime.datetime.now(datetime.timezone.utc).timestamp() < expTimstampUTC.timestamp()) else "invalid"
+                        expDateTime = datetime.datetime.fromtimestamp(expDate)
+                        expTimstampUTC = expDateTime.replace(tzinfo=datetime.timezone.utc)
 
-                invoiceDetails = {
-                    "invoiceID": invoiceID,
-                    "amount": amount,
-                    "fromAddr": fromAddr, 
-                    "toAddr": toAddr,
-                    "expTimestamp": expDate, 
-                    "status": status,
-                }
+                        status = "valid" if(datetime.datetime.now(datetime.timezone.utc).timestamp() < expTimstampUTC.timestamp()) else "invalid"
 
-                self.db.InvoicePool.insert(invoiceDetails)
+
+                    invoicesData = self.db.InvoicePool.find({"invoiceID": invoiceID })
+
+                    duplicate = False
+
+                    # Checks for duplicates
+
+                    if(invoicesData):
+                        for invoice in invoicesData:
+                            duplicate = True
+
+                    if(not duplicate):
+                        invoiceDetails = {
+                            "invoiceID": invoiceID,
+                            "amount": amount,
+                            "fromAddr": fromAddr, 
+                            "toAddr": toAddr,
+                            "expTimestamp": expDate, 
+                            "status": status,
+                        }
+
+                        self.db.InvoicePool.insert(invoiceDetails)
+                    
+                    else:
+                        print(colored("[INVOICE REJECTED] Invoice id is duplicated", "red"))
+                else:
+                    print(colored("[INVOICE REJECTED] Invoice id formatted incorrectly", "red"))
+
 
             else:
                 print(colored("[INVOICE REJECTED] Cannot send invoice to themself", "red"))
@@ -577,19 +598,36 @@ class BlockchainMongo:
         
         return invoices
 
-    def remove_invoice_from_pool(self, invoiceID, addr):
-        invoices = []
+    def remove_invoice_from_pool(self, invoiceID, senderAddr, ownAddr):
+        invoicesFiltered = []
+        removedOneInvoice = False
 
-        invoicesData = self.db.InvoicePool.find({"toAddr": addr, "invoiceID": invoiceID})
+        print("Removing invoice")
 
-        #print(invoicesDataFrom.documents)
-        #print(invoicesDataTo.documents)
+        print(ownAddr)
 
+
+        invoicesData = self.db.InvoicePool.find({"invoiceID": invoiceID})
+        
         for invoice in invoicesData:
             print(invoice)
-            invoices.append(invoice)
+            if(invoice['invoiceID'] == invoiceID and invoice['toAddr'] == ownAddr and invoice['fromAddr'] == senderAddr):
+                invoicesFiltered.append(invoice)
+            
+            else:
+                print("NOT EQUAL")
         
-        #TODO: IMPLEEMENT CHECKING AND THEN REMOVE THE INVOICE
+
+        for invoice in invoicesFiltered:
+            try:
+                self.db.InvoicePool.delete_one({"invoiceID": invoiceID})
+                removedOneInvoice = True
+            
+            except Exception as e:
+                print("Failed to delete one invoice: " + str(e))
+        
+
+        return removedOneInvoice
         
 
 
