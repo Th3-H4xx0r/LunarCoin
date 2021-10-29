@@ -345,6 +345,8 @@ class BlockchainMongo:
 
         #print("Lenght of transactions: " + str(len(self.current_transactions)))
 
+        transactionSuccess = True
+
         if(genesisBlock):
             self.current_transactions_mempool.append({
                 'sender': sender,
@@ -357,18 +359,35 @@ class BlockchainMongo:
 
             
         else:
-            
 
-            self.current_transactions_mempool.append({
-                'sender': sender,
-                'recipient': recipient,
-                'amount': amount,
-                'transactionID': transactionID,
-                'timestamp': timestamp,
-                'hash': hashVal
-            })
+            if(len(transactionID) != 98):
+
+                invoicesDataFrom = self.db.Blockchain.find({"transactionID": transactionID })
+
+                #print(invoicesDataFrom.documents)
+                #print(invoicesDataTo.documents)
+
+                if(invoicesDataFrom):
+                    for invoice in invoicesDataFrom:
+                        transactionSuccess = False  # Duplicate transaction ID
+                        print(colored("[Share Rejected] Transaction ID is duplicated", 'yellow'))
+        
+
+                self.current_transactions_mempool.append({
+                    'sender': sender,
+                    'recipient': recipient,
+                    'amount': amount,
+                    'transactionID': transactionID,
+                    'timestamp': timestamp,
+                    'hash': hashVal
+                })
+            
+            else:
+                print(colored("[Share Rejected] Transaction ID does not match standard format", 'yellow'))
 
             #return self.last_block.index + 1
+        
+        return transactionSuccess
 
     def last_block_blockchain(self):
         return self.chain[-1]

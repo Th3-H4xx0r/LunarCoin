@@ -826,20 +826,21 @@ try:
 
                                         #if(blockchain.checkCoinsInCirculation() + newTx.getOutputAmount() <= 146692378): # TODO: FIX THIS
 
-                                        blockchain.new_transaction('validator_reward', newTx.getOutputAddress(), newTx.getOutputAmount())
-
-                                        addTxToList(newTx)
-
-                                        newBlock = blockchain.goNewBlock()
-
-                                        if(newBlock):
-                                            
-                                            validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
-
-                                            blockchain.new_block() # Creates new block if block meets all requirements
+                                        transactionSuccess = blockchain.new_transaction('validator_reward', newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
                                         
-                                        #else:
-                                            #validatorLogger.logMessage("[Share Rejected] Coin limit reached", 'info-red')
+                                        if(transactionSuccess):
+                                            addTxToList(newTx)
+
+                                            newBlock = blockchain.goNewBlock()
+
+                                            if(newBlock):
+                                                
+                                                validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
+
+                                                blockchain.new_block() # Creates new block if block meets all requirements
+                                            
+                                            #else:
+                                                #validatorLogger.logMessage("[Share Rejected] Coin limit reached", 'info-red')
 
                                     
                                     else:
@@ -961,24 +962,25 @@ try:
 
                                                             if(execute):
 
-                                                                blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
+                                                                transactionComplete = blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
 
-                                                                addTxToList(newTx)
+                                                                if(transactionComplete):
+                                                                    addTxToList(newTx)
 
-                                                                newBlock = blockchain.goNewBlock()
+                                                                    newBlock = blockchain.goNewBlock()
 
-                                                                if(newBlock):
+                                                                    if(newBlock):
 
-                                                                    #print("Working 6")
+                                                                        #print("Working 6")
 
-                                                                    validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
+                                                                        validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
 
-                                                                    blockchain.new_block(VALIDATOR_PEERS) # Creates new block if block meets all requirements\\
+                                                                        blockchain.new_block(VALIDATOR_PEERS) # Creates new block if block meets all requirements\\
 
 
-                                                                    #verifyBlock(blockchain.last_block_blockchain(), db)
-                                                                
-                                                                validatorLogger.logMessage("[Share Accepted] Share validated", 'success')
+                                                                        #verifyBlock(blockchain.last_block_blockchain(), db)
+                                                                    
+                                                                    validatorLogger.logMessage("[Share Accepted] Share validated", 'success')
 
                                                         else:
                                                             validatorLogger.logMessage("[Share Rejected] User attempting to send coins to themself.", 'info-yellow')
