@@ -359,8 +359,8 @@ class BlockchainMongo:
 
             
         else:
-
-            if(len(transactionID) != 98):
+            
+            if(len(transactionID) == 98):
 
                 invoicesDataFrom = self.db.Blockchain.find({"transactionID": transactionID })
 
@@ -384,6 +384,7 @@ class BlockchainMongo:
             
             else:
                 print(colored("[Share Rejected] Transaction ID does not match standard format", 'yellow'))
+                transactionSuccess = False
 
             #return self.last_block.index + 1
         

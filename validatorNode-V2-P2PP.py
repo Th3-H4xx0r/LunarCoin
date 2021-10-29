@@ -67,6 +67,8 @@ try:
     NODE_VERSION = '' # TODO: Add node version to be sent on IHS    
 
     CONNECTION_MODE = 'tcp'
+    VALIDATOR_PRIVATE, VALIDATOR_PUBLIC_KEY = None, None
+    VALIDATOR_WALLET_ADDRESS = None
 
     walletTxFreq = {}
 
@@ -168,7 +170,8 @@ try:
         global NETWORK
         global CONNECTION_MODE
         global TCP_PORT
-
+        global VALIDATOR_PUBLIC_KEY
+        global VALIDATOR_WALLET_ADDRESS
         # 1sbjL6HgcrNZeVi61XPymtYEisD_xaXYnSwRckKbJiUmBfVg   ---  token for mcendercraftnetwork@gmail.com
 
         if(CONNECTION_MODE == 'ngrok'):
@@ -178,7 +181,7 @@ try:
                 tunnel = ngrok.connect(TCP_PORT, "tcp")
                 validatorLogger.logMessage("[Internal Server] Running ngrok connection server: " + str(tunnel.public_url), 'regular')
 
-                NODE_IP, NODE_PORT = SocketUtil.updateMinerIp(tunnel.public_url, MINER_ID, NETWORK)
+                NODE_IP, NODE_PORT = SocketUtil.updateMinerIp(tunnel.public_url, MINER_ID, NETWORK, VALIDATOR_PUBLIC_KEY.to_string().hex(), VALIDATOR_WALLET_ADDRESS)
 
                 if(NODE_IP == None and NODE_PORT == None):
                     validatorLogger.logMessage("[Offline] Cannot connect to network node. Your node will not be connected to the rest of the network, restart this node or try again later. Exiting...", 'error')
@@ -194,7 +197,7 @@ try:
             NODE_IP = requests.get('https://api.ipify.org').content.decode('utf8')
             NODE_PORT = TCP_PORT
 
-            success = SocketUtil.updateMinerIpTCP_MODE(NODE_IP, TCP_PORT, MINER_ID, NETWORK)
+            success = SocketUtil.updateMinerIpTCP_MODE(NODE_IP, TCP_PORT, MINER_ID, NETWORK, VALIDATOR_PUBLIC_KEY.to_string().hex(), VALIDATOR_WALLET_ADDRESS)
 
             if(success):
                 validatorLogger.logMessage("[NODE CONNECTION] Started connection for node with address " + str(NODE_IP) + ":" + str(TCP_PORT) + ". IMPORTANT: Configure your router to port-forward this port and point to this machine.", "info-yellow")
@@ -924,31 +927,34 @@ try:
 
                                                             execute = True
 
-                                                            if('invoice_send_to' in newTx.getMetaData()):
-                                                                
-                                                                metaData = newTx.getMetaData()
+                                                            
+                                                            if(newTx.getMetaData() != None):   
 
-                                                                invoiceIdGet = newTx.getMetaData()
-                                                                colonIndex = str(metaData).find(":")
-                                                                secondElementIndex = str(metaData).find("://:")
-
-                                                                invoiceIdGet = metaData[colonIndex + 1: secondElementIndex]
-
-                                                                print(invoiceIdGet)
-
-                                                                invoiceFromAddr = metaData[secondElementIndex+4:]
-
-                                                                print(invoiceFromAddr)
-
-                                                                if(invoiceFromAddr == newTx.getOutputAddress()):
+                                                                if('invoice_send_to' in newTx.getMetaData()):
                                                                     
-                                                                    removeInvResult = blockchain.remove_invoice_from_pool(invoiceIdGet, newTx.getOutputAddress(), newTx.getOwnWallet())
-                                                                    print(removeInvResult)
-                                                                
-                                                                else:
-                                                                    validatorLogger.logMessage("[Share Rejected] Invoice signature or metadata is corrupt", 'info-yellow')
-                                                                    execute = False
-                                                                
+                                                                    metaData = newTx.getMetaData()
+
+                                                                    invoiceIdGet = newTx.getMetaData()
+                                                                    colonIndex = str(metaData).find(":")
+                                                                    secondElementIndex = str(metaData).find("://:")
+
+                                                                    invoiceIdGet = metaData[colonIndex + 1: secondElementIndex]
+
+                                                                    print(invoiceIdGet)
+
+                                                                    invoiceFromAddr = metaData[secondElementIndex+4:]
+
+                                                                    print(invoiceFromAddr)
+
+                                                                    if(invoiceFromAddr == newTx.getOutputAddress()):
+                                                                        
+                                                                        removeInvResult = blockchain.remove_invoice_from_pool(invoiceIdGet, newTx.getOutputAddress(), newTx.getOwnWallet())
+                                                                        print(removeInvResult)
+                                                                    
+                                                                    else:
+                                                                        validatorLogger.logMessage("[Share Rejected] Invoice signature or metadata is corrupt", 'info-yellow')
+                                                                        execute = False
+                                                                    
 
 
 
@@ -1124,6 +1130,8 @@ try:
         
 
         nodesDataTemp = syncUtil.getNodes(NETWORK)
+
+        print(nodesDataTemp)
         nodesDataList = []
 
         # Filters out offline nodes
@@ -1239,6 +1247,13 @@ try:
         # Checks if miner wallet exists
         if(path.exists('key.pem')):
 
+            # Loads wallet details
+
+            myPrivateSigning, myVerifyingKey = SignaturesECDSA().loadKey()
+            walletAddress, wif = SignaturesECDSA().make_address(myVerifyingKey.to_string())
+
+            VALIDATOR_PRIVATE, VALIDATOR_PUBLIC_KEY = myPrivateSigning, myVerifyingKey
+            VALIDATOR_WALLET_ADDRESS = walletAddress
 
             # Loads node configuration
 
@@ -1281,6 +1296,7 @@ try:
                     
                     except Exception as e:
                         print("Error with blockchain sync thread: " + str(e))
+                        print(traceback.format_exc())
 
 
                 else:

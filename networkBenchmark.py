@@ -22,8 +22,8 @@ myPrivate, myPublic = SignaturesECDSA().loadKey()
 addr, wif = SignaturesECDSA().make_address(myPublic.to_string())
 
 
-WALLET_COUNT = 10
-TRANSACTION_COUNT_PER_WALLET = 10
+WALLET_COUNT = 2
+TRANSACTION_COUNT_PER_WALLET = 20
 
 
 
@@ -62,14 +62,16 @@ tic = time.perf_counter()
 
 nodesDataTemp = Connections().getValidatorNodesWallet('testnet')
 
-nodesData = []
+nodesData = [{'ip': '10.0.0.18', 'port': '6003'}, {'ip': '192.168.1.249', 'port': '6003'}]
 
 # Filters out inactive nodes
 
-
+'''
 for node in nodesDataTemp:
     if(node['status'] == 'online'):
         nodesData.append(node)
+
+'''
 
 print("Filtered out inactive nodes")
 

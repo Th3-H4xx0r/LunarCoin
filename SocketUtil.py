@@ -89,7 +89,7 @@ class SocketUtil:
 
 
     
-    def updateMinerIp(ip, minerID, net):
+    def updateMinerIp(ip, minerID, net, publicKey, walletAddr):
 
         ip = ip[6:]
 
@@ -104,10 +104,18 @@ class SocketUtil:
 
         for node in networkNodes:
             try:
-                r = requests.get(node + '/validator/update?ip=' + str(ip) + "&port=" + str(port) + "&id=" + str(minerID) + "&network=" + str(net))
+                r = requests.get(node + '/validator/update?ip=' + str(ip) + "&port=" + str(port) + "&id=" + str(minerID) + "&network=" + str(net) + "&publicKey=" + str(publicKey) + "&walletAddr=" + str(walletAddr))
                 #print("Updated miner ip: " + str(r.json()))
-                rtnStatement =  ip, int(port)
-                break
+
+                data = r.json()
+
+                if(data['status'] == 'failed'):
+                    print(colored("Network node update request failed: " + str(data['message']), "yellow"))
+                    return None, None
+
+                else:
+                    rtnStatement =  ip, int(port)
+                    break
 
             except Exception as e:
                 print("[FATAL ERROR] Network node is offline: " + str(e))
