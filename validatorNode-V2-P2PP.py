@@ -939,9 +939,16 @@ try:
                                                             #tx_string = json.dumps(newTx, sort_keys=True).encode()
                                                             #tx_hash = hashlib.sha256(tx_string).hexdigest()
 
+                                                            
+
                                                             if(execute):
 
-                                                                transactionComplete = blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData().hex())
+                                                                transactionComplete = False
+
+                                                                try:    
+                                                                    transactionComplete = blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData().hex())
+                                                                except:
+                                                                    transactionComplete = blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData())
 
                                                                 if(transactionComplete):
                                                                     addTxToList(newTx)
