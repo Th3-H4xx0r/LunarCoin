@@ -309,7 +309,7 @@ try:
 
                     tx_public = ecdsa.VerifyingKey.from_string(bytes.fromhex(jsonParsed['public_key']), curve=ecdsa.SECP256k1, hashfunc=sha256)
 
-                    print(tx_public.to_string())
+                    #print(tx_public.to_string())
                     
                     tx_timestamp = jsonParsed['timestamp']
                     tx_outputAddr = jsonParsed['recipient']
@@ -348,7 +348,7 @@ try:
                     
                     addr = SignaturesECDSA().make_address(tx_public.to_string())
 
-                    print(addr[0])
+                    #print(addr[0])
 
                     new_sock.send(bytes(addr[0], 'utf-8'))
                 
@@ -555,7 +555,7 @@ try:
 
                         walletAddr =  returnData[index - 1:]
 
-                        print(walletAddr)
+                        #print(walletAddr)
 
 
                         invoices = blockchainObj.get_invoices(walletAddr)
@@ -885,8 +885,8 @@ try:
                                         getOwnWalletFunc = getOwnWalletFunc[0]
                                     
 
-                                    print(madeWalletAddr)
-                                    print(getOwnWalletFunc)
+                                    #print(madeWalletAddr)
+                                    #print(getOwnWalletFunc)
 
 
                                     if(madeWalletAddr == getOwnWalletFunc):
@@ -940,16 +940,16 @@ try:
 
                                                                     invoiceIdGet = metaData[colonIndex + 1: secondElementIndex]
 
-                                                                    print(invoiceIdGet)
+                                                                    #print(invoiceIdGet)
 
                                                                     invoiceFromAddr = metaData[secondElementIndex+4:]
 
-                                                                    print(invoiceFromAddr)
+                                                                    #print(invoiceFromAddr)
 
                                                                     if(invoiceFromAddr == newTx.getOutputAddress()):
                                                                         
                                                                         removeInvResult = blockchain.remove_invoice_from_pool(invoiceIdGet, newTx.getOutputAddress(), newTx.getOwnWallet())
-                                                                        print(removeInvResult)
+                                                                        #print(removeInvResult)
                                                                     
                                                                     else:
                                                                         validatorLogger.logMessage("[Share Rejected] Invoice signature or metadata is corrupt", 'info-yellow')

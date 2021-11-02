@@ -152,7 +152,7 @@ class BlockchainMongo:
             
             blockData = pickle.loads(blockTemp)
 
-            print(blockData)
+            #print(blockData)
 
             
 
@@ -289,7 +289,7 @@ class BlockchainMongo:
 
             lastHash = None
 
-            print(len(self.chain))
+            #print(len(self.chain))
 
             for i in range(len(self.chain)):
 
@@ -524,9 +524,9 @@ class BlockchainMongo:
         # print
 
 
-        print("DATA: " + str(originalMessage.encode('utf-8')))
+        #print("DATA: " + str(originalMessage.encode('utf-8')))
 
-        print("SIGNATURE: " + str(bytes.fromhex(signature)))
+        #print("SIGNATURE: " + str(bytes.fromhex(signature)))
 
         invoiceValid = False
 
@@ -595,7 +595,7 @@ class BlockchainMongo:
 
         fromAddr = fromAddr.decode('utf-8')
 
-        print(fromAddr)
+        #print(fromAddr)
         invoices = []
 
         invoicesDataFrom = self.db.InvoicePool.find({"fromAddr": fromAddr })
@@ -605,7 +605,7 @@ class BlockchainMongo:
 
         if(pendingIncoming):
             for invoice in invoicesDataFrom:
-                print(invoice)
+                #print(invoice)
                 invoices.append(invoice)
         
 
@@ -615,7 +615,7 @@ class BlockchainMongo:
         for invoice in invoicesDataTo:
             invoices.append(invoice)
         
-        print(invoices)
+        #print(invoices)
         
         return invoices
 
@@ -623,15 +623,15 @@ class BlockchainMongo:
         invoicesFiltered = []
         removedOneInvoice = False
 
-        print("Removing invoice")
+        #print("Removing invoice")
 
-        print(ownAddr)
+        #print(ownAddr)
 
 
         invoicesData = self.db.InvoicePool.find({"invoiceID": invoiceID})
         
         for invoice in invoicesData:
-            print(invoice)
+            #print(invoice)
             if(invoice['invoiceID'] == invoiceID and invoice['toAddr'] == ownAddr and invoice['fromAddr'] == senderAddr):
                 invoicesFiltered.append(invoice)
             
