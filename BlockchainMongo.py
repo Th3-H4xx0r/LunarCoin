@@ -4,6 +4,7 @@ import json
 from os import dup
 from threading import current_thread
 from time import time
+import time as timeFunc
 import pickle
 from Block import Block
 from Transaction import Transaction
@@ -19,7 +20,7 @@ from pymongo import MongoClient
 import datetime
 import ecdsa
 from hashlib import sha256
-
+import sys
 
 init()
 
@@ -33,6 +34,9 @@ class BlockchainMongo:
     client = MongoClient('localhost')
     db=client.LunarCoin
 
+    util = SocketUtil()
+
+
     def __init__(self):
 
         try: 
@@ -45,7 +49,7 @@ class BlockchainMongo:
 
                     # Creates genesis block
 
-                    self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, '0x000000000000000000000000000000000000000000000000', time(), '0x0', True)
+                    self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, '0x000000000000000000000000000000000000000000000000', time(), '0x0', 'none', 'none', True)
                     self.new_block(previous_hash=None)
                 
                 else:
@@ -65,7 +69,7 @@ class BlockchainMongo:
 
                 #sender, recipient, amount, transactionID, timestamp, hashVal
 
-                self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, '0x000000000000000000000000000000000000000000000000', time(), '0x0', True)
+                self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, '0x000000000000000000000000000000000000000000000000', time(), '0x0', 'none', 'none', True)
                 self.new_block(None, previous_hash=None)
 
                 #self.saveBlock(block)
@@ -88,10 +92,10 @@ class BlockchainMongo:
             print("Fatal error with blockchain init: " + str(e))
 
 
-        #valid = self.verifyBlockchainIntegrity()
+        valid = self.verifyBlockchainIntegrity()
 
-        #if(valid == False):
-            #raise("Blockchain invalid")
+        if(valid == False):
+            print(colored("[BLOCKCHAIN] Blockchain is invalid", "red"))
 
     
     def checkCoinsInCirculation(self):
@@ -154,23 +158,13 @@ class BlockchainMongo:
 
             #print(blockData)
 
-            
-
-
-
-
-
-
-
-
-
     def getBlockTXThreshold(self):
 
-
-
-        TX_INTERVAL = 1000
+        TX_INTERVAL = 200
 
         currentBlockCount = self.get_current_block_length()
+
+        #print("Current block height: " + str(currentBlockCount))
 
         txThreshold = 1
 
@@ -206,12 +200,52 @@ class BlockchainMongo:
             dataReturn = block
         
         return dataReturn
+    
+    def verifyTransactionBlockchainIntegrity(self, tx):
+
+        # "publicKey": publicKey,
+                    #"signedMessage": signedMsg
+
+        execute = False
+
+        if(tx['sender'] != 'genesis' and tx['sender'] != 'validator_reward'):
+
+            publicKey = ecdsa.VerifyingKey.from_string(bytes.fromhex(tx['publicKey']), curve=ecdsa.SECP256k1, hashfunc = hashlib.sha1)
+
+            #print("TX PUBLIC KEY: " + str(publicKey.to_string()))
+
+            valid = self.util.verifyTransactionRaw(tx, publicKey)
+
+            #print("TX VALID: " + str(valid))
+
+            madeWalletAddr, wif = SignaturesECDSA().make_address(publicKey.to_string())
+
+            getOwnWalletFunc = tx['sender']
+
+            if(madeWalletAddr == getOwnWalletFunc):
+                userCurrentBalance, duplicateTx = self.getUserBalance(getOwnWalletFunc, tx['transactionID'])
+                if(duplicateTx == False):
+                    if(userCurrentBalance >= tx['amount']):
+                        if(valid):
+                            if(tx['recipient'] != tx['sender']):
+                                # Transaction is fully processed and is good to go
+                                execute = True
+
+        
+        else:
+            if(tx['sender'] == "genesis"):
+                if(tx['recipient'] == 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8hLC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h'):
+                    execute = True
+            
+            elif(tx['sender'] == 'validator_reward'): #TODO: take care of this
+                execute = True
+        return execute
 
     def get_current_block_length(self):
         return self.db.Blockchain.estimated_document_count()
     
     def get_previous_block(self, currentHeight):
-        docs = self.db.Transactions.find({"block_height": currentHeight - 1 })
+        docs = self.db.Blockchain.find({"block_height": currentHeight - 1 })
 
         block = None
 
@@ -229,11 +263,19 @@ class BlockchainMongo:
 
             currentHeight = self.get_current_block_length()
 
+            #print("Current height: " + str(currentHeight))
+
             if(currentHeight == 0): # Genesis block
                 lastBlockHash = ''
             
             else:
-                lastBlockHash = self.computeHash(self.get_previous_block(currentHeight))
+                previousBlock = self.get_previous_block(currentHeight)
+
+                #print(previousBlock)
+
+                del previousBlock['_id']
+
+                lastBlockHash = self.computeHash(previousBlock)
             
             #block = Block(len(self.chain) + 1, time(), self.current_transactions, lastBlockHash)
 
@@ -257,9 +299,13 @@ class BlockchainMongo:
             block = {
                 'block_height': currentHeight,
                 'timestamp': time(),
-                'transactions': self.current_transactions_mempool[0:txThreshold-1],
+                'transactions': self.current_transactions_mempool[0:txThreshold],
                 'previous_block': lastBlockHash,
             }
+
+            #print(txThreshold)
+            #print( self.current_transactions_mempool)
+            #print(block['transactions'])
             
 
             # Deletes transactions from current mempool
@@ -267,6 +313,7 @@ class BlockchainMongo:
             for txDelete in block['transactions']:
                 self.current_transactions_mempool.remove(txDelete)
 
+            print(self.current_transactions_mempool)
             self.saveBlock(block)
 
         except Exception as e:
@@ -278,42 +325,47 @@ class BlockchainMongo:
         
     def verifyBlockchainIntegrity(self): 
 
+        blocksHeight = self.get_current_block_length()
 
-        bar = Bar('Verifying blockchain integrity', max=len(self.chain))
-
+        bar = Bar('Verifying blockchain integrity', max=blocksHeight)
         
         valid = True
 
+        start = timeFunc.time()
         try:
-
 
             lastHash = None
 
-            #print(len(self.chain))
+            for i in range(blocksHeight):
 
-            for i in range(len(self.chain)):
+                currentBlock = self.getBlock(i)
 
+                # Verifies transactions inside block
 
-                if(i != 0):
-                    block_stringThis = pickle.dumps(self.chain[i])
-                    thisHash = hashlib.sha256(block_stringThis).hexdigest()
+                for tx in currentBlock['transactions']:
+                    self.verifyTransactionBlockchainIntegrity(tx)
 
-                    #print(str(self.chain[i].previousBlockHash) + " : " + str(lastHash))
+                del currentBlock['_id']
 
-                    if(self.chain[i].previousBlockHash == lastHash):
-                        #print("Hash is correct")
+                if(i > 0):
+
+                    if(currentBlock["previous_block"] == lastHash):
                         pass
                     
                     else:
+                        print("Block " + str(i) + " is invalid")
                         valid = False
                 
-                block_string = pickle.dumps(self.chain[i])
-                lastHash = hashlib.sha256(block_string).hexdigest()
+                lastHash = self.computeHash(currentBlock)
                 bar.next()
 
 
             bar.finish()
-            print("Blockchain is "+ str(valid))
+
+            end = timeFunc.time()
+            print("Validated the blockchain integrity in: " + str(end - start) + "s")
+
+            #print("Blockchain is "+ str(valid))
         
         except Exception as e:
             print("Error with validating blockchain: " + str(e))
@@ -342,7 +394,7 @@ class BlockchainMongo:
         print("Deleted current blockchain")
 
 
-    def new_transaction(self, sender, recipient, amount, transactionID, timestamp, hashVal, genesisBlock = False):
+    def new_transaction(self, sender, recipient, amount, transactionID, timestamp, hashVal, publicKey, signedMsg, genesisBlock = False):
 
         #print("Lenght of transactions: " + str(len(self.current_transactions)))
 
@@ -355,7 +407,9 @@ class BlockchainMongo:
                 'amount': amount,
                 'transactionID': transactionID,
                 'timestamp': timestamp,
-                'hash': '0x0' #TODO: Add hash
+                'hash': '0x0', #TODO: Add hash
+                "public": "none",
+                "signedMessage": "none"
             })
 
             
@@ -380,7 +434,9 @@ class BlockchainMongo:
                     'amount': amount,
                     'transactionID': transactionID,
                     'timestamp': timestamp,
-                    'hash': hashVal
+                    'hash': hashVal,
+                    "publicKey": publicKey,
+                    "signedMessage": signedMsg
                 })
             
             else:

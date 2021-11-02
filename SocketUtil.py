@@ -21,6 +21,32 @@ class SocketUtil:
     def __init__(self):
         pass
 
+    def verifyTransactionRaw(self, tx, public):
+
+        try:
+
+            verified = False
+
+            originalData = []
+
+            originalData.append(tx['recipient'])
+            originalData.append(tx['amount'])
+            originalData.append(tx['timestamp'])
+            originalData.append(tx['publicKey'])
+            originalData.append(tx['transactionID'])
+
+            #print(bytes(str(originalData), 'utf-8').hex())
+
+            #print(originalData)
+
+            verified = SignaturesECDSA().verify(bytes(str(originalData), 'utf-8'), bytes.fromhex(tx['signedMessage']), public)
+            return verified
+
+        
+        except Exception as e: # On error
+            print(" Error occured verifyTransactionRaw - SocketUtil.py: " + str(e))
+            print(traceback.format_exc())
+            return False
 
     def verifyTransaction(self, transaction, public):
 
@@ -37,14 +63,17 @@ class SocketUtil:
 
             verified = False
 
-            print(transaction.getTxType())
+            #print(transaction.getTxType())
 
             if(transaction.getTxType() == 'mobile'):
-                print("mobile transaction")
+                #print("mobile transaction")
                 verifed = SignaturesECDSA().verify(transaction.getMobileSignedData(), bytes.fromhex(transaction.getSignedData()), public)
 
             else:
-                print("regular transaction")
+                #print("regular transaction")
+                #print(bytes(str(transaction.getData()), 'utf-8').hex())
+                #print(transaction.getData())
+
                 verifed = SignaturesECDSA().verify(bytes(str(transaction.getData()), 'utf-8'), transaction.getSignedData(), public)
 
             #print(verifed)

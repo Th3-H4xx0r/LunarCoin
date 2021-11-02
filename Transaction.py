@@ -89,7 +89,8 @@ class Transaction:
             self.__data.append(self.__outputAddress)
             self.__data.append(self.__outputAmount)
             self.__data.append(self.__transactionTimestamp)
-            self.__data.append(self.__public)
+            self.__data.append(self.__public.to_string().hex())
+            self.__data.append(self.__transactionID)
 
             if(miningReward):
                 pass

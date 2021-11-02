@@ -891,35 +891,16 @@ try:
 
                                     if(madeWalletAddr == getOwnWalletFunc):
 
-                                        #print("Working 1")
-
                                         if(getOwnWalletFunc != "genesis" and getOwnWalletFunc != "validator_reward"):
-
-                                            #print("Working 2")
-
-                                            #print("NEWWWW:: " + str(newTx.getOwnWallet()))
 
                                             userCurrentBalance, duplicateTx = blockchain.getUserBalance(getOwnWalletFunc, newTx.getTransactionID())
                                         
-                                            #print(userCurrentBalance)
-
-                                            #print(newTx.getOwnWallet())
-                                            #print(userCurrentBalance)
-
-                                            #print(newTx.getOutputAmount())
-                                            #print("Working 3 1/2")
-
                                             if(duplicateTx == False):
                                                 if(userCurrentBalance >= newTx.getOutputAmount()):
-                                                    #print("Working 3")
 
                                                     if(valid):
 
-                                                        #print("Working 4")
-
                                                         if(newTx.getOutputAddress() != newTx.getPublic()):
-
-                                                            #print("Working 5")
 
                                                             # Transaction is fully processed and is good to go
 
@@ -940,23 +921,15 @@ try:
 
                                                                     invoiceIdGet = metaData[colonIndex + 1: secondElementIndex]
 
-                                                                    #print(invoiceIdGet)
-
                                                                     invoiceFromAddr = metaData[secondElementIndex+4:]
-
-                                                                    #print(invoiceFromAddr)
 
                                                                     if(invoiceFromAddr == newTx.getOutputAddress()):
                                                                         
                                                                         removeInvResult = blockchain.remove_invoice_from_pool(invoiceIdGet, newTx.getOutputAddress(), newTx.getOwnWallet())
-                                                                        #print(removeInvResult)
-                                                                    
+
                                                                     else:
                                                                         validatorLogger.logMessage("[Share Rejected] Invoice signature or metadata is corrupt", 'info-yellow')
                                                                         execute = False
-                                                                    
-
-
 
 
                                                                 #blockchain.remove_invoice_from_pool(newTx.getOwnWallet(), getOwnWalletFunc)
@@ -968,7 +941,7 @@ try:
 
                                                             if(execute):
 
-                                                                transactionComplete = blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
+                                                                transactionComplete = blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData().hex())
 
                                                                 if(transactionComplete):
                                                                     addTxToList(newTx)
@@ -1313,4 +1286,5 @@ try:
         
 except Exception as e:
     print("Error with validator: " + str(e))
+    print(traceback.format_exc())
     x = input("(Press any key to exit)>>")

@@ -22,12 +22,8 @@ myPrivate, myPublic = SignaturesECDSA().loadKey()
 addr, wif = SignaturesECDSA().make_address(myPublic.to_string())
 
 
-WALLET_COUNT = 2
-TRANSACTION_COUNT_PER_WALLET = 20
-
-
-
-
+WALLET_COUNT = 3
+TRANSACTION_COUNT_PER_WALLET = 100
 
 reps = TRANSACTION_COUNT_PER_WALLET
 
@@ -62,7 +58,7 @@ tic = time.perf_counter()
 
 nodesDataTemp = Connections().getValidatorNodesWallet('testnet')
 
-nodesData = [{'ip': '10.0.0.18', 'port': '6003'}, {'ip': '192.168.1.249', 'port': '6003'}]
+nodesData = [{'ip': '192.168.1.249', 'port': '6003'}]
 
 # Filters out inactive nodes
 
@@ -121,7 +117,7 @@ if(nodesData != None):
         
         for wallet in wallets:
             Tx = Transaction(wallet[1], wallet[2])
-            Tx.addOutput('testSend', 0.5)
+            Tx.addOutput('testSend', 0.05)
             Tx.sign(wallet[0])
             TxPacket = TransactionPacket(Tx)
 
@@ -162,7 +158,7 @@ if(nodesData != None):
     
     minerNodesList = nodesData
 
-    time.sleep(25)
+    time.sleep(20)
 
     bar1 = Bar('Getting balances', max=WALLET_COUNT)
 
