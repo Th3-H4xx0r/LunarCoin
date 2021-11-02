@@ -330,9 +330,42 @@ if __name__ == "__main__":
 
                     balance = []
 
-    
+                    minerNodesListGet = []
 
-                    for miner in minerNodesList:
+                    if(len(minerNodesList) > 3):
+                        n1 = random.randint(0, len(minerNodesList) - 1)
+                        n2 = random.randint(0, len(minerNodesList) - 1)
+                        n3 = random.randint(0, len(minerNodesList) - 1)
+
+                        if(n1 == n2):
+                            while True:
+                                n2 = random.randint(0, len(minerNodesList) - 1)
+
+                                if(n1 != n2):
+                                    break
+                        if(n2 == n3):
+                            while True:
+                                n3 = random.randint(0, len(minerNodesList) - 1)
+
+                                if(n2 != n3):
+                                    break
+                        
+                        if(n1 == n3):
+                            while True:
+                                n3 = random.randint(0, len(minerNodesList) - 1)
+
+                                if(n2 != n3 and n3 != n1):
+                                    break
+                        
+
+                        if(n1 != n2 and n2 != n3 and n1 != n3):
+                            minerNodesListGet.append(minerNodesList[n1])
+                            minerNodesListGet.append(minerNodesList[n2])
+                            minerNodesListGet.append(minerNodesList[n3])
+                    else:
+                        minerNodesListGet = minerNodesList
+                        
+                    for miner in minerNodesListGet:
 
                         try:
 

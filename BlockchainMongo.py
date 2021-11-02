@@ -235,7 +235,6 @@ class BlockchainMongo:
             else:
                 lastBlockHash = self.computeHash(self.get_previous_block(currentHeight))
             
-
             #block = Block(len(self.chain) + 1, time(), self.current_transactions, lastBlockHash)
 
             # TODO: FOR block confirmation
@@ -251,30 +250,32 @@ class BlockchainMongo:
             
 
             '''
+            txThreshold = self.getBlockTXThreshold()
+
+            self.sortTxMempool() # Sorts the mempool by asending order of timestamps
 
             block = {
                 'block_height': currentHeight,
                 'timestamp': time(),
-                'transactions': self.current_transactions_mempool,
+                'transactions': self.current_transactions_mempool[0:txThreshold-1],
                 'previous_block': lastBlockHash,
             }
             
 
-            # Reset the current mempool of transactions
-            self.current_transactions_mempool = []
+            # Deletes transactions from current mempool
 
-
-            #self.chain.append(block)
-
-
+            for txDelete in block['transactions']:
+                self.current_transactions_mempool.remove(txDelete)
 
             self.saveBlock(block)
 
-
-            #return block
         except Exception as e:
             print("Error with adding block to the chain: " + str(e))
-
+    
+    def sortTxMempool(self):
+        self.current_transactions_mempool = sorted(self.current_transactions_mempool, key = lambda i: i['timestamp'])
+            
+        
     def verifyBlockchainIntegrity(self): 
 
 
