@@ -472,6 +472,7 @@ try:
                         return None
                     
                     elif('block_sync' in str(returnData)):
+                        print("BLOCK REGULAR SYNC REQ")
                         #print(returnData)
                         index = str(returnData).index(":")
 
@@ -481,9 +482,24 @@ try:
 
                         height_end = returnData[index_dash - 1:].decode("utf-8") 
 
-                        validatorLogger.logMessage('Block sync with height: ' + str(height) +  ' to height ' + str(height_end) + ' requested from miner: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
+                        validatorLogger.logMessage('Block sync with height: ' + str(height) +  ' to height ' + str(height_end) + ' requested from validator: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
 
                         syncUtil.sendBlockchain_BLOCK(new_sock, blockchainObj, height, height_end)
+
+                        return None
+                    
+                    elif('blockchain_hash_header_sync' in str(returnData)):
+                        print("BLOCKCHAIN SYNC HASH HEADERS REQ")
+                        #print(returnData)
+                        index = str(returnData).index(":")
+                        index_dash = str(returnData).index("-")
+                        height = returnData[index - 1:index_dash - 2].decode("utf-8") 
+                        height_end = returnData[index_dash - 1:].decode("utf-8") 
+                        validatorLogger.logMessage('Block sync hash headers with height: ' + str(height) +  ' to height ' + str(height_end) + ' requested from validator: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
+
+                        syncUtil.sendBlockchain_BLOCK_HASH_HEADERS(new_sock, blockchainObj, height, height_end)
+
+                        return None
 
 
                     elif('send_transactions_list' in str(returnData)):
@@ -666,6 +682,8 @@ try:
             global VALIDATOR_PEERS
 
             blockchain = BlockchainMongo()
+
+            blockchain.initializeBlockchain()
 
             syncUtil = BlockchainSyncUtil.BlockchainSyncUtil()
 
@@ -939,12 +957,8 @@ try:
                                                             #tx_string = json.dumps(newTx, sort_keys=True).encode()
                                                             #tx_hash = hashlib.sha256(tx_string).hexdigest()
 
-                                                            
-
                                                             if(execute):
-
                                                                 transactionComplete = False
-
                                                                 try:    
                                                                     transactionComplete = blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData().hex())
                                                                 except:
@@ -1089,9 +1103,6 @@ try:
 
                 VALIDATOR_PEERS = nodesFiltered
     
-
-
-
     async def syncBlockchain(syncUtil, syncNodeIP, syncNodePort):
         syncComplete = await syncUtil.chainInitSync(syncNodeIP, syncNodePort)
 
@@ -1106,9 +1117,6 @@ try:
     # Syncs the blockchain
 
         syncUtil = BlockchainSyncUtil.BlockchainSyncUtil()
-
-        
-
         nodesDataTemp = syncUtil.getNodes(NETWORK)
 
         print(nodesDataTemp)
@@ -1121,58 +1129,36 @@ try:
         
         nodesData = nodesDataTemp
         nodesData['data'] = nodesDataList
-
         print(nodesData)
-
         currentTransactions = None
 
         while True:
-            #print(nodesData)
 
             # IF getNodes is None
-
             if(nodesData == None):
                 execute = False
                 validatorLogger.logMessage('Error with connecting to network node. Restart miner and try again later.', 'regular')
                 break
-
-            #print("Repeat")
-
             syncNodeIP, syncNodePort, nodeDataJSON = syncUtil.getRandomNode(MINER_ID, nodesData)
 
-
             if(syncNodeIP == True and syncNodePort == True and nodeDataJSON == True): # This is the first online node
-                
                 validatorLogger.logMessage('[ONLINE] Detected as first online node', 'regular', False)
-
                 print("[ONLINE " + colored("⦾", 'green') + " ] Detected as first online node")
-
                 BLOCKCHAIN_SYNC_COMPLETE = True
-
                 break
 
-
             elif(syncNodeIP != None and syncNodePort != None and nodeDataJSON != None): # Is 
-
-
-
                 syncComplete = await syncBlockchain(syncUtil, syncNodeIP, syncNodePort)#  # Blockchain is attempted to be synced
 
                 if(syncComplete): # If blockchain is synced
 
                     seconds, txFreqRecv = syncUtil.syncSpamManagementClock(syncNodeIP, syncNodePort)
 
-                    #print(seconds)
-                    #print(txFreqRecv)
-
                     if(seconds != None and txFreqRecv != None):
                         SPAM_MANAGEMENT_SECONDS_LEFT = seconds
                         walletTxFreq = txFreqRecv
-
                     BLOCKCHAIN_SYNC_COMPLETE = True 
                     #currentTransactions = currentTx
-
-
                     break
                     
                 else: # Sync failed
@@ -1180,17 +1166,18 @@ try:
                     nodesData['data'].remove(nodeDataJSON)
                     pass
 
-
             else: # Blockchain could not be synced
                 #nodesData
                 validatorLogger.logMessage('An error has occured with syncing the blockchain', 'regular')
-
                 BLOCKCHAIN_SYNC_COMPLETE = False
 
         # Syncs with the blockchain
 
         #while BLOCKCHAIN_SYNC_COMPLETE != True:
         if(BLOCKCHAIN_SYNC_COMPLETE):
+
+            BlockchainMongo().verifyBlockchainIntegrity()
+            
             # Starts the main threads
             t1 = threading.Thread(target=validatorServer, args=(('0.0.0.0', TCP_PORT), ))
 
@@ -1209,7 +1196,6 @@ try:
                 t1.start()
                 spamProtection.start()
                 #validatorRewardServ.start()
-
                 time.sleep(2)
                 validatorLogger.logMessage("Starting peer discovery service...", 'info')
                 peerDiscoveryService.start()

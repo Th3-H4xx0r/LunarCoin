@@ -38,7 +38,10 @@ class BlockchainMongo:
 
 
     def __init__(self):
+        pass
 
+    
+    def initializeBlockchain(self):
         try: 
 
             if('Blockchain' in self.db.list_collection_names()): # Checks if blockchain exists
@@ -78,7 +81,7 @@ class BlockchainMongo:
             self.current_transactions_mempool = []
                 
 
-           #chain = self.db.Transactions.estimated_document_count()
+            #chain = self.db.Transactions.estimated_document_count()
 
 
             ###########################
@@ -92,12 +95,12 @@ class BlockchainMongo:
             print("Fatal error with blockchain init: " + str(e))
 
 
-        valid = self.verifyBlockchainIntegrity()
+        #valid = self.verifyBlockchainIntegrity()
 
-        if(valid == False):
-            print(colored("[BLOCKCHAIN] Blockchain is invalid", "red"))
+        #if(valid == False):
+            #print(colored("[BLOCKCHAIN] Blockchain is invalid", "red"))
 
-    
+
     def checkCoinsInCirculation(self):
 
         unser = self.chain
@@ -194,6 +197,17 @@ class BlockchainMongo:
         dataReturn = None
 
         data = self.db.Blockchain.find({'block_height': int(height)})
+
+        for block in data:
+            #print("BLOCK:" + str(block))
+            dataReturn = block
+        
+        return dataReturn
+    
+    def getBlockStatic(db, height):
+        dataReturn = None
+
+        data = db.Blockchain.find({'block_height': int(height)})
 
         for block in data:
             #print("BLOCK:" + str(block))
@@ -501,6 +515,8 @@ class BlockchainMongo:
 
                         if(tx['transactionID'] == checkTransactionID):
                             duplicate = True
+
+                            print("OUTGOING: " + str(tx['transactionID']) + " : " + str(checkTransactionID ))
                         
 
                         if(mobileGet):
@@ -525,6 +541,7 @@ class BlockchainMongo:
                     if(tx['recipient'] == myPublic):
 
                         if(tx['transactionID'] == checkTransactionID):
+                            print("INCOMING: " + str(tx['transactionID']) + " : " + str(checkTransactionID ))
                             duplicate = True
 
                         if(mobileGet):

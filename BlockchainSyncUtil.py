@@ -17,6 +17,7 @@ import logging
 import time
 import traceback
 import sys
+from pymongo import MongoClient
 
 from datetime import datetime
 
@@ -137,34 +138,50 @@ class BlockchainSyncUtil:
         BLOCK_HEIGHT_END = int(BLOCK_HEIGHT_END)
 
         try:
-
             blocks = []
-
             for i in range(BLOCK_HEIGHT_START, BLOCK_HEIGHT_END+1):
                 block = blockchainObj.getBlock(i)
                 blocks.append(block)
-
             socket.sendall(pickle.dumps(blocks)) 
             socket.close()
-
-            
             now = datetime.now()
-
             current_time = now.strftime("%H:%M:%S")
-            #print("Sent block with height: " + str(block['block_height']) + " At time: " + str(current_time))
-        
-            return 0
-
+            return None
         
         except Exception as e:
 
             print("Error with sending block: " + str(e))
             #print(traceback.format_exc())
-
             dataSend = pickle.dumps(None)
-
             socket.send(dataSend)
             socket.close()
+            return None
+    
+    def sendBlockchain_BLOCK_HASH_HEADERS(self, socket, blockchainObj, BLOCK_HEIGHT_START, BLOCK_HEIGHT_END):
+
+        BLOCK_HEIGHT_START = int(BLOCK_HEIGHT_START)
+        BLOCK_HEIGHT_END = int(BLOCK_HEIGHT_END)
+
+        try:
+            block_hashes = []
+            for i in range(BLOCK_HEIGHT_START, BLOCK_HEIGHT_END+1):
+                block = blockchainObj.getBlock(i)
+                computedHash = blockchainObj.computeHash(block)
+                block_hashes.append({"height": i, "hash": computedHash})
+            socket.sendall(pickle.dumps(block_hashes)) 
+            socket.close()
+            now = datetime.now()
+            current_time = now.strftime("%H:%M:%S")
+            return None
+        
+        except Exception as e:
+
+            print("Error with sending block: " + str(e))
+            #print(traceback.format_exc())
+            dataSend = pickle.dumps(None)
+            socket.send(dataSend)
+            socket.close()
+            return None
 
     def getNodes(self, net):
 
@@ -236,87 +253,108 @@ class BlockchainSyncUtil:
 
     async def chainInitSync(self, ip, port):
 
-        
-        #TODO: Verify blockchain integrity after sync
+        '''
+        # Blockchain initial sync
+        '''
 
+        # Checks current blockchain
+
+        badHashBlocks = []
+
+        client = MongoClient('localhost')
+        db=client.LunarCoin
+        currentChainHeight = db.Blockchain.estimated_document_count()
+        missingBlocks = []
+
+        # Finds missing blocks
+
+        print("LOCAL CHAIN HEIGHT: " + str(currentChainHeight))
+
+        for i in range(currentChainHeight):
+            blockData = BlockchainMongo.getBlockStatic(db, i)  
+            if not blockData: missingBlocks.append(i)
+            
         try:
-
             # Requests for blockchain sync
             print(colored('[VALIDATOR CORE] Syncing blockchain.','cyan'))
-
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((ip, port))
-
             #s.setblocking(0)
-
             dataToSend = b'blockchain_init_sync'
             data = pickle.dumps(dataToSend)
             s.sendall(data)
 
-
-
-            # Gets the block length of blockchain
-
+            # Gets the block length of most recent blockchain from peer
             try:
                 data = b''
-
                 packet = s.recv(BUFFER_SIZE)
-
                 data += packet
-
-
                 blockchainLength = pickle.loads(data)
-
                 s.close()
-
-                #print("Got packet chain size 1: " + str(blockchainLength))
-
-                #saveBlockStatic() takes 1 positional argument but 2 were given
-
-
                 blockchainLength = int(blockchainLength[blockchainLength.find(":") + 1:])
 
                 if(blockchainLength == 0):
                     blockchainLength = 1
-                
                 breakUpIterations = int((blockchainLength-(blockchainLength%100))/100) + 1
-
                 iterIndex = 0
-
-                                
-
                 print("Got packet chain size: " + str(blockchainLength))
 
                 try:
                 # Delete current blockchain if sync is found
-                    print("Deleting current blockchain...")
-
-                    BlockchainMongo.deleteBlockchainStatic()
+                    #print("Deleting current blockchain...")
+                    #BlockchainMongo.deleteBlockchainStatic()
 
                     try:
 
-                        print("Waiting to get blockchain.")
-
+                        print("Waiting to get blockchain...")
 
                         bar = Bar('Downloading blockchain', max=(int(breakUpIterations))) # Adds one to avoid zero-division error
-
-                        
-
                         for i in range(breakUpIterations):
                             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                             s.connect((ip, port))
-
                             blockDataTemp = b''
-                            
-
                             dataToSend = None
 
-                            dataToSend = b'block_sync:' + bytes(str(iterIndex), 'utf-8') + b'-' + bytes(str(iterIndex + 99), 'utf-8')
-                            iterIndex+=100
+                            missingBlockInRange = False
+                            startIdx, endIdx= iterIndex, iterIndex + 99
+
+                            print(missingBlocks)
+
+                            for missingBlockIndex in missingBlocks:
+                                if(missingBlockIndex >= iterIndex and missingBlockIndex <= endIdx):
+                                    missingBlockInRange = True
+
+                            if(missingBlockInRange):
+                                dataToSend = b'block_sync:' + bytes(str(iterIndex), 'utf-8') + b'-' + bytes(str(iterIndex + 99), 'utf-8')
+                                # Delete current blocks in this range
+                                for i in range(startIdx, endIdx + 1):
+                                    db.Blockchain.delete_one({'block_height': i})
+
+                            #print("######################")
+                            #print(currentChainHeight)
+                            #print(startIdx)
+                            #print(endIdx)
+                            #print((missingBlockInRange == False and currentChainHeight >= startIdx and currentChainHeight >= endIdx))
+                            #print("######################")
                             
+                            if(missingBlockInRange == False and currentChainHeight >= startIdx and currentChainHeight >= endIdx):
+                                # Requests just block hash headers to verify current block integrity
+                                dataToSend = b'blockchain_hash_header_sync:' + bytes(str(iterIndex), 'utf-8') + b'-' + bytes(str(iterIndex + 99), 'utf-8')
+                                print("SEND HASHES")
+                            else:
+                                dataToSend = b'block_sync:' + bytes(str(iterIndex), 'utf-8') + b'-' + bytes(str(iterIndex + 99), 'utf-8')
+                                missingBlockInRange = True
+                                # Delete current blocks in this range
+                                for i in range(startIdx, endIdx + 1):
+                                    db.Blockchain.delete_one({'block_height': i})
+
+                            #print(missingBlockInRange)
+                            
+                            print(dataToSend)
+
+                            iterIndex+=100
                             data = pickle.dumps(dataToSend)
                             s.sendall(data)
-                            
 
                             while True:
                                 blockPacket = s.recv(BUFFER_SIZE)
@@ -324,33 +362,36 @@ class BlockchainSyncUtil:
 
                                 if not blockPacket: break
                                 
-
                             blockData = pickle.loads(blockDataTemp)
-
-                            
                             #else: # Adds block to the local blockchain
-
 
                             for block in blockData:
                                 try:
                                     if(block != None):
-                                        BlockchainMongo.saveBlockStatic(block)
+                                        if(missingBlockInRange): # If there are missing blocks in the range, or there are no blocks in this range
+                                            BlockchainMongo.saveBlockStatic(block)
+                                        else:
+                                            #print(block)
+                                            height = block['height']
+                                            block_hash = block['hash']
+                                            localBlock = BlockchainMongo.getBlockStatic(height)
+                                            del localBlock['_id']
+                                            getLocalBlockHash = BlockchainMongo.computeHash()
+                                            print ("Hash of block " + str(height) + " matches with current chain") if getLocalBlockHash == block_hash else badHashBlocks.append(height)
                                     
                                 except Exception as e:
-                                    print("ERROR: " + str(e))
-                            
+                                    #print("ERROR: " + str(e))
+                                    pass
 
                             s.close()
-
                             bar.next()
 
-                        
                         bar.finish()
                         s.close()
 
-                        print(colored('[VALIDATOR CORE] Successfully synced the blockchain','cyan'))
+                        print("Blocks with bad hash: " + str(badHashBlocks)) # TODO: Implement
 
- 
+                        print(colored('[VALIDATOR CORE] Successfully synced the blockchain','cyan'))
 
                         return True # TODO: Add current transactions to the newly synced blockchain
 
