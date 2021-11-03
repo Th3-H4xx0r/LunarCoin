@@ -490,6 +490,10 @@ class BlockchainMongo:
 
         transactionsInfo = []
 
+        for tx in self.current_transactions_mempool:
+            if(tx['transactionID'] == checkTransactionID):
+                duplicate = True
+
         try:
 
             if(type(myPublic) != str):
@@ -516,7 +520,7 @@ class BlockchainMongo:
                         if(tx['transactionID'] == checkTransactionID):
                             duplicate = True
 
-                            print("OUTGOING: " + str(tx['transactionID']) + " : " + str(checkTransactionID ))
+                            #print("OUTGOING: " + str(tx['transactionID']) + " : " + str(checkTransactionID ))
                         
 
                         if(mobileGet):
@@ -541,7 +545,7 @@ class BlockchainMongo:
                     if(tx['recipient'] == myPublic):
 
                         if(tx['transactionID'] == checkTransactionID):
-                            print("INCOMING: " + str(tx['transactionID']) + " : " + str(checkTransactionID ))
+                            #print("INCOMING: " + str(tx['transactionID']) + " : " + str(checkTransactionID ))
                             duplicate = True
 
                         if(mobileGet):
