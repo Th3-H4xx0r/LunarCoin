@@ -312,8 +312,8 @@ class BlockchainMongo:
 
             block = {
                 'block_height': currentHeight,
-                'timestamp': time(),
-                'transactions': self.current_transactions_mempool[0:txThreshold],
+                'timestamp': self.current_transactions_mempool[0:txThreshold][-1]['timestamp'], # TEMPORARY: Timestamp of last transaction is common block timestamp
+                'transactions': self.current_transactions_mempool[0:txThreshold], 
                 'previous_block': lastBlockHash,
             }
 
@@ -357,7 +357,8 @@ class BlockchainMongo:
                 # Verifies transactions inside block
 
                 for tx in currentBlock['transactions']:
-                    self.verifyTransactionBlockchainIntegrity(tx)
+                    self.verifyTransactionBlockchainIntegrity(tx) # TODO: GIVING INVALID
+
 
                 del currentBlock['_id']
 

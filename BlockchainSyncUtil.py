@@ -166,6 +166,7 @@ class BlockchainSyncUtil:
             block_hashes = []
             for i in range(BLOCK_HEIGHT_START, BLOCK_HEIGHT_END+1):
                 block = blockchainObj.getBlock(i)
+                del block['_id']
                 computedHash = blockchainObj.computeHash(block)
                 block_hashes.append({"height": i, "hash": computedHash})
             socket.sendall(pickle.dumps(block_hashes)) 
@@ -266,6 +267,8 @@ class BlockchainSyncUtil:
         currentChainHeight = db.Blockchain.estimated_document_count()
         missingBlocks = []
 
+        blockHostRecvList = {}
+
         # Finds missing blocks
 
         print("LOCAL CHAIN HEIGHT: " + str(currentChainHeight))
@@ -350,7 +353,7 @@ class BlockchainSyncUtil:
 
                             #print(missingBlockInRange)
                             
-                            print(dataToSend)
+                            #print(dataToSend)
 
                             iterIndex+=100
                             data = pickle.dumps(dataToSend)
@@ -365,6 +368,13 @@ class BlockchainSyncUtil:
                             blockData = pickle.loads(blockDataTemp)
                             #else: # Adds block to the local blockchain
 
+                            badHashInBlockChunk = False
+
+                            chunkGetIteration = 1
+
+                            # Logs where the block chunk came from
+                            blockHostRecvList[f'{iterIndex-100}:{iterIndex-1}-' + str(chunkGetIteration)] = {"ip": ip, "port": port}
+
                             for block in blockData:
                                 try:
                                     if(block != None):
@@ -374,20 +384,83 @@ class BlockchainSyncUtil:
                                             #print(block)
                                             height = block['height']
                                             block_hash = block['hash']
-                                            localBlock = BlockchainMongo.getBlockStatic(height)
+                                            localBlock = BlockchainMongo.getBlockStatic(db, height)
                                             del localBlock['_id']
-                                            getLocalBlockHash = BlockchainMongo.computeHash()
-                                            print ("Hash of block " + str(height) + " matches with current chain") if getLocalBlockHash == block_hash else badHashBlocks.append(height)
+                                            getLocalBlockHash = BlockchainMongo.computeHash(localBlock)
+
+                                            #print(height)
+
+                                            if getLocalBlockHash == block_hash:
+                                                #print ("Hash of block " + str(height) + " matches with current chain")
+                                                pass
+                                            else:
+                                                badHashBlocks.append(height)
+                                                badHashInBlockChunk = True
+                                                print("BAD HASH")
                                     
                                 except Exception as e:
-                                    #print("ERROR: " + str(e))
+                                    print("ERROR: " + str(e))
                                     pass
+                            
+                            if(badHashInBlockChunk):
+                                s.close() # Closes current connection
+                                print("Bad block hash verification in current chunk. Redownloading chunk of blocks")
+
+                                '''
+                                # REGETS THE BLOCK TO GET VALID HASHES
+                                # IMPLEMENTATION BELOW
+                                '''
+
+                                
+                                dataToSend = b'block_sync:' + bytes(str(iterIndex-100), 'utf-8') + b'-' + bytes(str(iterIndex-1), 'utf-8')
+                                data = pickle.dumps(dataToSend)
+
+                                # Reconnects to node
+                                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                                s.connect((ip, port))
+                                s.sendall(data)
+                                
+                                # Delete the data for this chunk
+                                for i in range(startIdx, endIdx + 1):
+                                    db.Blockchain.delete_one({'block_height': i})
+
+                                print("Sent for redownload")
+
+                                while True:
+                                    blockPacket = s.recv(BUFFER_SIZE)
+                                    blockDataTemp += blockPacket
+
+                                    if not blockPacket: break
+                                
+                                print("Got redownload")
+                                blockData = pickle.loads(blockDataTemp)
+                                #else: # Adds block to the local blockchain
+
+                                badHashInBlockChunk = False
+
+                                chunkGetIteration = 1
+
+                                #print(blockDataTemp)
+
+                                # Logs where the block chunk came from
+                                blockHostRecvList[f'{iterIndex-100}:{iterIndex-1}-' + str(chunkGetIteration)] = {"ip": ip, "port": port}
+
+                                for block in blockData:
+                                    print(block)
+                                    try:
+                                        if(block != None):
+                                            BlockchainMongo.saveBlockStatic(block)
+                                    except Exception as e:
+                                        print("ERROR: " + str(e))
+                                        pass
 
                             s.close()
                             bar.next()
 
                         bar.finish()
                         s.close()
+
+                        print(blockHostRecvList)
 
                         print("Blocks with bad hash: " + str(badHashBlocks)) # TODO: Implement
 

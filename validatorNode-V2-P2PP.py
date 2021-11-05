@@ -1176,32 +1176,42 @@ try:
         #while BLOCKCHAIN_SYNC_COMPLETE != True:
         if(BLOCKCHAIN_SYNC_COMPLETE):
 
-            BlockchainMongo().verifyBlockchainIntegrity()
+            print("Verifing blockchain integrity...")
+
+            blockchainValid = BlockchainMongo().verifyBlockchainIntegrity()
+
+            print("Done")
+
+            if(blockchainValid):
+                
+                # Starts the main threads
+                t1 = threading.Thread(target=validatorServer, args=(('0.0.0.0', TCP_PORT), ))
+
+                grok = threading.Thread(target=runGrok)
+
+                # Starts spam protection service
+                spamProtection = threading.Thread(target=spamManagement)
+
+                validatorRewardServ = threading.Thread(target=validatorRewardService)
+
+                peerDiscoveryService = threading.Thread(target=getpeers)
+
+                # Starts the threads
+                try:
+                    grok.start()
+                    t1.start()
+                    spamProtection.start()
+                    #validatorRewardServ.start()
+                    time.sleep(2)
+                    validatorLogger.logMessage("Starting peer discovery service...", 'info')
+                    peerDiscoveryService.start()
+                
+                except Exception as err:
+                    validatorLogger.logMessage("Node err has occured: " + str(err), 'regular')
             
-            # Starts the main threads
-            t1 = threading.Thread(target=validatorServer, args=(('0.0.0.0', TCP_PORT), ))
-
-            grok = threading.Thread(target=runGrok)
-
-            # Starts spam protection service
-            spamProtection = threading.Thread(target=spamManagement)
-
-            validatorRewardServ = threading.Thread(target=validatorRewardService)
-
-            peerDiscoveryService = threading.Thread(target=getpeers)
-
-            # Starts the threads
-            try:
-                grok.start()
-                t1.start()
-                spamProtection.start()
-                #validatorRewardServ.start()
-                time.sleep(2)
-                validatorLogger.logMessage("Starting peer discovery service...", 'info')
-                peerDiscoveryService.start()
-            
-            except Exception as err:
-                validatorLogger.logMessage("Node err has occured: " + str(err), 'regular')
+            else:
+                validatorLogger.logMessage("[FATAL ERROR] Blockchain is not valid. Please restart this node and download the latest blockchain.", 'error')
+                x = input("(Press any key to exit)>>")
 
         else:
             x = input("(Press any key to exit)>>")
