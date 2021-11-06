@@ -513,7 +513,7 @@ class BlockchainMongo:
                     if(mobileGet):
                         dateTimeObj = datetime.datetime.fromtimestamp(outTxBlock['timestamp'])
                         formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
-                        transactionsInfo.append({"type" : "outgoing", "amount" : outTxBlock['amount'], "date" : str(formattedDate), "txID": outTxBlock['transactionID'], "to": outTxBlock['recipient'], "from" : outTxBlock['sender'], "height": outTxBlock['Unconfirmed']})
+                        transactionsInfo.append({"type" : "outgoing", "amount" : outTxBlock['amount'], "date" : str(formattedDate), "txID": outTxBlock['transactionID'], "to": outTxBlock['recipient'], "from" : outTxBlock['sender'], "height": 'Unconfirmed'})
                     try:
                         balance = balance - outTxBlock['amount']
                     except:
@@ -529,11 +529,11 @@ class BlockchainMongo:
                     if(mobileGet):
                         dateTimeObj = datetime.datetime.fromtimestamp(inTxBlock['timestamp'])
                         formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
-                        transactionsInfo.append({"type" : "incoming", "amount" : inTxBlock['amount'], "date" : str(formattedDate), "txID": inTxBlock['transactionID'], "to": tx['recipient'], "from" : inTxBlock['sender'], "height": outTxBlock['Unconfirmed']})
+                        transactionsInfo.append({"type" : "incoming", "amount" : inTxBlock['amount'], "date" : str(formattedDate), "txID": inTxBlock['transactionID'], "to": tx['recipient'], "from" : inTxBlock['sender'], "height": 'Unconfirmed'})
                     try:
-                        balance = balance - inTxBlock['amount']
+                        balance = balance + inTxBlock['amount']
                     except:
-                        balance = balance - inTxBlock.amount
+                        balance = balance + inTxBlock.amount
 
             ######################################
             # Checks blockchain for transactions
