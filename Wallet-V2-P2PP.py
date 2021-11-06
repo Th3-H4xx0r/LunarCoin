@@ -41,8 +41,8 @@ walletAddress, wif = SignaturesECDSA().make_address(myVerifyingKey.to_string())
 
 #SECP256k1
 
-print(myPrivateSigning.to_string())
-print(myVerifyingKey.to_string())
+#print(myPrivateSigning.to_string())
+#print(myVerifyingKey.to_string())
 
 #print(myPublicSigning)
 #print(type(myPublicSigning))
@@ -379,7 +379,7 @@ if __name__ == "__main__":
                             data = pickle.dumps(dataToSend)
                             s.send(data)
 
-                            print("Sent data")
+                            #print("Sent data")
 
                             #time.sleep(1)
 
@@ -390,7 +390,7 @@ if __name__ == "__main__":
             
                                 data = s.recv(BUFFER_SIZE)
 
-                                print(data)
+                                #print(data)
 
                                 balance.append(float(data.decode()))
 

@@ -465,13 +465,10 @@ class BlockchainMongo:
     def last_block_blockchain(self):
         return self.chain[-1]
          
-
-    
     @property
     def last_block(self):
         return self.chain[-1]
     
-
     @staticmethod
     def computeHash(block):
         """
@@ -479,94 +476,106 @@ class BlockchainMongo:
         :param block: <dict> Block
         :return: <str>
         """
-
         # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
         block_string = pickle.dumps(block)
         return hashlib.sha256(block_string).hexdigest()
 
-
     def getUserBalance(self, myPublic, checkTransactionID=None, mobileGet=False):
 
         duplicate = False
-
         transactionsInfo = []
 
+        # Checks for duplicate transaction in mempool
         for tx in self.current_transactions_mempool:
             if(tx['transactionID'] == checkTransactionID):
                 duplicate = True
-
         try:
 
             if(type(myPublic) != str):
                 myPublic = myPublic.decode('utf-8')
 
-
             #print(myPublic)
 
-
             outgoingTx = self.db.Blockchain.find({"transactions.sender": myPublic })
-
             incomingTx = self.db.Blockchain.find({"transactions.recipient": myPublic })
-
             balance = 0
+
+            ###################################
+            # Checks mempool for transactions
+            ###################################
+
+            # Checks outgoing transactions
+
+            for outTxBlock in self.current_transactions_mempool:
+                if(outTxBlock['sender'] == myPublic):
+                    if(outTxBlock['transactionID'] == checkTransactionID):
+                        duplicate = True
+                    if(mobileGet):
+                        dateTimeObj = datetime.datetime.fromtimestamp(outTxBlock['timestamp'])
+                        formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
+                        transactionsInfo.append({"type" : "outgoing", "amount" : outTxBlock['amount'], "date" : str(formattedDate), "txID": outTxBlock['transactionID'], "to": outTxBlock['recipient'], "from" : outTxBlock['sender'], "height": outTxBlock['Unconfirmed']})
+                    try:
+                        balance = balance - outTxBlock['amount']
+                    except:
+                        balance = balance - outTxBlock.amount
+
+
+            # Checks incoming transactions
+            
+            for inTxBlock in self.current_transactions_mempool:
+                if(inTxBlock['recipient'] == myPublic):
+                    if(inTxBlock['transactionID'] == checkTransactionID):
+                        duplicate = True
+                    if(mobileGet):
+                        dateTimeObj = datetime.datetime.fromtimestamp(inTxBlock['timestamp'])
+                        formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
+                        transactionsInfo.append({"type" : "incoming", "amount" : inTxBlock['amount'], "date" : str(formattedDate), "txID": inTxBlock['transactionID'], "to": tx['recipient'], "from" : inTxBlock['sender'], "height": outTxBlock['Unconfirmed']})
+                    try:
+                        balance = balance - inTxBlock['amount']
+                    except:
+                        balance = balance - inTxBlock.amount
+
+            ######################################
+            # Checks blockchain for transactions
+            ######################################
 
             # Checks outgoing transactions
 
             for outTxBlock in outgoingTx:
                 transactions = outTxBlock['transactions']
-
                 for tx in transactions:
                     if(tx['sender'] == myPublic):
-
                         if(tx['transactionID'] == checkTransactionID):
                             duplicate = True
-
-                            #print("OUTGOING: " + str(tx['transactionID']) + " : " + str(checkTransactionID ))
-                        
-
                         if(mobileGet):
                             dateTimeObj = datetime.datetime.fromtimestamp(tx['timestamp'])
                             formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
-
                             transactionsInfo.append({"type" : "outgoing", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": outTxBlock['block_height']})
-
                         try:
                             balance = balance - tx['amount']
-                        
                         except:
                             balance = balance - tx.amount
             
-
             # Checks incoming transactions
 
             for incomingTxBlock in incomingTx:
                 transactions = incomingTxBlock['transactions']
-
                 for tx in transactions:
                     if(tx['recipient'] == myPublic):
-
                         if(tx['transactionID'] == checkTransactionID):
-                            #print("INCOMING: " + str(tx['transactionID']) + " : " + str(checkTransactionID ))
                             duplicate = True
-
                         if(mobileGet):
                             dateTimeObj = datetime.datetime.fromtimestamp(tx['timestamp'])
                             formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
-                        
                             transactionsInfo.append({"type" : "incoming", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": incomingTxBlock['block_height']})
-
                         try:
                             balance = balance + tx['amount']
-                        
                         except:
                             balance = balance + tx.amount
             
-
             #print("BALANCE: " + str(balance))
-
             if(mobileGet):
                 return balance, duplicate, transactionsInfo
-            
             else:
                 return balance, duplicate
 

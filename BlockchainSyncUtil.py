@@ -34,32 +34,19 @@ class BlockchainSyncUtil:
 
     '''
     def payMinerReward(self, public):
-
         # TODO: Work on adding validator reward
-
         validatorNodesList = SocketUtil.getMinerNodes()
-
         bar = Bar('Processing validator reward transaction', max=len(validatorNodesList))
-
         for i in range(len(validatorNodesList)):
             try:
-
                 #if(validatorNodesList[i]['ip'] != ip and validatorNodesList[i]['port'] != port):
                 SocketUtil.sendObj(validatorNodesList[i]['ip'], Tx, validatorNodesList[i]['port'])
-
             except Exception as e:
                 pass
-                
             bar.next()
-        
         bar.finish()
-
-
-
         print(colored("[VALIDATOR CORE] Paying validator reward", "yellow"))
-
-
-'''
+    '''
     def syncSpamManagementClock(self, ip, port):
         try:
             print(colored('[VALIDATOR CORE] Syncing spam management service.','cyan'))
@@ -98,7 +85,7 @@ class BlockchainSyncUtil:
 
             
             except Exception as e:
-                print("Error with getting spam management sync data")
+                print("Error with getting spam management sync data: " + str(e))
                 return None, None
         
  
@@ -252,7 +239,10 @@ class BlockchainSyncUtil:
 
 
 
-    async def chainInitSync(self, ip, port):
+    async def chainInitSync(self, ip, port, fullNodesList, minerID):
+
+        print(fullNodesList)
+        print("======================================================")
 
         '''
         # Blockchain initial sync
@@ -260,14 +250,13 @@ class BlockchainSyncUtil:
 
         # Checks current blockchain
 
-        badHashBlocks = []
-
-        client = MongoClient('localhost')
+        badHashBlocks=[]
+        client=MongoClient('localhost')
         db=client.LunarCoin
-        currentChainHeight = db.Blockchain.estimated_document_count()
-        missingBlocks = []
-
-        blockHostRecvList = {}
+        currentChainHeight=db.Blockchain.estimated_document_count()
+        missingBlocks=[]
+        blockHostRecvList={}
+        fullNodesListTemp=fullNodesList
 
         # Finds missing blocks
 
@@ -308,131 +297,66 @@ class BlockchainSyncUtil:
                     #BlockchainMongo.deleteBlockchainStatic()
 
                     try:
-
                         print("Waiting to get blockchain...")
 
                         bar = Bar('Downloading blockchain', max=(int(breakUpIterations))) # Adds one to avoid zero-division error
-                        for i in range(breakUpIterations):
-                            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                            s.connect((ip, port))
-                            blockDataTemp = b''
-                            dataToSend = None
+                        for i in range(breakUpIterations): # Goes through each block chunk
 
-                            missingBlockInRange = False
-                            startIdx, endIdx= iterIndex, iterIndex + 99
-
-                            print(missingBlocks)
-
-                            for missingBlockIndex in missingBlocks:
-                                if(missingBlockIndex >= iterIndex and missingBlockIndex <= endIdx):
-                                    missingBlockInRange = True
-
-                            if(missingBlockInRange):
-                                dataToSend = b'block_sync:' + bytes(str(iterIndex), 'utf-8') + b'-' + bytes(str(iterIndex + 99), 'utf-8')
-                                # Delete current blocks in this range
-                                for i in range(startIdx, endIdx + 1):
-                                    db.Blockchain.delete_one({'block_height': i})
-
-                            #print("######################")
-                            #print(currentChainHeight)
-                            #print(startIdx)
-                            #print(endIdx)
-                            #print((missingBlockInRange == False and currentChainHeight >= startIdx and currentChainHeight >= endIdx))
-                            #print("######################")
-                            
-                            if(missingBlockInRange == False and currentChainHeight >= startIdx and currentChainHeight >= endIdx):
-                                # Requests just block hash headers to verify current block integrity
-                                dataToSend = b'blockchain_hash_header_sync:' + bytes(str(iterIndex), 'utf-8') + b'-' + bytes(str(iterIndex + 99), 'utf-8')
-                                print("SEND HASHES")
-                            else:
-                                dataToSend = b'block_sync:' + bytes(str(iterIndex), 'utf-8') + b'-' + bytes(str(iterIndex + 99), 'utf-8')
-                                missingBlockInRange = True
-                                # Delete current blocks in this range
-                                for i in range(startIdx, endIdx + 1):
-                                    db.Blockchain.delete_one({'block_height': i})
-
-                            #print(missingBlockInRange)
-                            
-                            #print(dataToSend)
-
-                            iterIndex+=100
-                            data = pickle.dumps(dataToSend)
-                            s.sendall(data)
-
-                            while True:
-                                blockPacket = s.recv(BUFFER_SIZE)
-                                blockDataTemp += blockPacket
-
-                                if not blockPacket: break
-                                
-                            blockData = pickle.loads(blockDataTemp)
-                            #else: # Adds block to the local blockchain
-
-                            badHashInBlockChunk = False
-
-                            chunkGetIteration = 1
-
-                            # Logs where the block chunk came from
-                            blockHostRecvList[f'{iterIndex-100}:{iterIndex-1}-' + str(chunkGetIteration)] = {"ip": ip, "port": port}
-
-                            for block in blockData:
-                                try:
-                                    if(block != None):
-                                        if(missingBlockInRange): # If there are missing blocks in the range, or there are no blocks in this range
-                                            BlockchainMongo.saveBlockStatic(block)
-                                        else:
-                                            #print(block)
-                                            height = block['height']
-                                            block_hash = block['hash']
-                                            localBlock = BlockchainMongo.getBlockStatic(db, height)
-                                            del localBlock['_id']
-                                            getLocalBlockHash = BlockchainMongo.computeHash(localBlock)
-
-                                            #print(height)
-
-                                            if getLocalBlockHash == block_hash:
-                                                #print ("Hash of block " + str(height) + " matches with current chain")
-                                                pass
-                                            else:
-                                                badHashBlocks.append(height)
-                                                badHashInBlockChunk = True
-                                                print("BAD HASH")
-                                    
-                                except Exception as e:
-                                    print("ERROR: " + str(e))
-                                    pass
-                            
-                            if(badHashInBlockChunk):
-                                s.close() # Closes current connection
-                                print("Bad block hash verification in current chunk. Redownloading chunk of blocks")
-
-                                '''
-                                # REGETS THE BLOCK TO GET VALID HASHES
-                                # IMPLEMENTATION BELOW
-                                '''
-
-                                
-                                dataToSend = b'block_sync:' + bytes(str(iterIndex-100), 'utf-8') + b'-' + bytes(str(iterIndex-1), 'utf-8')
-                                data = pickle.dumps(dataToSend)
-
-                                # Reconnects to node
+                            try:
                                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                                 s.connect((ip, port))
-                                s.sendall(data)
-                                
-                                # Delete the data for this chunk
-                                for i in range(startIdx, endIdx + 1):
-                                    db.Blockchain.delete_one({'block_height': i})
+                                blockDataTemp = b''
+                                dataToSend = None
 
-                                print("Sent for redownload")
+                                missingBlockInRange = False
+                                startIdx, endIdx= iterIndex, iterIndex + 99
+
+                                print(missingBlocks)
+
+                                for missingBlockIndex in missingBlocks:
+                                    if(missingBlockIndex >= iterIndex and missingBlockIndex <= endIdx):
+                                        missingBlockInRange = True
+
+                                if(missingBlockInRange):
+                                    dataToSend = b'block_sync:' + bytes(str(iterIndex), 'utf-8') + b'-' + bytes(str(iterIndex + 99), 'utf-8')
+                                    # Delete current blocks in this range
+                                    for i in range(startIdx, endIdx + 1):
+                                        db.Blockchain.delete_one({'block_height': i})
+
+                                #print("######################")
+                                #print(currentChainHeight)
+                                #print(startIdx)
+                                #print(endIdx)
+                                #print((missingBlockInRange == False and currentChainHeight >= startIdx and currentChainHeight >= endIdx))
+                                #print("######################")
+                                
+                                if(missingBlockInRange == False and currentChainHeight >= startIdx and currentChainHeight >= endIdx):
+                                    # Requests just block hash headers to verify current block integrity
+                                    dataToSend = b'blockchain_hash_header_sync:' + bytes(str(iterIndex), 'utf-8') + b'-' + bytes(str(iterIndex + 99), 'utf-8')
+                                    print("SEND HASHES")
+                                else:
+                                    dataToSend = b'block_sync:' + bytes(str(iterIndex), 'utf-8') + b'-' + bytes(str(iterIndex + 99), 'utf-8')
+                                    missingBlockInRange = True
+                                    # Delete current blocks in this range
+                                    for i in range(startIdx, endIdx + 1):
+                                        db.Blockchain.delete_one({'block_height': i})
+
+                                #print(missingBlockInRange)
+                                
+                                #print(dataToSend)
+
+                                iterIndex+=100
+                                data = pickle.dumps(dataToSend)
+                                s.sendall(data)
+
+                                #fullNodesListTemp.remove()
 
                                 while True:
                                     blockPacket = s.recv(BUFFER_SIZE)
                                     blockDataTemp += blockPacket
 
                                     if not blockPacket: break
-                                
-                                print("Got redownload")
+                                    
                                 blockData = pickle.loads(blockDataTemp)
                                 #else: # Adds block to the local blockchain
 
@@ -440,22 +364,117 @@ class BlockchainSyncUtil:
 
                                 chunkGetIteration = 1
 
-                                #print(blockDataTemp)
-
                                 # Logs where the block chunk came from
                                 blockHostRecvList[f'{iterIndex-100}:{iterIndex-1}-' + str(chunkGetIteration)] = {"ip": ip, "port": port}
 
                                 for block in blockData:
-                                    print(block)
                                     try:
                                         if(block != None):
-                                            BlockchainMongo.saveBlockStatic(block)
+                                            if(missingBlockInRange): # If there are missing blocks in the range, or there are no blocks in this range
+                                                BlockchainMongo.saveBlockStatic(block)
+                                            else:
+                                                #print(block)
+                                                height = block['height']
+                                                block_hash = block['hash']
+                                                localBlock = BlockchainMongo.getBlockStatic(db, height)
+                                                del localBlock['_id']
+                                                getLocalBlockHash = BlockchainMongo.computeHash(localBlock)
+
+                                                #print(height)
+
+                                                if getLocalBlockHash == block_hash:
+                                                    #print ("Hash of block " + str(height) + " matches with current chain")
+                                                    pass
+                                                else:
+                                                    badHashBlocks.append(height)
+                                                    badHashInBlockChunk = True
+                                                    print("BAD HASH")
+                                        
                                     except Exception as e:
                                         print("ERROR: " + str(e))
                                         pass
+                                
+                                if(badHashInBlockChunk):
 
-                            s.close()
-                            bar.next()
+                                    retryIndex = 0
+
+                                    while retryIndex < 5: # Upto five retries of redowloading blockchain
+
+                                        retrialError = False
+                                        s.close() # Closes concurrent connection
+                                        print("Bad block hash verification in current chunk. Redownloading chunk of blocks")
+
+                                        '''
+                                        # REGETS THE BLOCK TO GET VALID HASHES
+                                        # IMPLEMENTATION BELOW
+                                        '''
+                                        
+                                        dataToSend = b'block_sync:' + bytes(str(iterIndex-100), 'utf-8') + b'-' + bytes(str(iterIndex-1), 'utf-8')
+                                        print(dataToSend)
+                                        data = pickle.dumps(dataToSend)
+
+                                        # Reconnects to node
+                                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                                        s.connect((ip, port))
+                                        s.sendall(data)
+
+                                        print("Sent for redownload")
+
+                                        blockDataTemp = b''
+
+                                        while True:
+                                            blockPacket = s.recv(BUFFER_SIZE)
+                                            blockDataTemp += blockPacket
+
+                                            if not blockPacket: break
+                                        
+                                        print("Got redownload")
+
+                                        # Delete the data for this chunk
+                                        for i in range(startIdx, endIdx + 1):
+                                            db.Blockchain.delete_one({'block_height': i})
+
+                                        blockDataNew = pickle.loads(blockDataTemp)
+                                        #else: # Adds block to the local blockchain
+
+                                        badHashInBlockChunk = False
+
+                                        chunkGetIteration = 1
+
+                                        #print(blockDataTemp)
+
+                                        # Logs where the block chunk came from
+                                        blockHostRecvList[f'{iterIndex-100}:{iterIndex-1}-' + str(chunkGetIteration)] = {"ip": ip, "port": port}
+
+                                        for block in blockDataNew:
+                                            #print(block)
+                                            try:
+                                                if(block != None):
+                                                    BlockchainMongo.saveBlockStatic(block)
+                                            except Exception as e:
+                                                print("ERROR: " + str(e))
+                                                retrialError = True
+                                                pass
+                                        
+                                        if(retrialError == False):
+                                            break
+                                        else:
+                                            print("Error with trial to resync block chunk. Retrying...")
+                                            retryIndex+=1 # Increments retry count
+                                        
+                                        # Communicates with another node to get next chunk (if avaliable) (Bandwidth load balancing)
+                                        ip, port, nodeDataJSON = BlockchainSyncUtil().getRandomNode(minerID, fullNodesList)
+                                        print("new node generated: " + str(ip) + ":" + str(port))
+
+                                s.close()
+                                bar.next()
+
+                                # Communicates with another node to get next chunk (if avaliable) (Bandwidth load balancing)
+                                ip, port, nodeDataJSON = BlockchainSyncUtil().getRandomNode(minerID, fullNodesList)
+                                print("new node generated: " + str(ip) + ":" + str(port))
+
+                            except Exception as e:
+                                print("ERROR 1: " + str(e))
 
                         bar.finish()
                         s.close()

@@ -472,7 +472,7 @@ try:
                         return None
                     
                     elif('block_sync' in str(returnData)):
-                        print("BLOCK REGULAR SYNC REQ")
+                        print("BLOCK REGULAR SYNC")
                         #print(returnData)
                         index = str(returnData).index(":")
 
@@ -486,10 +486,12 @@ try:
 
                         syncUtil.sendBlockchain_BLOCK(new_sock, blockchainObj, height, height_end)
 
+                        print("====================")
+
                         return None
                     
                     elif('blockchain_hash_header_sync' in str(returnData)):
-                        print("BLOCKCHAIN SYNC HASH HEADERS REQ")
+                        print("HASH HEADERS")
                         #print(returnData)
                         index = str(returnData).index(":")
                         index_dash = str(returnData).index("-")
@@ -498,6 +500,8 @@ try:
                         validatorLogger.logMessage('Block sync hash headers with height: ' + str(height) +  ' to height ' + str(height_end) + ' requested from validator: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
 
                         syncUtil.sendBlockchain_BLOCK_HASH_HEADERS(new_sock, blockchainObj, height, height_end)
+
+                        print("====================")
 
                         return None
 
@@ -753,7 +757,7 @@ try:
                             if(node == {'ip': NODE_IP, 'port': NODE_PORT}):
                                 duplicateTransaction = True
 
-                        if(duplicateTransaction == False):
+                        if(duplicateTransaction == False): #TODO: This is redundant look into
 
                             # Adds current node to the recieved list on transaction packet
 
@@ -819,6 +823,8 @@ try:
 
                             #print(VALIDATOR_PEERS)
                             #print(newTx)
+
+                            print("NODES TO SEND TO: " + str(nodesToSendTo))
                             for node in nodesToSendTo:
                                 try:
                                     Connections().sendObj(node['ip'], newTx, node['port'])
@@ -1103,8 +1109,10 @@ try:
 
                 VALIDATOR_PEERS = nodesFiltered
     
-    async def syncBlockchain(syncUtil, syncNodeIP, syncNodePort):
-        syncComplete = await syncUtil.chainInitSync(syncNodeIP, syncNodePort)
+    async def syncBlockchain(syncUtil, syncNodeIP, syncNodePort, fullNodesList):
+        global MINER_ID
+
+        syncComplete = await syncUtil.chainInitSync(syncNodeIP, syncNodePort, fullNodesList, MINER_ID)
 
         return syncComplete
 
@@ -1148,7 +1156,7 @@ try:
                 break
 
             elif(syncNodeIP != None and syncNodePort != None and nodeDataJSON != None): # Is 
-                syncComplete = await syncBlockchain(syncUtil, syncNodeIP, syncNodePort)#  # Blockchain is attempted to be synced
+                syncComplete = await syncBlockchain(syncUtil, syncNodeIP, syncNodePort, nodesData)# Blockchain is attempted to be synced
 
                 if(syncComplete): # If blockchain is synced
 
@@ -1175,6 +1183,7 @@ try:
 
         #while BLOCKCHAIN_SYNC_COMPLETE != True:
         if(BLOCKCHAIN_SYNC_COMPLETE):
+
 
             print("Verifing blockchain integrity...")
 
