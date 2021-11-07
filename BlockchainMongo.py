@@ -215,45 +215,36 @@ class BlockchainMongo:
         
         return dataReturn
     
-    def verifyTransactionBlockchainIntegrity(self, tx):
+    def verifyTransactionBlockchainIntegrity(self, tx, currentBlock):
 
-        # "publicKey": publicKey,
-                    #"signedMessage": signedMsg
+        try:
+            execute = False
 
-        execute = False
+            if(tx['sender'] != 'genesis' and tx['sender'] != 'validator_reward'):
+                publicKey = ecdsa.VerifyingKey.from_string(bytes.fromhex(tx['publicKey']), curve=ecdsa.SECP256k1, hashfunc = hashlib.sha1)
+                valid = self.util.verifyTransactionRaw(tx, publicKey)
+                madeWalletAddr, wif = SignaturesECDSA().make_address(publicKey.to_string())
+                getOwnWalletFunc = tx['sender']
 
-        if(tx['sender'] != 'genesis' and tx['sender'] != 'validator_reward'):
-
-            publicKey = ecdsa.VerifyingKey.from_string(bytes.fromhex(tx['publicKey']), curve=ecdsa.SECP256k1, hashfunc = hashlib.sha1)
-
-            #print("TX PUBLIC KEY: " + str(publicKey.to_string()))
-
-            valid = self.util.verifyTransactionRaw(tx, publicKey)
-
-            #print("TX VALID: " + str(valid))
-
-            madeWalletAddr, wif = SignaturesECDSA().make_address(publicKey.to_string())
-
-            getOwnWalletFunc = tx['sender']
-
-            if(madeWalletAddr == getOwnWalletFunc):
-                userCurrentBalance, duplicateTx = self.getUserBalance(getOwnWalletFunc, tx['transactionID'])
-                if(duplicateTx == False):
-                    if(userCurrentBalance >= tx['amount']):
-                        if(valid):
-                            if(tx['recipient'] != tx['sender']):
-                                # Transaction is fully processed and is good to go
-                                execute = True
-
-        
-        else:
-            if(tx['sender'] == "genesis"):
-                if(tx['recipient'] == 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8hLC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h'):
+                if(madeWalletAddr == getOwnWalletFunc):
+                    userCurrentBalance, duplicateTx = self.getUserBalance(getOwnWalletFunc, currentBlock, tx['transactionID'], False, True)
+                    if(duplicateTx == False):
+                        if(userCurrentBalance >= tx['amount']):
+                            if(valid):
+                                if(tx['recipient'] != tx['sender']):
+                                    # Transaction is fully processed and is good to go
+                                    execute = True
+            else:
+                if(tx['sender'] == "genesis"):
+                    if(tx['recipient'] == 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h'):
+                        execute = True
+                elif(tx['sender'] == 'validator_reward'): #TODO: take care of this
                     execute = True
-            
-            elif(tx['sender'] == 'validator_reward'): #TODO: take care of this
-                execute = True
-        return execute
+            return execute
+        
+        except Exception as e:
+            print("Error with verifying transaction: " + str(e))
+            return False
 
     def get_current_block_length(self):
         return self.db.Blockchain.estimated_document_count()
@@ -357,7 +348,9 @@ class BlockchainMongo:
                 # Verifies transactions inside block
 
                 for tx in currentBlock['transactions']:
-                    self.verifyTransactionBlockchainIntegrity(tx) # TODO: GIVING INVALID
+                    if(not self.verifyTransactionBlockchainIntegrity(tx, i)):
+                        print("Invalid")
+                        valid = False
 
 
                 del currentBlock['_id']
@@ -480,10 +473,12 @@ class BlockchainMongo:
         block_string = pickle.dumps(block)
         return hashlib.sha256(block_string).hexdigest()
 
-    def getUserBalance(self, myPublic, checkTransactionID=None, mobileGet=False):
+    def getUserBalance(self, myPublic, blockLimit = None, checkTransactionID=None, mobileGet=False, integrityCheck=False):
 
         duplicate = False
         transactionsInfo = []
+
+        duplicateCount = 0
 
         # Checks for duplicate transaction in mempool
         for tx in self.current_transactions_mempool:
@@ -496,8 +491,17 @@ class BlockchainMongo:
 
             #print(myPublic)
 
-            outgoingTx = self.db.Blockchain.find({"transactions.sender": myPublic })
-            incomingTx = self.db.Blockchain.find({"transactions.recipient": myPublic })
+            outgoingTx = None 
+            incomingTx = None
+
+
+            if(blockLimit):
+                outgoingTx = self.db.Blockchain.find({"$and": [{"transactions.sender": myPublic}, {"block_height": {"$lte": blockLimit}}]})
+                incomingTx = self.db.Blockchain.find({"$and": [{"transactions.recipient": myPublic}, {"block_height": {"$lte": blockLimit}}]})
+            
+            else:
+                outgoingTx = self.db.Blockchain.find({"transactions.sender": myPublic })
+                incomingTx = self.db.Blockchain.find({"transactions.recipient": myPublic })
             balance = 0
 
             ###################################
@@ -506,10 +510,12 @@ class BlockchainMongo:
 
             # Checks outgoing transactions
 
+
             for outTxBlock in self.current_transactions_mempool:
                 if(outTxBlock['sender'] == myPublic):
                     if(outTxBlock['transactionID'] == checkTransactionID):
                         duplicate = True
+                        duplicateCount+=1
                     if(mobileGet):
                         dateTimeObj = datetime.datetime.fromtimestamp(outTxBlock['timestamp'])
                         formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
@@ -526,6 +532,7 @@ class BlockchainMongo:
                 if(inTxBlock['recipient'] == myPublic):
                     if(inTxBlock['transactionID'] == checkTransactionID):
                         duplicate = True
+                        duplicateCount+=1
                     if(mobileGet):
                         dateTimeObj = datetime.datetime.fromtimestamp(inTxBlock['timestamp'])
                         formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
@@ -547,6 +554,7 @@ class BlockchainMongo:
                     if(tx['sender'] == myPublic):
                         if(tx['transactionID'] == checkTransactionID):
                             duplicate = True
+                            duplicateCount+=1
                         if(mobileGet):
                             dateTimeObj = datetime.datetime.fromtimestamp(tx['timestamp'])
                             formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
@@ -564,6 +572,7 @@ class BlockchainMongo:
                     if(tx['recipient'] == myPublic):
                         if(tx['transactionID'] == checkTransactionID):
                             duplicate = True
+                            duplicateCount+=1
                         if(mobileGet):
                             dateTimeObj = datetime.datetime.fromtimestamp(tx['timestamp'])
                             formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
@@ -574,6 +583,11 @@ class BlockchainMongo:
                             balance = balance + tx.amount
             
             #print("BALANCE: " + str(balance))
+
+            if(integrityCheck):
+                if(duplicateCount <= 1):
+                    duplicate = False
+
             if(mobileGet):
                 return balance, duplicate, transactionsInfo
             else:

@@ -1,5 +1,37 @@
-# Imports
+'''
 
+██╗░░░░░██╗░░░██╗███╗░░██╗░█████╗░██████╗░  ░█████╗░░█████╗░██╗███╗░░██╗
+██║░░░░░██║░░░██║████╗░██║██╔══██╗██╔══██╗  ██╔══██╗██╔══██╗██║████╗░██║
+██║░░░░░██║░░░██║██╔██╗██║███████║██████╔╝  ██║░░╚═╝██║░░██║██║██╔██╗██║
+██║░░░░░██║░░░██║██║╚████║██╔══██║██╔══██╗  ██║░░██╗██║░░██║██║██║╚████║
+███████╗╚██████╔╝██║░╚███║██║░░██║██║░░██║  ╚█████╔╝╚█████╔╝██║██║░╚███║
+╚══════╝░╚═════╝░╚═╝░░╚══╝╚═╝░░╚═╝╚═╝░░╚═╝  ░╚════╝░░╚════╝░╚═╝╚═╝░░╚══╝
+
+
+░█──░█ █▀▀█ █── ─▀─ █▀▀▄ █▀▀█ ▀▀█▀▀ █▀▀█ █▀▀█ 　 ░█▄─░█ █▀▀█ █▀▀▄ █▀▀ 
+─░█░█─ █▄▄█ █── ▀█▀ █──█ █▄▄█ ──█── █──█ █▄▄▀ 　 ░█░█░█ █──█ █──█ █▀▀ 
+──▀▄▀─ ▀──▀ ▀▀▀ ▀▀▀ ▀▀▀─ ▀──▀ ──▀── ▀▀▀▀ ▀─▀▀ 　 ░█──▀█ ▀▀▀▀ ▀▀▀─ ▀▀▀
+
+Official Website: https://lunarcoin.network
+
+// Copyright 2021 Lunar Coin Developers
+// This file is part of the lunarcoin-validator-node library.
+//
+// The lunarcoin-validator-node library is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// The lunarcoin-validator-node library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with the lunarcoin-validator-node library. If not, see <http://www.gnu.org/licenses/>.
+'''
+
+# Imports
 from asyncio.tasks import FIRST_COMPLETED
 from hashlib import new
 from logging import BASIC_FORMAT
@@ -37,46 +69,91 @@ try:
     from TransactionPacket import TransactionPacket
     import ecdsa
     import codecs
-
     import BlockchainSyncUtil as BlockchainSyncUtil
     from Logger import Logger
-
     import os.path
     from os import path
     import random
+    import ntplib
+    from time import ctime
 
+    ###########################
+    # Initilizations
+    ###########################
     init()
-    # Global var
+
+    ###########################
+    # Global Variables
+    ###########################
     TCP_PORT = 6003
     BUFFER_SIZE = 65536
-
     CURRENT_BLOCK = None
     NGROK_AUTH_TOKEN = None
     MINER_ID = None
-
     NODE_IP = None
     NODE_PORT = None
     NETWORK = None
     SPAM_MANAGEMENT_SECONDS_LEFT = 86400
     SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT = SPAM_MANAGEMENT_SECONDS_LEFT
-
     VALIDATOR_PEERS = []
-
     BLOCKCHAIN_SYNC_COMPLETE = False
-
     NODE_VERSION = '' # TODO: Add node version to be sent on IHS    
-
     CONNECTION_MODE = 'tcp'
     VALIDATOR_PRIVATE, VALIDATOR_PUBLIC_KEY = None, None
     VALIDATOR_WALLET_ADDRESS = None
-
+    INITIAL_TWO_BLOCK_PASSED = False
+    BLOCK_TIME_PASS_COUNTER = 0
+    c = ntplib.NTPClient()
+    response = c.request('us.pool.ntp.org', version=3)
+    INTERNAL_NODE_CLOCK = response.tx_time
+    INTERNAL_NODE_CLOCK += 1
+    TIME_THRESHOLD_REACHED = False
     walletTxFreq = {}
-
     txRecv = []
-
     validatorLogger = Logger()
+    sys.setrecursionlimit(1000000000)
 
-    sys.setrecursionlimit(1000000)
+
+
+    def internalClockService():
+        global INTERNAL_NODE_CLOCK
+        while True:
+            INTERNAL_NODE_CLOCK += 1
+            time.sleep(1)
+
+    def saveBlockService():
+        global TIME_THRESHOLD_REACHED
+        global INTERNAL_NODE_CLOCK
+        global INITIAL_TWO_BLOCK_PASSED
+        global BLOCK_TIME_PASS_COUNTER
+
+        TEMP = time.time()
+
+        while True:
+            #print(ctime(start) + str(" : ") + ctime(time.time()))
+            seconds = 10
+            diff = INTERNAL_NODE_CLOCK % seconds
+            if(str(diff)[0] == '0' and TIME_THRESHOLD_REACHED == False):
+                print("----------------")
+                print(f"its been {seconds} sec")
+                print("ACTUAL: " + str(time.time()-TEMP))
+                TEMP = time.time()
+
+                BLOCK_TIME_PASS_COUNTER+=1
+
+                if(BLOCK_TIME_PASS_COUNTER > 2):
+                    INITIAL_TWO_BLOCK_PASSED = True
+
+                TIME_THRESHOLD_REACHED = True
+
+                # Saves the block
+                if(INITIAL_TWO_BLOCK_PASSED):
+                    print("SAVING BLOCK NOW...")
+
+            if(str(diff)[0] != '0' and TIME_THRESHOLD_REACHED == True):
+                TIME_THRESHOLD_REACHED = False
+            time.sleep(0.1)
+
 
     def loadConfiguration():
 
@@ -89,72 +166,46 @@ try:
         try:
             with open('config.json', 'r') as file:
                 data = json.load(file)
-
                 try: # Checks if ngrokAuthToken exists
-
                     NGROK_AUTH_TOKEN = data['ngrokAuthToken']
-
                     # Checks if ngrokAuthToken is proper
-
                     if(isinstance(NGROK_AUTH_TOKEN, str) != True):
                         validatorLogger.logMessage("Error with loading config.json: key ngrokAuthToken is not of type string", 'error')
                         return False
-
                 except Exception as e:
                     validatorLogger.logMessage("Error with loading config.json: key ngrokAuthToken does not exist", 'error')
                     return False
-
-
                 try: # Checks if minerID exists
                     MINER_ID = data['minerID']
-
-                    
                     if(isinstance(MINER_ID, str) != True): # Checks if minerID is proper
                         validatorLogger.logMessage("Error with loading config.json: key minerID is not of type string", 'error')
                         return False
-
                 except Exception as e:
                     validatorLogger.logMessage("Error with loading config.json: key minerID does not exist", 'error')
                     return False
-                
-
                 try: # Checks if network exists
                     NETWORK = data['network']
-
-                    
                     if(isinstance(MINER_ID, str) and (NETWORK == "mainnet" or NETWORK == "testnet")): # Checks if network is proper
                         pass
-                    
                     else: 
                         validatorLogger.logMessage("Error with loading config.json: key network is not of type string or is not 'mainnet' or 'testnet'", 'error')
                         return False
-
                 except Exception as e:
                     validatorLogger.logMessage("Error with loading config.json: key network does not exist: " + str(e), 'error')
                     return False
-                
-
                 try: # Checks if connection mode
                     CONNECTION_MODE = data['connection_mode']
-
-                    
                     if(isinstance(CONNECTION_MODE, str) and (CONNECTION_MODE == "tcp" or CONNECTION_MODE == "ngrok")): # Checks if network is proper
                         pass
-                    
                     else: 
                         validatorLogger.logMessage("Error with loading config.json: key connection_mode is not of type string or is not 'tcp' or 'ngrok'", 'error')
                         return False
-
                 except Exception as e:
                     validatorLogger.logMessage("Error with loading config.json: key connection_mode does not exist: " + str(e), 'error')
                     return False
-
-
                 # If all values successfull load
                 validatorLogger.logMessage("[VALIDATOR CORE] Loaded validator Configs from config.json", 'success')
                 return True
-
-        
         # Error with file loading
         except Exception as e:
             validatorLogger.logMessage("Error with loading config.json or file does not exist: " + str(e), 'error')
@@ -365,7 +416,7 @@ try:
                         
                         publicKey = useData[index + 1:]
                         
-                        userCurrentBalance = blockchainObj.getUserBalance(publicKey, False, True)
+                        userCurrentBalance = blockchainObj.getUserBalance(publicKey, None, None, True, False)
 
                         #print("user balance: " +str(userCurrentBalance))
 
@@ -532,7 +583,7 @@ try:
 
                         publicKey = returnData[index - 1:]
 
-                        userCurrentBalance = blockchainObj.getUserBalance(publicKey)
+                        userCurrentBalance = blockchainObj.getUserBalance(publicKey, None, None, False, False)
 
                         #print("user balance: " +str(userCurrentBalance))
 
@@ -917,7 +968,7 @@ try:
 
                                         if(getOwnWalletFunc != "genesis" and getOwnWalletFunc != "validator_reward"):
 
-                                            userCurrentBalance, duplicateTx = blockchain.getUserBalance(getOwnWalletFunc, newTx.getTransactionID())
+                                            userCurrentBalance, duplicateTx = blockchain.getUserBalance(getOwnWalletFunc, None, newTx.getTransactionID(), False, False)
                                         
                                             if(duplicateTx == False):
                                                 if(userCurrentBalance >= newTx.getOutputAmount()):
@@ -1184,14 +1235,22 @@ try:
         #while BLOCKCHAIN_SYNC_COMPLETE != True:
         if(BLOCKCHAIN_SYNC_COMPLETE):
 
-
             print("Verifing blockchain integrity...")
-
             blockchainValid = BlockchainMongo().verifyBlockchainIntegrity()
-
             print("Done")
 
             if(blockchainValid):
+
+                 # Start internal clock service
+                validatorLogger.logMessage('Starting internal node clock service...', 'regular')
+                clockUpdateService = threading.Thread(target=internalClockService)
+                clockUpdateService.start()
+                time.sleep(1)
+
+                # Save block service
+                validatorLogger.logMessage('Starting save block service...', 'regular')
+                saveBlockServiceDameon = threading.Thread(target=saveBlockService)
+                saveBlockServiceDameon.start()
                 
                 # Starts the main threads
                 t1 = threading.Thread(target=validatorServer, args=(('0.0.0.0', TCP_PORT), ))
@@ -1233,15 +1292,12 @@ try:
         if(path.exists('key.pem')):
 
             # Loads wallet details
-
             myPrivateSigning, myVerifyingKey = SignaturesECDSA().loadKey()
             walletAddress, wif = SignaturesECDSA().make_address(myVerifyingKey.to_string())
-
             VALIDATOR_PRIVATE, VALIDATOR_PUBLIC_KEY = myPrivateSigning, myVerifyingKey
             VALIDATOR_WALLET_ADDRESS = walletAddress
 
             # Loads node configuration
-
             loadComplete = loadConfiguration()
 
             if(NETWORK == "testnet"):
@@ -1274,7 +1330,7 @@ try:
 
                 if(allTestsPassed):
 
-                    print("All tests passed")
+                    #print("All tests passed")
 
                     try:
                         asyncio.run(syncThread())

@@ -190,7 +190,7 @@ class Connections:
         
         # Pings manager nodes
 
-        print(managerNodes)
+        #print(managerNodes)
         # [{'id': 'propagator1', 'ip': '4.tcp.ngrok.io', 'port': '14002'}]
         for node in managerNodes:
             try:
