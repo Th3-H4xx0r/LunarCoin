@@ -1,39 +1,32 @@
-import ntplib
-from time import ctime
-import time
-import threading
+import sys
+from types import ModuleType, FunctionType
+from gc import get_referents
 
-c = ntplib.NTPClient()
-response = c.request('us.pool.ntp.org', version=3)
-
-start = response.tx_time
-
-start += 1
+# Custom objects know their class.
+# Function objects seem to know way too much, including modules.
+# Exclude modules as well.
+BLACKLIST = type, ModuleType, FunctionType
 
 
+def getsize(obj):
+    """sum size of object & members."""
+    if isinstance(obj, BLACKLIST):
+        raise TypeError('getsize() does not take argument of type: '+ str(type(obj)))
+    seen_ids = set()
+    size = 0
+    objects = [obj]
+    while objects:
+        need_referents = []
+        for obj in objects:
+            if not isinstance(obj, BLACKLIST) and id(obj) not in seen_ids:
+                seen_ids.add(id(obj))
+                size += sys.getsizeof(obj)
+                need_referents.append(obj)
+        objects = get_referents(*need_referents)
+    return size
 
-def update():
-    global start
-    while True:
-        start += 1
-        time.sleep(1)
-
-updateService = threading.Thread(target=update)
-updateService.start()
-
-
-already5 = False
-while True:
-    #print(ctime(start) + str(" : ") + ctime(time.time()))
-    diff = start % 5
-    #print(diff)
-
-    if(str(diff)[0] == '0' and already5 == False):
-        print("----------------")
-        print("its been 5 sec")
-        already5 = True
     
-    if(str(diff)[0] != '0' and already5 == True):
-        already5 = False
-    time.sleep(0.1)
+obj = {"hello": ["aasdfasdfasfdasdffsdfasdfs" * 200]}
 
+print("Size of mempool: " + str(getsize(obj)))
+print(sys.getsizeof(obj))

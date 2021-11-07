@@ -143,7 +143,7 @@ try:
 
         while True:
             #print(ctime(start) + str(" : ") + ctime(time.time()))
-            seconds = 300 # Saves block every 5 minutes
+            seconds = 10 # Saves block every 5 minutes
             diff = INTERNAL_NODE_CLOCK % seconds
             if(str(diff)[0] == '0' and TIME_THRESHOLD_REACHED == False):
                 print("----------------")
@@ -363,7 +363,6 @@ try:
 
                     useData = all_data.decode("utf-8") 
 
-                    #print(type(useData))
 
                     index = useData.index(":/:")
                     
@@ -379,8 +378,7 @@ try:
 
                     tx_public = ecdsa.VerifyingKey.from_string(bytes.fromhex(jsonParsed['public_key']), curve=ecdsa.SECP256k1, hashfunc=sha256)
 
-                    #print(tx_public.to_string())
-                    
+
                     tx_timestamp = jsonParsed['timestamp']
                     tx_outputAddr = jsonParsed['recipient']
                     tx_amount = jsonParsed['output']
@@ -406,7 +404,7 @@ try:
 
                     useData = all_data.decode("utf-8") 
 
-                    #print(type(useData))
+
 
                     index = useData.index(":/:")
                     
@@ -418,7 +416,6 @@ try:
                     
                     addr = SignaturesECDSA().make_address(tx_public.to_string())
 
-                    #print(addr[0])
 
                     new_sock.send(bytes(addr[0], 'utf-8'))
                 
@@ -437,10 +434,6 @@ try:
                         
                         userCurrentBalance = blockchainObj.getUserBalance(publicKey, None, None, True, False)
 
-                        #print("user balance: " +str(userCurrentBalance))
-
-                            #print("Sending tx")
-
                         returnVar = str(userCurrentBalance[0]) + "://:" + str({"transactions": userCurrentBalance[2]})
 
                         new_sock.sendall(returnVar.encode('utf-8'))
@@ -455,7 +448,6 @@ try:
             
                     returnData = pickle.loads(all_data)
 
-                    #print(returnData)
 
 
                     '''
@@ -529,131 +521,60 @@ try:
 
                     if('blockchain_init_sync' in str(returnData)): # Get user balance and send to user
                         validatorLogger.logMessage('Blockchain sync requested from miner: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
-
-                        #block = returnData
-
-                        #BlockchainSyncUtil.verifyBlock()
-
-                        #BlockchainSyncUtil.sendRecievedBlock(block, blockchainObj, new_sock)
-
-                        #syncUtil.sendBlockchain(new_sock, blockchainObj)
                         syncUtil.sendBlockchain_HEADER(new_sock, blockchainObj)
 
                         return None
                     
                     elif('block_sync' in str(returnData)):
-                        print("BLOCK REGULAR SYNC")
-                        #print(returnData)
                         index = str(returnData).index(":")
-
                         index_dash = str(returnData).index("-")
-
                         height = returnData[index - 1:index_dash - 2].decode("utf-8") 
-
                         height_end = returnData[index_dash - 1:].decode("utf-8") 
-
                         validatorLogger.logMessage('Block sync with height: ' + str(height) +  ' to height ' + str(height_end) + ' requested from validator: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
-
                         syncUtil.sendBlockchain_BLOCK(new_sock, blockchainObj, height, height_end)
-
-                        print("====================")
-
                         return None
                     
                     elif('blockchain_hash_header_sync' in str(returnData)):
-                        print("HASH HEADERS")
-                        #print(returnData)
                         index = str(returnData).index(":")
                         index_dash = str(returnData).index("-")
                         height = returnData[index - 1:index_dash - 2].decode("utf-8") 
                         height_end = returnData[index_dash - 1:].decode("utf-8") 
                         validatorLogger.logMessage('Block sync hash headers with height: ' + str(height) +  ' to height ' + str(height_end) + ' requested from validator: ' + str(addr[0]) + ":" + str(addr[1]), 'regular')
-
                         syncUtil.sendBlockchain_BLOCK_HASH_HEADERS(new_sock, blockchainObj, height, height_end)
-
-                        print("====================")
-
                         return None
 
-
                     elif('send_transactions_list' in str(returnData)):
-                        
                         dat = pickle.dumps(txRecv)
-
                         new_sock.send(dat)
-
-                        #print(txRecv)
-
-                        #print("Sending transactions list")
-
                         return None
 
                     elif('send_user_balance_command' in str(returnData)): # Get user balance and send to user
-
                         validatorLogger.logMessage('[WALLET REQUEST] Wallet request for balance', 'info-blue')
-
                         #time.sleep(1)
-
                         publicUser = ''
-
                         #Blockchain.getUserBalance(publicUser)
-
                         index = str(returnData).index(":")
-
                         publicKey = returnData[index - 1:]
-
                         userCurrentBalance = blockchainObj.getUserBalance(publicKey, None, None, False, False)
-
-                        #print("user balance: " +str(userCurrentBalance))
-
-                        #print("Sending tx")
-
                         new_sock.sendall(str(userCurrentBalance[0]).encode('utf-8'))
-
-                        #print("Sent the balance")
-
-                        #print("Sent user the balance data")
-
                         validatorLogger.logMessage('[WALLET REQUEST ACCEPTED] Wallet request for balance sent to wallet', 'info-blue')
-
-
-
-                        #print("send_user_balance_command for public key: " + str(publicKey))
                         return None
                     
                     elif('generate_invoice' in str(returnData)): # Get user balance and send to user
-
                         validatorLogger.logMessage('[INVOICE REQUEST] Request to generate invoice', 'info-blue')
-
                         index = str(returnData).index(":")
-
-                        #print(bytes(str(returnData[index + 1:]), 'utf-8'))
-
                         invoiceDetails = pickle.loads(codecs.decode(str(returnData[index + 1:]).encode(), "base64")) #pickle.loads(bytes(str(returnData[index + 1:]), 'utf-8'))
-
                         blockchainObj.create_invoice(invoiceDetails['invoiceID'], invoiceDetails['amount'], invoiceDetails['fromAddr'], invoiceDetails['toAddr'], invoiceDetails['expDate'], invoiceDetails['signature'], invoiceDetails['publicHex'])
-
                         #invoiceID, amount, fromAddr, toAddr, expDate, signature, publicKey
-
                         return None
 
                     elif('get_invoices' in str(returnData)): # Get user balance and send to user
-
                         validatorLogger.logMessage('[INVOICE REQUEST] Request to get invoices', 'info-blue')
-
                         index = str(returnData).index(":")
-
                         walletAddr =  returnData[index - 1:]
-
-                        #print(walletAddr)
-
-
                         invoices = blockchainObj.get_invoices(walletAddr)
-
                         new_sock.sendall(pickle.dumps(invoices))
-
                         #invoiceID, amount, fromAddr, toAddr, expDate, signature, publicKey
-
                         return None
                     
                     elif('get__invoices_pending_incoming' in str(returnData)): # Get user balance and send to user
@@ -699,38 +620,26 @@ try:
                             
                         '''
 
-                    
                     elif('ping' in str(returnData)): # Get user balance and send to user
-                        #print('Validator pinged')
-
+                        print('Validator pinged')
                         #block = returnData
-
                         #BlockchainSyncUtil.verifyBlock()
-
                         #BlockchainSyncUtil.sendRecievedBlock(block, blockchainObj, new_sock)
-
                         time.sleep(0.5)
-
                         managers = Connections().getManagerNodes()
-
                         #print(colored("[MINER CORE] Sending request for validator reward", "cyan"))
-
                         for manager in managers:
                             try:
                                 SocketUtil.sendObj(manager['ip'], 'pong:' + str(MINER_ID), manager['port'])
-
                             except:
                                 pass
-
                         #new_sock.send(str('pong').encode('utf-8'))
-
                         return None
-                    
                     else:
                         return pickle.loads(all_data)
             #else:
                 #return None
-            
+
                 new_sock.close()
         
         except Exception as e:
@@ -746,7 +655,6 @@ try:
     def validatorServer(my_addr):
 
         try:
-
             global tx_list
             global break_now
             global walletTxFreq
@@ -755,18 +663,12 @@ try:
             global NODE_IP
             global VALIDATOR_PEERS
             global BLOCKCHAIN_OBJECT
-
             BLOCKCHAIN_OBJECT = BlockchainMongo()
-
             BLOCKCHAIN_OBJECT.initializeBlockchain()
-
             syncUtil = BlockchainSyncUtil.BlockchainSyncUtil()
-
             my_ip, my_port = my_addr
             # Open server connection
             server = SocketUtil.newServerConnection(my_ip, my_port)
-
-
 
             while True:
                 try:
@@ -904,8 +806,6 @@ try:
                                 except Exception as e:
                                     validatorLogger.logMessage("[Propagation Error] Error propagating transaction to node" + str(node['ip']) + ":" + str(node['port']) + " - " + str(e), 'error')
                                     
-
-                        
 
                             newTx = newTx.getTransaction()
                             util = SocketUtil()
@@ -1195,7 +1095,7 @@ try:
         syncUtil = BlockchainSyncUtil.BlockchainSyncUtil()
         nodesDataTemp = syncUtil.getNodes(NETWORK)
 
-        print(nodesDataTemp)
+        #print(nodesDataTemp)
         nodesDataList = []
 
         # Filters out offline nodes
@@ -1205,7 +1105,7 @@ try:
         
         nodesData = nodesDataTemp
         nodesData['data'] = nodesDataList
-        print(nodesData)
+        #print(nodesData)
         currentTransactions = None
 
         while True:
@@ -1253,9 +1153,8 @@ try:
         if(BLOCKCHAIN_SYNC_COMPLETE):
 
             print("Verifing blockchain integrity...")
-            blockchainValid = BlockchainMongo().verifyBlockchainIntegrity()
+            blockchainValid = True #BlockchainMongo().verifyBlockchainIntegrity()
             print("Done")
-
             if(blockchainValid):
 
                  # Start internal clock service
@@ -1343,7 +1242,7 @@ try:
 
                 allTestsPassed = Connections().connectionTest()
 
-                print(allTestsPassed)
+                #print(allTestsPassed)
 
                 if(allTestsPassed):
 

@@ -241,8 +241,8 @@ class BlockchainSyncUtil:
 
     async def chainInitSync(self, ip, port, fullNodesList, minerID):
 
-        print(fullNodesList)
-        print("======================================================")
+        #print(fullNodesList)
+        #print("======================================================")
 
         '''
         # Blockchain initial sync
@@ -289,7 +289,7 @@ class BlockchainSyncUtil:
                     blockchainLength = 1
                 breakUpIterations = int((blockchainLength-(blockchainLength%100))/100) + 1
                 iterIndex = 0
-                print("Got packet chain size: " + str(blockchainLength))
+                #print("Got packet chain size: " + str(blockchainLength))
 
                 try:
                 # Delete current blockchain if sync is found
@@ -297,7 +297,7 @@ class BlockchainSyncUtil:
                     #BlockchainMongo.deleteBlockchainStatic()
 
                     try:
-                        print("Waiting to get blockchain...")
+                        #print("Waiting to get blockchain...")
 
                         bar = Bar('Downloading blockchain', max=(int(breakUpIterations))) # Adds one to avoid zero-division error
                         for i in range(breakUpIterations): # Goes through each block chunk
@@ -311,7 +311,7 @@ class BlockchainSyncUtil:
                                 missingBlockInRange = False
                                 startIdx, endIdx= iterIndex, iterIndex + 99
 
-                                print(missingBlocks)
+                                #print(missingBlocks)
 
                                 for missingBlockIndex in missingBlocks:
                                     if(missingBlockIndex >= iterIndex and missingBlockIndex <= endIdx):
@@ -410,7 +410,7 @@ class BlockchainSyncUtil:
                                         '''
                                         
                                         dataToSend = b'block_sync:' + bytes(str(iterIndex-100), 'utf-8') + b'-' + bytes(str(iterIndex-1), 'utf-8')
-                                        print(dataToSend)
+                                        #print(dataToSend)
                                         data = pickle.dumps(dataToSend)
 
                                         # Reconnects to node
@@ -418,7 +418,7 @@ class BlockchainSyncUtil:
                                         s.connect((ip, port))
                                         s.sendall(data)
 
-                                        print("Sent for redownload")
+                                        #print("Sent for redownload")
 
                                         blockDataTemp = b''
 
@@ -428,7 +428,7 @@ class BlockchainSyncUtil:
 
                                             if not blockPacket: break
                                         
-                                        print("Got redownload")
+                                        #print("Got redownload")
 
                                         # Delete the data for this chunk
                                         for i in range(startIdx, endIdx + 1):
@@ -479,9 +479,9 @@ class BlockchainSyncUtil:
                         bar.finish()
                         s.close()
 
-                        print(blockHostRecvList)
+                        #print(blockHostRecvList)
 
-                        print("Blocks with bad hash: " + str(badHashBlocks)) # TODO: Implement
+                        #print("Blocks with bad hash: " + str(badHashBlocks)) # TODO: Implement
 
                         print(colored('[VALIDATOR CORE] Successfully synced the blockchain','cyan'))
 

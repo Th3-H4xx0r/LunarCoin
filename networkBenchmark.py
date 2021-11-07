@@ -22,8 +22,8 @@ myPrivate, myPublic = SignaturesECDSA().loadKey()
 addr, wif = SignaturesECDSA().make_address(myPublic.to_string())
 
 
-WALLET_COUNT = 1
-TRANSACTION_COUNT_PER_WALLET = 10
+WALLET_COUNT = 3
+TRANSACTION_COUNT_PER_WALLET = 100
 
 reps = TRANSACTION_COUNT_PER_WALLET
 

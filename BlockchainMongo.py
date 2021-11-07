@@ -162,70 +162,52 @@ class BlockchainMongo:
             #print(blockData)
 
     def getBlockTXThreshold(self):
-
-        TX_INTERVAL = 200
-
+        '''
+        @ Implementation
+         - The transaction threshold increases by 1 for 100 blocks (with block 1 having a tx threshold of 1)
+         The following equation can be used to find the block tx threshold (rounding down to the last whole number)
+            - f(x) = (x/100-1) + 1 
+            - f(x) = transaction threshold for block (x)
+        '''
+        TX_INTERVAL = 100
         currentBlockCount = self.get_current_block_length()
-
-        #print("Current block height: " + str(currentBlockCount))
-
         txThreshold = 1
-
         for i in range(currentBlockCount):
             if(i % TX_INTERVAL == 0):
                 if(i != 0):
                     txThreshold = txThreshold + 1
-
-        #print(txThreshold)
-        #print("Block threshold: " + str(txThreshold))
         return txThreshold
 
     def goNewBlock(self):
-
         txThreshold = self.getBlockTXThreshold()
-
         if(len(self.current_transactions_mempool) >= txThreshold):
-            #print("Going to next block")
-
             return True
-
         else:
             print(str(len(self.current_transactions_mempool))  + "/" + str(txThreshold) + " transactions left until next block")
             return False
 
     def getBlock(self, height):
         dataReturn = None
-
         data = self.db.Blockchain.find({'block_height': int(height)})
-
         for block in data:
-            #print("BLOCK:" + str(block))
             dataReturn = block
-        
         return dataReturn
     
     def getBlockStatic(db, height):
         dataReturn = None
-
         data = db.Blockchain.find({'block_height': int(height)})
-
         for block in data:
-            #print("BLOCK:" + str(block))
             dataReturn = block
-        
         return dataReturn
     
     def verifyTransactionBlockchainIntegrity(self, tx, currentBlock):
-
         try:
             execute = False
-
             if(tx['sender'] != 'genesis' and tx['sender'] != 'validator_reward'):
                 publicKey = ecdsa.VerifyingKey.from_string(bytes.fromhex(tx['publicKey']), curve=ecdsa.SECP256k1, hashfunc = hashlib.sha1)
                 valid = self.util.verifyTransactionRaw(tx, publicKey)
                 madeWalletAddr, wif = SignaturesECDSA().make_address(publicKey.to_string())
                 getOwnWalletFunc = tx['sender']
-
                 if(madeWalletAddr == getOwnWalletFunc):
                     userCurrentBalance, duplicateTx = self.getUserBalance(getOwnWalletFunc, currentBlock, tx['transactionID'], False, True)
                     if(duplicateTx == False):
@@ -241,7 +223,6 @@ class BlockchainMongo:
                 elif(tx['sender'] == 'validator_reward'): #TODO: take care of this
                     execute = True
             return execute
-        
         except Exception as e:
             print("Error with verifying transaction: " + str(e))
             return False
@@ -251,39 +232,25 @@ class BlockchainMongo:
     
     def get_previous_block(self, currentHeight):
         docs = self.db.Blockchain.find({"block_height": currentHeight - 1 })
-
         block = None
-
         for doc in docs:
             block = doc
-
         return block
-
 
     def new_block(self, VALIDATOR_PEERS, previous_hash=None):
 
         try:
-
             lastBlockHash = ''
-
             currentHeight = self.get_current_block_length()
-
             #print("Current height: " + str(currentHeight))
-
             if(currentHeight == 0): # Genesis block
                 lastBlockHash = ''
-            
             else:
                 previousBlock = self.get_previous_block(currentHeight)
-
                 #print(previousBlock)
-
                 del previousBlock['_id']
-
                 lastBlockHash = self.computeHash(previousBlock)
-            
             #block = Block(len(self.chain) + 1, time(), self.current_transactions, lastBlockHash)
-
             # TODO: FOR block confirmation
             '''
                         block_tmp = {
@@ -298,87 +265,87 @@ class BlockchainMongo:
 
             '''
             txThreshold = self.getBlockTXThreshold()
-
             self.sortTxMempool() # Sorts the mempool by asending order of timestamps
-
             block = {
                 'block_height': currentHeight,
                 'timestamp': self.current_transactions_mempool[0:txThreshold][-1]['timestamp'], # TEMPORARY: Timestamp of last transaction is common block timestamp
                 'transactions': self.current_transactions_mempool[0:txThreshold], 
                 'previous_block': lastBlockHash,
             }
-
             #print(txThreshold)
             #print( self.current_transactions_mempool)
             #print(block['transactions'])
             
-
             # Deletes transactions from current mempool
-
             for txDelete in block['transactions']:
                 self.current_transactions_mempool.remove(txDelete)
-
-            print(self.current_transactions_mempool)
+            #print(self.current_transactions_mempool)
             self.saveBlock(block)
 
+            import sys
+            from types import ModuleType, FunctionType
+            from gc import get_referents
+
+            # Custom objects know their class.
+            # Function objects seem to know way too much, including modules.
+            # Exclude modules as well.
+            BLACKLIST = type, ModuleType, FunctionType
+
+
+            def getsize(obj):
+                """sum size of object & members."""
+                if isinstance(obj, BLACKLIST):
+                    raise TypeError('getsize() does not take argument of type: '+ str(type(obj)))
+                seen_ids = set()
+                size = 0
+                objects = [obj]
+                while objects:
+                    need_referents = []
+                    for obj in objects:
+                        if not isinstance(obj, BLACKLIST) and id(obj) not in seen_ids:
+                            seen_ids.add(id(obj))
+                            size += sys.getsizeof(obj)
+                            need_referents.append(obj)
+                    objects = get_referents(*need_referents)
+                return size
+
+            print("Size of mempool: " + str(getsize(self.current_transactions_mempool))+ " bytes" + " - # of objects: " + str(len(self.current_transactions_mempool)))
         except Exception as e:
             print("Error with adding block to the chain: " + str(e))
     
     def sortTxMempool(self):
         self.current_transactions_mempool = sorted(self.current_transactions_mempool, key = lambda i: i['timestamp'])
-            
         
     def verifyBlockchainIntegrity(self): 
-
         blocksHeight = self.get_current_block_length()
-
         bar = Bar('Verifying blockchain integrity', max=blocksHeight)
-        
         valid = True
-
         start = timeFunc.time()
         try:
-
             lastHash = None
-
             for i in range(blocksHeight):
-
                 currentBlock = self.getBlock(i)
-
                 # Verifies transactions inside block
-
                 for tx in currentBlock['transactions']:
                     if(not self.verifyTransactionBlockchainIntegrity(tx, i)):
                         print("Invalid")
                         valid = False
-
-
                 del currentBlock['_id']
-
                 if(i > 0):
-
                     if(currentBlock["previous_block"] == lastHash):
                         pass
-                    
                     else:
                         print("Block " + str(i) + " is invalid")
                         valid = False
-                
                 lastHash = self.computeHash(currentBlock)
                 bar.next()
-
-
             bar.finish()
-
             end = timeFunc.time()
             print("Validated the blockchain integrity in: " + str(end - start) + "s")
-
             #print("Blockchain is "+ str(valid))
-        
         except Exception as e:
             print("Error with validating blockchain: " + str(e))
             valid = False
-
         return valid
 
 
@@ -405,9 +372,7 @@ class BlockchainMongo:
     def new_transaction(self, sender, recipient, amount, transactionID, timestamp, hashVal, publicKey, signedMsg, genesisBlock = False):
 
         #print("Lenght of transactions: " + str(len(self.current_transactions)))
-
         transactionSuccess = True
-
         if(genesisBlock):
             self.current_transactions_mempool.append({
                 'sender': sender,
@@ -419,23 +384,16 @@ class BlockchainMongo:
                 "public": "none",
                 "signedMessage": "none"
             })
-
-            
         else:
             
             if(len(transactionID) == 98):
-
                 invoicesDataFrom = self.db.Blockchain.find({"transactionID": transactionID })
-
                 #print(invoicesDataFrom.documents)
                 #print(invoicesDataTo.documents)
-
                 if(invoicesDataFrom):
                     for invoice in invoicesDataFrom:
                         transactionSuccess = False  # Duplicate transaction ID
                         print(colored("[Share Rejected] Transaction ID is duplicated", 'yellow'))
-        
-
                 self.current_transactions_mempool.append({
                     'sender': sender,
                     'recipient': recipient,
@@ -446,13 +404,10 @@ class BlockchainMongo:
                     "publicKey": publicKey,
                     "signedMessage": signedMsg
                 })
-            
             else:
                 print(colored("[Share Rejected] Transaction ID does not match standard format", 'yellow'))
                 transactionSuccess = False
-
             #return self.last_block.index + 1
-        
         return transactionSuccess
 
     def last_block_blockchain(self):
@@ -474,31 +429,23 @@ class BlockchainMongo:
         return hashlib.sha256(block_string).hexdigest()
 
     def getUserBalance(self, myPublic, blockLimit = None, checkTransactionID=None, mobileGet=False, integrityCheck=False):
-
         duplicate = False
         transactionsInfo = []
-
         duplicateCount = 0
-
         # Checks for duplicate transaction in mempool
         for tx in self.current_transactions_mempool:
             if(tx['transactionID'] == checkTransactionID):
                 duplicate = True
         try:
-
             if(type(myPublic) != str):
                 myPublic = myPublic.decode('utf-8')
 
             #print(myPublic)
-
             outgoingTx = None 
             incomingTx = None
-
-
             if(blockLimit):
                 outgoingTx = self.db.Blockchain.find({"$and": [{"transactions.sender": myPublic}, {"block_height": {"$lte": blockLimit}}]})
                 incomingTx = self.db.Blockchain.find({"$and": [{"transactions.recipient": myPublic}, {"block_height": {"$lte": blockLimit}}]})
-            
             else:
                 outgoingTx = self.db.Blockchain.find({"transactions.sender": myPublic })
                 incomingTx = self.db.Blockchain.find({"transactions.recipient": myPublic })
@@ -509,7 +456,6 @@ class BlockchainMongo:
             ###################################
 
             # Checks outgoing transactions
-
 
             for outTxBlock in self.current_transactions_mempool:
                 if(outTxBlock['sender'] == myPublic):
@@ -525,9 +471,8 @@ class BlockchainMongo:
                     except:
                         balance = balance - outTxBlock.amount
 
-
             # Checks incoming transactions
-            
+
             for inTxBlock in self.current_transactions_mempool:
                 if(inTxBlock['recipient'] == myPublic):
                     if(inTxBlock['transactionID'] == checkTransactionID):
@@ -587,13 +532,11 @@ class BlockchainMongo:
             if(integrityCheck):
                 if(duplicateCount <= 1):
                     duplicate = False
-
             if(mobileGet):
                 return balance, duplicate, transactionsInfo
             else:
                 return balance, duplicate
-
-
+                
         except Exception as e:
             print(colored("[FATAL ERROR] Error with fetching user balance: " + str(e), "red"))
 

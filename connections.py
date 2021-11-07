@@ -195,40 +195,30 @@ class Connections:
         for node in managerNodes:
             try:
                 self.sendObj(node['ip'], b'ping', int(node['port']))
-
-                print("Obj sent successfully manager nodes")
-
+                print("[P2P SUCCESS] Communication successful with manager node")
+                #print("Obj sent successfully manager nodes")
                 workingManagerNode = True
-
                 break
             
             except Exception as e:
                 pass
         
-
         
         print("\n========= Connection Test Results =========")
-
         if(networkNodeFound):
             print(colored('[✅] Network node connection established', 'green'))
             testPassCount = testPassCount + 1
-        
         else:
             print(colored('[❌] Network node connection failed', 'red'))
-
         if(workingManagerNode):
             print(colored('[✅] Manager node connection established', 'green'))
             testPassCount = testPassCount + 1
-        
         else:
             print(colored('[❌] Manager node connection failed', 'red'))
-
-        
         print("===========================================\n")
 
         if(testPassCount >= 2):
             return True
-        
         else:
             return False
 

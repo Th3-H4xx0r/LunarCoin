@@ -98,7 +98,7 @@ class SocketUtil:
     def newServerConnection(ip_addr, port=TCP_PORT):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((ip_addr, port))
-        s.listen()
+        s.listen(9096)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 10485760)  
         return s
     
