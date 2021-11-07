@@ -93,6 +93,7 @@ try:
     NODE_IP = None
     NODE_PORT = None
     NETWORK = None
+    BLOCKCHAIN_OBJECT = None
     SPAM_MANAGEMENT_SECONDS_LEFT = 86400
     SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT = SPAM_MANAGEMENT_SECONDS_LEFT
     VALIDATOR_PEERS = []
@@ -122,16 +123,27 @@ try:
             time.sleep(1)
 
     def saveBlockService():
+
+        '''
+        @@@ Implementation
+         - Saves block every 5 minutes
+         - New nodes on the network will wait 2 save cycles (600sec) before they save their first block
+          -- To allow buffer time so they will be caught up with the network
+         - New block is then saved if it meets the transaction count threshold for the current block height
+        
+        '''
         global TIME_THRESHOLD_REACHED
         global INTERNAL_NODE_CLOCK
         global INITIAL_TWO_BLOCK_PASSED
         global BLOCK_TIME_PASS_COUNTER
+        global BLOCKCHAIN_OBJECT
+        global VALIDATOR_PEERS
 
         TEMP = time.time()
 
         while True:
             #print(ctime(start) + str(" : ") + ctime(time.time()))
-            seconds = 10
+            seconds = 300 # Saves block every 5 minutes
             diff = INTERNAL_NODE_CLOCK % seconds
             if(str(diff)[0] == '0' and TIME_THRESHOLD_REACHED == False):
                 print("----------------")
@@ -148,7 +160,14 @@ try:
 
                 # Saves the block
                 if(INITIAL_TWO_BLOCK_PASSED):
-                    print("SAVING BLOCK NOW...")
+                    newBlock = BLOCKCHAIN_OBJECT.goNewBlock()
+                    if(newBlock):
+                        validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
+                        BLOCKCHAIN_OBJECT.new_block(VALIDATOR_PEERS) # Creates new block if block meets all requirements
+                    
+                    else:
+                        print("Not adding block...")
+
 
             if(str(diff)[0] != '0' and TIME_THRESHOLD_REACHED == True):
                 TIME_THRESHOLD_REACHED = False
@@ -735,10 +754,11 @@ try:
             global NODE_PORT
             global NODE_IP
             global VALIDATOR_PEERS
+            global BLOCKCHAIN_OBJECT
 
-            blockchain = BlockchainMongo()
+            BLOCKCHAIN_OBJECT = BlockchainMongo()
 
-            blockchain.initializeBlockchain()
+            BLOCKCHAIN_OBJECT.initializeBlockchain()
 
             syncUtil = BlockchainSyncUtil.BlockchainSyncUtil()
 
@@ -750,7 +770,7 @@ try:
 
             while True:
                 try:
-                    newTx = recvObj(server, blockchain, syncUtil)
+                    newTx = recvObj(server, BLOCKCHAIN_OBJECT, syncUtil)
                     #txPacket = recvObj(server, blockchain, syncUtil)
 
                     #if(txPacket != None):
@@ -904,21 +924,25 @@ try:
 
                                         #if(blockchain.checkCoinsInCirculation() + newTx.getOutputAmount() <= 146692378): # TODO: FIX THIS
 
-                                        transactionSuccess = blockchain.new_transaction('validator_reward', newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
+                                        transactionSuccess = BLOCKCHAIN_OBJECT.new_transaction('validator_reward', newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
                                         
                                         if(transactionSuccess):
                                             addTxToList(newTx)
 
-                                            newBlock = blockchain.goNewBlock()
+                                            '''
+                                            newBlock = BLOCKCHAIN_OBJECT.goNewBlock()
 
                                             if(newBlock):
                                                 
                                                 validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
 
-                                                blockchain.new_block() # Creates new block if block meets all requirements
+                                                BLOCKCHAIN_OBJECT.new_block() # Creates new block if block meets all requirements
                                             
                                             #else:
                                                 #validatorLogger.logMessage("[Share Rejected] Coin limit reached", 'info-red')
+                                            '''
+
+                                            
 
                                     
                                     else:
@@ -968,7 +992,7 @@ try:
 
                                         if(getOwnWalletFunc != "genesis" and getOwnWalletFunc != "validator_reward"):
 
-                                            userCurrentBalance, duplicateTx = blockchain.getUserBalance(getOwnWalletFunc, None, newTx.getTransactionID(), False, False)
+                                            userCurrentBalance, duplicateTx = BLOCKCHAIN_OBJECT.getUserBalance(getOwnWalletFunc, None, newTx.getTransactionID(), False, False)
                                         
                                             if(duplicateTx == False):
                                                 if(userCurrentBalance >= newTx.getOutputAmount()):
@@ -1000,7 +1024,7 @@ try:
 
                                                                     if(invoiceFromAddr == newTx.getOutputAddress()):
                                                                         
-                                                                        removeInvResult = blockchain.remove_invoice_from_pool(invoiceIdGet, newTx.getOutputAddress(), newTx.getOwnWallet())
+                                                                        removeInvResult = BLOCKCHAIN_OBJECT.remove_invoice_from_pool(invoiceIdGet, newTx.getOutputAddress(), newTx.getOwnWallet())
 
                                                                     else:
                                                                         validatorLogger.logMessage("[Share Rejected] Invoice signature or metadata is corrupt", 'info-yellow')
@@ -1017,14 +1041,15 @@ try:
                                                             if(execute):
                                                                 transactionComplete = False
                                                                 try:    
-                                                                    transactionComplete = blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData().hex())
+                                                                    transactionComplete = BLOCKCHAIN_OBJECT.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData().hex())
                                                                 except:
-                                                                    transactionComplete = blockchain.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData())
+                                                                    transactionComplete = BLOCKCHAIN_OBJECT.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData())
 
                                                                 if(transactionComplete):
                                                                     addTxToList(newTx)
 
-                                                                    newBlock = blockchain.goNewBlock()
+                                                                    '''
+                                                                    newBlock = BLOCKCHAIN_OBJECT.goNewBlock()
 
                                                                     if(newBlock):
 
@@ -1032,32 +1057,24 @@ try:
 
                                                                         validatorLogger.logMessage("[BLOCKCHAIN] Block complete. Adding block to the blockchain", 'regular')
 
-                                                                        blockchain.new_block(VALIDATOR_PEERS) # Creates new block if block meets all requirements\\
+                                                                        BLOCKCHAIN_OBJECT.new_block(VALIDATOR_PEERS) # Creates new block if block meets all requirements\\
 
 
                                                                         #verifyBlock(blockchain.last_block_blockchain(), db)
-                                                                    
+                                                                    '''
                                                                     validatorLogger.logMessage("[Share Accepted] Share validated", 'success')
 
                                                         else:
                                                             validatorLogger.logMessage("[Share Rejected] User attempting to send coins to themself.", 'info-yellow')
-                                                
                                                 else:
-
                                                     validatorLogger.logMessage("[Share Rejected] User balance is too low to make transaction", 'info-yellow')
                                             else:
                                                 # IS a duplicate transaction
                                                 validatorLogger.logMessage("[Share Rejected] Transaction is duplicate", 'info-yellow')
-
-                                            
                                         else:
-
                                             validatorLogger.logMessage("[Share Rejected] Fraud transaction detected", 'info-yellow')
-
-
                                     else:
                                         validatorLogger.logMessage("[Share Rejected] Wallet address does not match public key", 'info-yellow')
-
                         else:
                             validatorLogger.logMessage("[Share Rejected] Duplicate transaction recieved", 'info-yellow')
 
