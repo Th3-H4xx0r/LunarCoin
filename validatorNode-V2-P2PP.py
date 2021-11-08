@@ -76,6 +76,8 @@ try:
     import random
     import ntplib
     from time import ctime
+    from time import strftime
+    from time import gmtime
 
     ###########################
     # Initilizations
@@ -103,6 +105,7 @@ try:
     VALIDATOR_PRIVATE, VALIDATOR_PUBLIC_KEY = None, None
     VALIDATOR_WALLET_ADDRESS = None
     INITIAL_TWO_BLOCK_PASSED = False
+    NODE_UPTIME_START = time.time()
     BLOCK_TIME_PASS_COUNTER = 0
     c = ntplib.NTPClient()
     response = c.request('us.pool.ntp.org', version=3)
@@ -138,6 +141,7 @@ try:
         global BLOCK_TIME_PASS_COUNTER
         global BLOCKCHAIN_OBJECT
         global VALIDATOR_PEERS
+        global NODE_UPTIME_START
 
         TEMP = time.time()
 
@@ -149,6 +153,8 @@ try:
                 print("----------------")
                 print(f"its been {seconds} sec")
                 print("ACTUAL: " + str(time.time()-TEMP))
+                print("Right Now: " + str(ctime(time.time())))
+                print("Total Node Uptime: " + str(strftime("%H:%M:%S", gmtime(time.time() - NODE_UPTIME_START))) + "sec")
                 TEMP = time.time()
 
                 BLOCK_TIME_PASS_COUNTER+=1
