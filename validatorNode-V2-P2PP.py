@@ -914,7 +914,7 @@ try:
         #while BLOCKCHAIN_SYNC_COMPLETE != True:
         if(BLOCKCHAIN_SYNC_COMPLETE):
             print("Verifing blockchain integrity...")
-            blockchainValid = True #BlockchainMongo().verifyBlockchainIntegrity()
+            blockchainValid = BlockchainMongo().verifyBlockchainIntegrity()
             print("Done")
             if(blockchainValid):
                  # Start internal clock service

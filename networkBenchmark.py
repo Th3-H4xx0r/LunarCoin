@@ -58,7 +58,7 @@ tic = time.perf_counter()
 
 nodesDataTemp = Connections().getValidatorNodesWallet('testnet')
 
-nodesData = [{'ip': '192.168.1.100', 'port': '6003'}]
+nodesData = nodesDataTemp#[{'ip': '192.168.1.100', 'port': '6003'}]
 
 # Filters out inactive nodes
 
