@@ -14,6 +14,8 @@ import os
 # Global variables
 ngrokToken = None
 
+# TODO: DO NOT ALLOW SPACES
+
 
 def saveData(data):
     if not os.path.exists('config.json'):
@@ -22,6 +24,7 @@ def saveData(data):
         with open('config.json', 'r+') as f:
             f.seek(0)
             json.dump(data, f)
+            f.truncate()
         
 
 
