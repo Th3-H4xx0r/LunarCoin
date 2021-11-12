@@ -151,6 +151,8 @@ class SocketUtil:
 
                 data = r.json()
 
+                #print(data)
+
                 if(data['status'] == 'failed'):
                     print(colored("Network node update request failed: " + str(data['message']), "yellow"))
                     return None, None
