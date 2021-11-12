@@ -118,7 +118,10 @@ class SocketUtil:
 
 
     
-    def updateMinerIp(ip, minerID, net, publicKey, walletAddr):
+    def updateMinerIp(ip, validatorID, net, publicKey, walletAddr, privateKey):
+        
+        # Orignial Data
+        # - ip + port + id + network
 
         ip = ip[6:]
 
@@ -127,13 +130,23 @@ class SocketUtil:
         port = ip[colon + 1:]
         ip = ip[:colon]
 
+        data = str(validatorID) + str(ip) + str(port) + str(net) + str(walletAddr) + str(publicKey)
+
+        signature = ''
+
+        try:
+            signature = privateKey.sign(bytes(str(data), 'utf-8')).hex()
+      
+        except Exception as e:
+            print("Error with signing signature: " + str(e))
+        
         networkNodes = Connections().getNetworkNodes()
 
         rtnStatement = None
 
         for node in networkNodes:
             try:
-                r = requests.get(node + '/validator/update?ip=' + str(ip) + "&port=" + str(port) + "&id=" + str(minerID) + "&network=" + str(net) + "&publicKey=" + str(publicKey) + "&walletAddr=" + str(walletAddr))
+                r = requests.get(node + '/validator/update?ip=' + str(ip) + "&port=" + str(port) + "&id=" + str(validatorID) + "&network=" + str(net) + "&publicKey=" + str(publicKey) + "&walletAddr=" + str(walletAddr) + "&signature=" + str(signature))
                 #print("Updated miner ip: " + str(r.json()))
 
                 data = r.json()

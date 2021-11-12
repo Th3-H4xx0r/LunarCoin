@@ -1,45 +1,32 @@
-import ntplib
-from time import ctime
-import time
-c = ntplib.NTPClient()
 import threading
-response = c.request('us.pool.ntp.org', version=3)
+import queue
+import time
 
-startTime = response.tx_time
+def console(q):
+    while 1:
+        cmd = input('> ')
+        q.put(cmd)
+        if cmd == 'quit':
+            break
 
-print(startTime)
+def action_foo():
+    print('--> action foo')
 
-print(response.offset)
+def action_bar():
+    print('--> action bar')
 
-print(ctime(response.tx_time))
+def invalid_input():
+    print('---> Unknown command')
 
-print(response.root_delay)
-'''
-while True:
-    current = time.time()
-    if(current >= startTime + 5):
-        print("its been 5 sec")
-        pass
-    
-        startTime+=5
-'''
+def main():
+    cmd_actions = {'foo': action_foo, 'bar': action_bar}
+    cmd_queue = queue.Queue()
 
-def incrementTime():
-    global startTime
+    dj = threading.Thread(target=console, args=(cmd_queue,))
+    dj.start()
+
     while True:
-        startTime += 0.1
-        time.sleep(0.1)
+      print("hello")
+      time.sleep(1)
 
-incrementLiveCounter = threading.Thread(target=incrementTime)
-incrementLiveCounter.start()
-
-
-
-def printit():
-  threading.Timer(0.2, printit).start()
-  print(ctime(startTime))
-  #startTime = 
-
-printit()
-    
-
+main()

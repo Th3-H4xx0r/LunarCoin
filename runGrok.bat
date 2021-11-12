@@ -1,1 +1,0 @@
-./ngrok http --authtoken 1sbhWV700nwAio8OdFHAYq4eHFY_2kKKwLrHPFu4D3sXvHzNR 4993
