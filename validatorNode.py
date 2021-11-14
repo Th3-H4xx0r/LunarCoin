@@ -360,8 +360,9 @@ try:
                     index = useData.index(":/:")
                     indexEOS = useData.index("EOS")
                     walletAddr = useData[index + 3:indexEOS]
-                    invoices = blockchainObj.get_invoices(walletAddr)#
+                    invoices = blockchainObj.get_invoices(walletAddr.encode('utf-8'))#
                     new_sock.send(invoices.encode('utf-8'))
+
                 elif('send_user_balance_command_mobile' in str(all_data)):
 
                     try:
