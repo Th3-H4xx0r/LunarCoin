@@ -23,7 +23,7 @@ addr, wif = SignaturesECDSA().make_address(myPublic.to_string())
 
 
 WALLET_COUNT = 2
-TRANSACTION_COUNT_PER_WALLET = 100
+TRANSACTION_COUNT_PER_WALLET = 50
 
 reps = TRANSACTION_COUNT_PER_WALLET
 

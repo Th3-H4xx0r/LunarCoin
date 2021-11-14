@@ -353,6 +353,15 @@ try:
                     tx_public = ecdsa.VerifyingKey.from_string(bytes.fromhex(finalData), curve=ecdsa.SECP256k1, hashfunc=sha256)
                     addr = SignaturesECDSA().make_address(tx_public.to_string())
                     new_sock.send(bytes(addr[0], 'utf-8'))
+                
+                elif('sendAllInvoices' in str(all_data)):
+                    validatorLogger.logMessage('[Invoice Request] Mobile invoices request received', 'regular')
+                    useData = all_data.decode("utf-8") 
+                    index = useData.index(":/:")
+                    indexEOS = useData.index("EOS")
+                    walletAddr = useData[index + 3:indexEOS]
+                    invoices = blockchainObj.get_invoices(walletAddr)#
+                    new_sock.send(invoices.encode('utf-8'))
                 elif('send_user_balance_command_mobile' in str(all_data)):
 
                     try:
