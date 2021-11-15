@@ -26,7 +26,7 @@ class Transaction:
 
 
 
-    def __init__(self, public, wallet, timestamp=None, outputAddr=None, amount=None, signature=None, txID=None, publicHex=None):
+    def __init__(self, public, wallet, timestamp=None, outputAddr=None, amount=None, signature=None, txID=None, publicHex=None, metaData=None):
 
         if(timestamp == None and outputAddr == None and amount == None and signature == None and txID == None and publicHex == None):
             self.__public = public
@@ -41,7 +41,7 @@ class Transaction:
         else:
             print("Mobile tx init")
             self.__txType = 'mobile'
-            self.__metaData = 'mobile'
+            self.__metaData = metaData
             self.__public = public
             self.__transactionTimestamp = timestamp
             self.__outputAddress = outputAddr

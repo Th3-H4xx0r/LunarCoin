@@ -338,8 +338,10 @@ try:
                     tx_amount = jsonParsed['output']
                     tx_signature = jsonParsed['signature']
                     tx_id = jsonParsed['transactionID']
+                    metadata = jsonParsed['metadata']
                     tx_wallet = SignaturesECDSA().make_address(tx_public.to_string())
-                    mobileTx = Transaction(tx_public, tx_wallet, tx_timestamp, tx_outputAddr, tx_amount, tx_signature, tx_id, jsonParsed['public_key'])
+                    if(metadata == 'none'):metadata == 'mobile'
+                    mobileTx = Transaction(tx_public, tx_wallet, tx_timestamp, tx_outputAddr, tx_amount, tx_signature, tx_id, jsonParsed['public_key'], metadata)
                     txPacket = TransactionPacket(mobileTx)
                     return txPacket
                     #(self, public, timestamp, outputAddr, amount, signature, txID, wallet):
