@@ -483,7 +483,7 @@ class BlockchainMongo:
                     if(mobileGet):
                         dateTimeObj = datetime.datetime.fromtimestamp(inTxBlock['timestamp'])
                         formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
-                        transactionsInfo.append({"type" : "incoming", "amount" : inTxBlock['amount'], "date" : str(formattedDate), "txID": inTxBlock['transactionID'], "to": tx['recipient'], "from" : inTxBlock['sender'], "height": 'Unconfirmed', 'metadata': outTxBlock['metadata']})
+                        transactionsInfo.append({"type" : "incoming", "amount" : inTxBlock['amount'], "date" : str(formattedDate), "txID": inTxBlock['transactionID'], "to": tx['recipient'], "from" : inTxBlock['sender'], "height": 'Unconfirmed', 'metadata': inTxBlock['metadata']})
                     try:
                         balance = balance + inTxBlock['amount']
                     except:
@@ -523,7 +523,7 @@ class BlockchainMongo:
                         if(mobileGet):
                             dateTimeObj = datetime.datetime.fromtimestamp(tx['timestamp'])
                             formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
-                            transactionsInfo.append({"type" : "incoming", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": incomingTxBlock['block_height'], 'metadata': outTxBlock['metadata']})
+                            transactionsInfo.append({"type" : "incoming", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": incomingTxBlock['block_height'], 'metadata': incomingTxBlock['metadata']})
                         try:
                             balance = balance + tx['amount']
                         except:
