@@ -6,6 +6,7 @@ from threading import current_thread
 from time import time
 import time as timeFunc
 import pickle
+import traceback
 from Block import Block
 from Transaction import Transaction
 from SocketUtil import SocketUtil
@@ -404,7 +405,7 @@ class BlockchainMongo:
                     'hash': hashVal,
                     "publicKey": publicKey,
                     "signedMessage": signedMsg,
-                    'metadata': metadata
+                    'metadata': str(metadata)
                 })
             else:
                 print(colored("[Share Rejected] Transaction ID does not match standard format", 'yellow'))
@@ -505,7 +506,7 @@ class BlockchainMongo:
                         if(mobileGet):
                             dateTimeObj = datetime.datetime.fromtimestamp(tx['timestamp'])
                             formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
-                            transactionsInfo.append({"type" : "outgoing", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": outTxBlock['block_height'], 'metadata': outTxBlock['metadata']})
+                            transactionsInfo.append({"type" : "outgoing", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": outTxBlock['block_height'], 'metadata': tx['metadata']})
                         try:
                             balance = balance - tx['amount']
                         except:
@@ -523,7 +524,7 @@ class BlockchainMongo:
                         if(mobileGet):
                             dateTimeObj = datetime.datetime.fromtimestamp(tx['timestamp'])
                             formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
-                            transactionsInfo.append({"type" : "incoming", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": incomingTxBlock['block_height'], 'metadata': incomingTxBlock['metadata']})
+                            transactionsInfo.append({"type" : "incoming", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": incomingTxBlock['block_height'], 'metadata': tx['metadata']})
                         try:
                             balance = balance + tx['amount']
                         except:
@@ -541,6 +542,7 @@ class BlockchainMongo:
                 
         except Exception as e:
             print(colored("[FATAL ERROR] Error with fetching user balance: " + str(e), "red"))
+            print(traceback.format_exc())
 
     ####################
     # Invoice support
