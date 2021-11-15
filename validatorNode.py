@@ -341,9 +341,14 @@ try:
                     metadata = jsonParsed['metadata']
                     tx_wallet = SignaturesECDSA().make_address(tx_public.to_string())
                     if(metadata == 'none'):metadata == 'mobile'
-                    mobileTx = Transaction(tx_public, tx_wallet, tx_timestamp, tx_outputAddr, tx_amount, tx_signature, tx_id, jsonParsed['public_key'], metadata)
-                    txPacket = TransactionPacket(mobileTx)
-                    return txPacket
+
+                    if(tx_outputAddr != tx_wallet):
+                        mobileTx = Transaction(tx_public, tx_wallet, tx_timestamp, tx_outputAddr, tx_amount, tx_signature, tx_id, jsonParsed['public_key'], metadata)
+                        txPacket = TransactionPacket(mobileTx)
+                        return txPacket
+                    else:
+                        validatorLogger.logMessage('[Share Rejected] User is sending coins to themself', 'error')
+                        return None
                     #(self, public, timestamp, outputAddr, amount, signature, txID, wallet):
                     #{"recipient":"LC1234","output":10.0,"public_key":"045feff91e0171e2fa0c96863e0b4054747e10e295854b91a5af274c0d2bde908f4f3f9f5a74f6b232b42c1ac3f9d4cb628420fb518bddbe0a7cb8b8a869cd8644","transactionID":"0xSiGc-Fy6RKbmKcsL-_b-00l_rB4PFv0MtaE-2cdIQr38a4ms6oWLeAmqq_uZnWKU","signature":"3090594baad2e5dd00390eb9b184fbdfb453ca6bdef90c9183274196e7acff53d08803f85d3a881e9801d8a265411f5fa234543feec9a89627ccb05591283720"}
                 elif('makeAddr' in str(all_data)):
@@ -734,10 +739,15 @@ try:
                                     valid = util.verifyTransaction(newTx, newTx.getPublic())
                                     madeWalletAddr, wif = SignaturesECDSA().make_address(newTx.getPublic().to_string())
                                     getOwnWalletFunc = newTx.getOwnWallet()
-                                    if(newTx.getMetaData() == 'mobile'): #TODO: giving tuple for some reason FIX
+                                    if(newTx.getTxType() == 'mobile'): #TODO: giving tuple for some reason FIX
                                         getOwnWalletFunc = getOwnWalletFunc[0]
+                                    
+                                    #print("//////////////////////")
                                     #print(madeWalletAddr)
                                     #print(getOwnWalletFunc)
+                                    #print("//////////////////////")
+
+                                
                                     if(madeWalletAddr == getOwnWalletFunc):
                                         if(getOwnWalletFunc != "genesis" and getOwnWalletFunc != "validator_reward"):
                                             userCurrentBalance, duplicateTx = BLOCKCHAIN_OBJECT.getUserBalance(getOwnWalletFunc, None, newTx.getTransactionID(), False, False)

@@ -676,7 +676,7 @@ class BlockchainMongo:
         
         for invoice in invoicesData:
             #print(invoice)
-            if(invoice['invoiceID'] == invoiceID and invoice['toAddr'] == ownAddr and invoice['fromAddr'] == senderAddr):
+            if(invoice['invoiceID'] == invoiceID and invoice['toAddr'] == ownAddr[0] and invoice['fromAddr'] == senderAddr):
                 invoicesFiltered.append(invoice)
             
             else:
