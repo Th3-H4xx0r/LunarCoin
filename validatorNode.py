@@ -704,7 +704,7 @@ try:
                                     if(addrOwnWallet == 'LC1D9x7UovnwqekVXtKg5BsykBybf9ZsHErh'): #Checks if reward TX is from manager node wallet
                                         validatorLogger.logMessage("[Share Accepted] Validator reward transaction is valid", 'success')
                                         #if(blockchain.checkCoinsInCirculation() + newTx.getOutputAmount() <= 146692378): # TODO: FIX THIS
-                                        transactionSuccess = BLOCKCHAIN_OBJECT.new_transaction('validator_reward', newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash())
+                                        transactionSuccess = BLOCKCHAIN_OBJECT.new_transaction('validator_reward', newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getMetaData())
                                         if(transactionSuccess):
                                             addTxToList(newTx)
                                             '''
@@ -778,9 +778,9 @@ try:
                                                             if(execute):
                                                                 transactionComplete = False
                                                                 try:    
-                                                                    transactionComplete = BLOCKCHAIN_OBJECT.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData().hex())
+                                                                    transactionComplete = BLOCKCHAIN_OBJECT.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData().hex(), newTx.getMetaData())
                                                                 except:
-                                                                    transactionComplete = BLOCKCHAIN_OBJECT.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData())
+                                                                    transactionComplete = BLOCKCHAIN_OBJECT.new_transaction(getOwnWalletFunc, newTx.getOutputAddress(), newTx.getOutputAmount(), newTx.getTransactionID(), newTx.getTimestamp(), newTx.getHash(), newTx.getPublic().to_string().hex(), newTx.getSignedData(), newTx.getMetaData())
 
                                                                 if(transactionComplete):
                                                                     addTxToList(newTx)

@@ -52,7 +52,7 @@ class BlockchainMongo:
 
                     # Creates genesis block
 
-                    self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, '0x000000000000000000000000000000000000000000000000', time(), '0x0', 'none', 'none', True)
+                    self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, '0x000000000000000000000000000000000000000000000000', time(), '0x0', 'none', 'none', 'metadata', True)
                     self.new_block(previous_hash=None)
                 
                 else:
@@ -72,7 +72,7 @@ class BlockchainMongo:
 
                 #sender, recipient, amount, transactionID, timestamp, hashVal
 
-                self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, '0x000000000000000000000000000000000000000000000000', time(), '0x0', 'none', 'none', True)
+                self.new_transaction('genesis', 'LC14NiTUSVd8FJbowK7G8g7yp3HwouNXkr8h', 10000, '0x000000000000000000000000000000000000000000000000', time(), '0x0', 'none', 'none', 'metadata', True)
                 self.new_block(None, previous_hash=None)
 
                 #self.saveBlock(block)
@@ -369,7 +369,7 @@ class BlockchainMongo:
         print("Deleted current blockchain")
 
 
-    def new_transaction(self, sender, recipient, amount, transactionID, timestamp, hashVal, publicKey, signedMsg, genesisBlock = False):
+    def new_transaction(self, sender, recipient, amount, transactionID, timestamp, hashVal, publicKey, signedMsg, metadata, genesisBlock = False):
 
         #print("Lenght of transactions: " + str(len(self.current_transactions)))
         transactionSuccess = True
@@ -382,7 +382,8 @@ class BlockchainMongo:
                 'timestamp': timestamp,
                 'hash': '0x0', #TODO: Add hash
                 "public": "none",
-                "signedMessage": "none"
+                "signedMessage": "none",
+                'metadata': ''
             })
         else:
             
@@ -402,7 +403,8 @@ class BlockchainMongo:
                     'timestamp': timestamp,
                     'hash': hashVal,
                     "publicKey": publicKey,
-                    "signedMessage": signedMsg
+                    "signedMessage": signedMsg,
+                    'metadata': metadata
                 })
             else:
                 print(colored("[Share Rejected] Transaction ID does not match standard format", 'yellow'))
@@ -465,7 +467,7 @@ class BlockchainMongo:
                     if(mobileGet):
                         dateTimeObj = datetime.datetime.fromtimestamp(outTxBlock['timestamp'])
                         formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
-                        transactionsInfo.append({"type" : "outgoing", "amount" : outTxBlock['amount'], "date" : str(formattedDate), "txID": outTxBlock['transactionID'], "to": outTxBlock['recipient'], "from" : outTxBlock['sender'], "height": 'Unconfirmed'})
+                        transactionsInfo.append({"type" : "outgoing", "amount" : outTxBlock['amount'], "date" : str(formattedDate), "txID": outTxBlock['transactionID'], "to": outTxBlock['recipient'], "from" : outTxBlock['sender'], "height": 'Unconfirmed', 'metadata': outTxBlock['metadata']})
                     try:
                         balance = balance - outTxBlock['amount']
                     except:
@@ -481,7 +483,7 @@ class BlockchainMongo:
                     if(mobileGet):
                         dateTimeObj = datetime.datetime.fromtimestamp(inTxBlock['timestamp'])
                         formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
-                        transactionsInfo.append({"type" : "incoming", "amount" : inTxBlock['amount'], "date" : str(formattedDate), "txID": inTxBlock['transactionID'], "to": tx['recipient'], "from" : inTxBlock['sender'], "height": 'Unconfirmed'})
+                        transactionsInfo.append({"type" : "incoming", "amount" : inTxBlock['amount'], "date" : str(formattedDate), "txID": inTxBlock['transactionID'], "to": tx['recipient'], "from" : inTxBlock['sender'], "height": 'Unconfirmed', 'metadata': outTxBlock['metadata']})
                     try:
                         balance = balance + inTxBlock['amount']
                     except:
@@ -503,7 +505,7 @@ class BlockchainMongo:
                         if(mobileGet):
                             dateTimeObj = datetime.datetime.fromtimestamp(tx['timestamp'])
                             formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
-                            transactionsInfo.append({"type" : "outgoing", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": outTxBlock['block_height']})
+                            transactionsInfo.append({"type" : "outgoing", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": outTxBlock['block_height'], 'metadata': outTxBlock['metadata']})
                         try:
                             balance = balance - tx['amount']
                         except:
@@ -521,7 +523,7 @@ class BlockchainMongo:
                         if(mobileGet):
                             dateTimeObj = datetime.datetime.fromtimestamp(tx['timestamp'])
                             formattedDate = dateTimeObj.strftime('%m/%d/%y %H:%M:%S')
-                            transactionsInfo.append({"type" : "incoming", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": incomingTxBlock['block_height']})
+                            transactionsInfo.append({"type" : "incoming", "amount" : tx['amount'], "date" : str(formattedDate), "txID": tx['transactionID'], "to": tx['recipient'], "from" : tx['sender'], "height": incomingTxBlock['block_height'], 'metadata': outTxBlock['metadata']})
                         try:
                             balance = balance + tx['amount']
                         except:
