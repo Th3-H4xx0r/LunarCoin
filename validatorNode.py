@@ -819,7 +819,7 @@ try:
                     #logging.log('message')
 
         except Exception as e:
-            validatorLogger.logMessage("[FATAL ERROR] Miner error occured. " + str(e) + " Restart node.", 'error')
+            validatorLogger.logMessage("[FATAL ERROR] Validator error occured. " + str(e) + " Restart node.", 'error')
 
     def validatorRewardService():
         global txRecv
@@ -843,7 +843,7 @@ try:
                     #for node in nodes:
                     data = {'walletAddress': walletAddress, 'transactions': txRecv, 'minerID': MINER_ID, 'network': NETWORK, 'ip': NODE_IP, 'port': NODE_PORT}
                     managers = Connections().getManagerNodes()
-                    validatorLogger.logMessage("[MINER CORE] Sending request for validator reward", 'info')
+                    validatorLogger.logMessage("[VALIDATOR CORE] Sending request for validator reward", 'info')
                     for manager in managers:
                         try:
                             SocketUtil.sendObj(manager['ip'], data, manager['port'])
@@ -857,7 +857,7 @@ try:
         global validatorLogger
         global SPAM_MANAGEMENT_SECONDS_LEFT
         global SPAM_MANAGEMENT_SECONDS_LEFT_DOCUMENT
-        validatorLogger.logMessage('[MINER CORE] Started spam protection service', 'info')
+        validatorLogger.logMessage('[VALIDATOR CORE] Started spam protection service', 'info')
         while True:
             for i in range(SPAM_MANAGEMENT_SECONDS_LEFT, -1, - 1):
                 time.sleep(1)
@@ -909,7 +909,7 @@ try:
             # IF getNodes is None
             if(nodesData == None):
                 execute = False
-                validatorLogger.logMessage('Error with connecting to network node. Restart miner and try again later.', 'regular')
+                validatorLogger.logMessage('Error with connecting to network node. Restart validator and try again later.', 'regular')
                 break
             syncNodeIP, syncNodePort, nodeDataJSON = syncUtil.getRandomNode(MINER_ID, nodesData)
 
@@ -1022,7 +1022,7 @@ try:
             else: # Error has occured
                 x = input("(Press any key to exit)>>")
         else:
-            validatorLogger.logMessage("Miner wallet does not exist. Run 'python GenerateWallet.py' and run the validator node again.", 'error')
+            validatorLogger.logMessage("Validator wallet does not exist. Run 'python GenerateWallet.py' and run the validator node again.", 'error')
             x = input("(Press any key to exit)>>")
 
 except Exception as e:
