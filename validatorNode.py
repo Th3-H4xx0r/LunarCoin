@@ -393,7 +393,7 @@ try:
                     index = str(all_data).index(":/:")
                     indexEOS = str(all_data).index("EOS")
                     invoiceDetails = json.loads(str(all_data[index + 3:indexEOS]))
-                    blockchainObj.create_invoice(invoiceDetails['invoiceID'], invoiceDetails['amount'], invoiceDetails['fromAddr'], invoiceDetails['toAddr'], invoiceDetails['expDate'], invoiceDetails['signature'], invoiceDetails['publicHex'])
+                    blockchainObj.create_invoice(invoiceDetails['invoiceID'], invoiceDetails['amount'], invoiceDetails['fromAddr'], invoiceDetails['toAddr'], invoiceDetails['expDate'], invoiceDetails['signature'], invoiceDetails['publicHex'], True)
                     #invoiceID, amount, fromAddr, toAddr, expDate, signature, publicKey
                     return None
 

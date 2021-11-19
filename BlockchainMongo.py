@@ -548,7 +548,7 @@ class BlockchainMongo:
     # Invoice support
     ####################
 
-    def create_invoice(self, invoiceID, amount, fromAddr, toAddr, expDate, signature, public):
+    def create_invoice(self, invoiceID, amount, fromAddr, toAddr, expDate, signature, public, mobile=False):
 
         #publicKey = ecdsa.VerifyingKey.from_string(bytes.fromhex(public), curve=ecdsa.SECP256k1, hashfunc=sha256)
 
@@ -557,6 +557,9 @@ class BlockchainMongo:
         #print(invoiceID)
 
         originalMessage = str(invoiceID) #+ str(amount) + str(fromAddr) + str(toAddr) + str(expDate) + str(public)
+
+        print(originalMessage)
+        print(signature)
         #str(invoiceID) + str(amount) + str(walletAddress) + str(toAddr) + str(expDate) + str(myVerifyingKey.to_string().hex())
 
         #print(originalMessage)
@@ -581,8 +584,13 @@ class BlockchainMongo:
         # Verifies invoice signature
 
         try:
+            
+            if(mobile):
+                publicUse = ecdsa.VerifyingKey.from_string(bytes.fromhex(public), curve=ecdsa.SECP256k1, hashfunc=sha256) 
+            else: pickle.loads(public)
 
-            invoiceValid = SignaturesECDSA().verify(originalMessage.encode('utf-8'), bytes.fromhex(signature), pickle.loads(public)) 
+
+            invoiceValid = SignaturesECDSA().verify(originalMessage.encode('utf-8'), bytes.fromhex(signature), publicUse) 
         
         except:
             pass
