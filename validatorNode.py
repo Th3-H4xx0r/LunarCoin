@@ -386,6 +386,16 @@ try:
                         new_sock.sendall(returnVar.encode('utf-8'))
                     except Exception as e:
                         pass
+                
+                elif('generate_invoice' in str(all_data)): # Get user balance and send to user
+                    validatorLogger.logMessage('[INVOICE CREATE REQUEST] Request to generate invoice - mobile', 'info-blue')
+                    index = str(all_data).index(":/:")
+                    indexEOS = str(all_data).index("EOS")
+                    invoiceDetails = json.loads(str(all_data[index + 3:indexEOS]))
+                    blockchainObj.create_invoice(invoiceDetails['invoiceID'], invoiceDetails['amount'], invoiceDetails['fromAddr'], invoiceDetails['toAddr'], invoiceDetails['expDate'], invoiceDetails['signature'], invoiceDetails['publicHex'])
+                    #invoiceID, amount, fromAddr, toAddr, expDate, signature, publicKey
+                    return None
+
                 else:
                     returnData = pickle.loads(all_data)
                     '''
