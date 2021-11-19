@@ -389,6 +389,7 @@ try:
                 
                 elif('generate_invoice' in str(all_data)): # Get user balance and send to user
                     validatorLogger.logMessage('[INVOICE CREATE REQUEST] Request to generate invoice - mobile', 'info-blue')
+                    all_data = all_data.decode("utf-8") 
                     index = str(all_data).index(":/:")
                     indexEOS = str(all_data).index("EOS")
                     invoiceDetails = json.loads(str(all_data[index + 3:indexEOS]))
