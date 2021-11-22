@@ -98,21 +98,24 @@ class BlockchainSyncUtil:
 
 
     def sendInvoicePool(self, socket, previousChunkID):
+        
 
         try:
 
             data,lastID = BlockchainMongo.get_invoices_sync_util(5, previousChunkID)
 
             print("=================================================================")
-            print(data)
+            print("GIVEN PREVIOUS ID: " + str(previousChunkID))
+            #print(data)
             print(lastID)
 
             socket.sendall(pickle.dumps({"poolChunk": data, "lastID": lastID}))
-            previousChunkID = lastID
+            socket.close()
 
             print("Sent invoice pool chunk")
             print("=================================================================")
 
+            
             return 0
         
         except Exception as e:
@@ -284,6 +287,8 @@ class BlockchainSyncUtil:
         data = pickle.dumps(dataToSend)
         s.sendall(data)
 
+        lastChunkID = ''
+
         try:
             dataTemp = b''
 
@@ -298,20 +303,26 @@ class BlockchainSyncUtil:
                 s.close()
                     
                 poolChunkData = pickle.loads(dataTemp)
-                print(poolChunkData)
 
-                if(poolChunkData['poolChunk'] == None and poolChunkData['lastID'] == None):
-                    break
-                
-                # Resends request for next chunk
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect((ip, port))
-                #s.setblocking(0)
-                dataToSend = b'invoice_pool_init_sync://:' + pickle.dumps({"lastID": poolChunkData['lastID']})
-                data = pickle.dumps(dataToSend)
-                s.sendall(data)
-                
+                if(poolChunkData is not None):
+                    #print(poolChunkData)
 
+                    if(poolChunkData['poolChunk'] == None and poolChunkData['lastID'] == None):
+                        break
+
+                    lastChunkID = poolChunkData['lastID']
+
+                    print(lastChunkID)
+                    
+                    # Resends request for next chunk
+                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.connect((ip, port))
+                    #s.setblocking(0)
+                    dataToSend = b'invoice_pool_init_sync://:' + pickle.dumps({"lastID": lastChunkID})
+                    data = pickle.dumps(dataToSend)
+                    s.sendall(data)
+                else:
+                    print("NULL DATA RECIEVED")
         
         except Exception as e:
             print("Failed to recieve pool: " + str(e))

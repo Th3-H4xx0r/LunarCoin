@@ -538,6 +538,7 @@ try:
                         validatorLogger.logMessage('[INVOICE REQUEST] Request to get pending incoming invoices', 'info-blue')
                         index = str(returnData).index("://:")
                         lastIDInfo =  pickle.loads(returnData[index+4:])
+                        print("LAST ID: " + str(lastIDInfo))
                         sent = syncUtil.sendInvoicePool(new_sock, lastIDInfo['lastID'])
                         return None
 
