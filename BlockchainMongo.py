@@ -678,12 +678,8 @@ class BlockchainMongo:
     def remove_invoice_from_pool(self, invoiceID, senderAddr, ownAddr):
         invoicesFiltered = []
         removedOneInvoice = False
-
         #print("Removing invoice")
-
         #print(ownAddr)
-
-
         invoicesData = self.db.InvoicePool.find({"invoiceID": invoiceID})
         
         for invoice in invoicesData:
@@ -693,7 +689,6 @@ class BlockchainMongo:
             
             else:
                 print("NOT EQUAL")
-        
 
         for invoice in invoicesFiltered:
             try:
@@ -703,8 +698,51 @@ class BlockchainMongo:
             except Exception as e:
                 print("Failed to delete one invoice: " + str(e))
         
-
         return removedOneInvoice
+    
+    def get_invoices_count():
+        try:
+            client = MongoClient('localhost')
+            db=client.LunarCoin
+            data = db.InvoicePool.estimated_document_count()
+            return data
+        except: return None
+
+    def get_invoices_sync_util(page_size, last_id=None):
+        try:
+            client = MongoClient('localhost')
+            db=client.LunarCoin
+
+            if last_id is None:
+                # When it is first page
+                cursor = db['InvoicePool'].find().limit(page_size)
+            else:
+                cursor = db['InvoicePool'].find({'_id': {'$gt': last_id}}).limit(page_size)
+
+            # Get the data      
+            data = [x for x in cursor]
+
+            if not data:
+                # No documents left
+                return None, None
+
+            # Since documents are naturally ordered with _id, last document will
+            # have max id.
+            last_id = data[-1]['_id']
+
+            # Return data and last_id
+            return data, last_id
+            
+        except: return None, None
+            
+
+
+
+
+
+
+
+
         
 
 

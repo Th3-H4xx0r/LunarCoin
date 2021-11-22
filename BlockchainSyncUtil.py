@@ -97,6 +97,39 @@ class BlockchainSyncUtil:
         return None, None
 
 
+    def sendInvoicePool(self, socket, blockchainObj, previousChunkID=None):
+
+        try:
+
+            for i in range(10):
+
+                data,lastID = blockchainObj.get_invoices_sync_util(5, previousChunkID)
+
+                print("=================================================================")
+                print(data)
+                print(lastID)
+
+                socket.sendall(pickle.dumps({"poolChunk": data, "lastID": lastID}))
+
+                previousChunkID = lastID
+
+                print("Sent invoice pool chunk")
+                print("=================================================================")
+
+            return 0
+        
+        except Exception as e:
+
+            print("Error with sending invoice pool chunk: " + str(e))
+
+            dataSend = pickle.dumps(None)
+
+            socket.send(dataSend)
+            socket.close()
+
+            return 0
+    
+
     def sendBlockchain_HEADER(self, socket, blockchainObj):
 
         try:
@@ -237,6 +270,45 @@ class BlockchainSyncUtil:
             print("Error with getting nodes: " + str(e))
             return None, None, None
 
+    async def invoicePoolSync(self, fullNodesList):
+        '''
+        # Invoice Pool Initial Sync
+        '''
+
+        # Generates random node to fetch pool
+        
+        ip, port, nodeDataJSON = BlockchainSyncUtil().getRandomNode(None, fullNodesList)
+
+        print(colored('[VALIDATOR CORE] Syncing invoices pool.','cyan'))
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((ip, port))
+        #s.setblocking(0)
+        dataToSend = b'invoice_pool_init_sync'
+        data = pickle.dumps(dataToSend)
+        s.sendall(data)
+
+        try:
+            dataTemp = b''
+
+            for i in range(10):
+
+                while True:
+                    blockPacket = s.recv(BUFFER_SIZE)
+                    dataTemp += blockPacket
+
+                    if not blockPacket: break
+                    
+                poolChunkData = pickle.loads(dataTemp)
+                print(poolChunkData)
+
+        
+        except Exception as e:
+            print("Failed to recieve pool: " + str(e))
+
+
+
+
+
 
 
     async def chainInitSync(self, ip, port, fullNodesList, minerID):
@@ -246,6 +318,9 @@ class BlockchainSyncUtil:
 
         '''
         # Blockchain initial sync
+
+        -  Current blockchain is checked for missing blocks and blockcount
+        -  Add more
         '''
 
         # Checks current blockchain

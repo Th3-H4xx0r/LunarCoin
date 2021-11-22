@@ -533,6 +533,11 @@ try:
                         new_sock.sendall(pickle.dumps(invoices))
                         #invoiceID, amount, fromAddr, toAddr, expDate, signature, publicKey
                         return None
+                    
+                    elif('invoice_pool_init_sync' in str(returnData)): # Get user balance and send to user
+                        validatorLogger.logMessage('[INVOICE REQUEST] Request to get pending incoming invoices', 'info-blue')
+                        sent = syncUtil.sendInvoicePool()
+                        return None
 
                     elif('sync_spam_management' in str(returnData)): # Get user balance and send to user
                         validatorLogger.logMessage('[VALIDATOR REQUEST] Validator request for sync spam management', 'info')
