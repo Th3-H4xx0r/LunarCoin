@@ -536,7 +536,7 @@ try:
                     
                     elif('invoice_pool_init_sync' in str(returnData)): # Get user balance and send to user
                         validatorLogger.logMessage('[INVOICE REQUEST] Request to get pending incoming invoices', 'info-blue')
-                        sent = syncUtil.sendInvoicePool()
+                        sent = syncUtil.sendInvoicePool(new_sock, blockchainObj)
                         return None
 
                     elif('sync_spam_management' in str(returnData)): # Get user balance and send to user
@@ -900,8 +900,8 @@ try:
     async def syncBlockchain(syncUtil, syncNodeIP, syncNodePort, fullNodesList):
         global MINER_ID
         syncComplete = await syncUtil.chainInitSync(syncNodeIP, syncNodePort, fullNodesList, MINER_ID)
-        invoicePoolSync = await syncUtil.invoicePoolSync()
-        
+        invoicePoolSync = await syncUtil.invoicePoolSync(fullNodesList)
+
         return syncComplete
 
     async def syncThread():
