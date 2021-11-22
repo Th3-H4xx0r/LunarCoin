@@ -900,6 +900,8 @@ try:
     async def syncBlockchain(syncUtil, syncNodeIP, syncNodePort, fullNodesList):
         global MINER_ID
         syncComplete = await syncUtil.chainInitSync(syncNodeIP, syncNodePort, fullNodesList, MINER_ID)
+        invoicePoolSync = await syncUtil.invoicePoolSync()
+        
         return syncComplete
 
     async def syncThread():
