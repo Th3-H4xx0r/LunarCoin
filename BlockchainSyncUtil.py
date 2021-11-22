@@ -110,11 +110,13 @@ class BlockchainSyncUtil:
                 print(lastID)
 
                 socket.sendall(pickle.dumps({"poolChunk": data, "lastID": lastID}))
-
                 previousChunkID = lastID
 
                 print("Sent invoice pool chunk")
                 print("=================================================================")
+
+                if(data == None and lastID == None):
+                    break
 
             return 0
         
@@ -290,7 +292,7 @@ class BlockchainSyncUtil:
         try:
             dataTemp = b''
 
-            for i in range(10):
+            while True:
 
                 while True:
                     blockPacket = s.recv(BUFFER_SIZE)
@@ -300,6 +302,10 @@ class BlockchainSyncUtil:
                     
                 poolChunkData = pickle.loads(dataTemp)
                 print(poolChunkData)
+
+                if(poolChunkData['poolChunk'] == None and poolChunkData['lastID'] == None):
+                    break
+                
 
         
         except Exception as e:
