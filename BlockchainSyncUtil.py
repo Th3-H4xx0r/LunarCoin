@@ -103,7 +103,7 @@ class BlockchainSyncUtil:
 
             for i in range(10):
 
-                data,lastID = BlockchainMongo().get_invoices_sync_util(5, previousChunkID)
+                data,lastID = BlockchainMongo.get_invoices_sync_util(5, previousChunkID)
 
                 print("=================================================================")
                 print(data)
