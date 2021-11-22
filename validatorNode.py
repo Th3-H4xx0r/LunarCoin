@@ -536,7 +536,9 @@ try:
                     
                     elif('invoice_pool_init_sync' in str(returnData)): # Get user balance and send to user
                         validatorLogger.logMessage('[INVOICE REQUEST] Request to get pending incoming invoices', 'info-blue')
-                        sent = syncUtil.sendInvoicePool(new_sock, blockchainObj)
+                        index = str(returnData).index("://:")
+                        lastIDInfo =  pickle.loads(returnData[index+4:])
+                        sent = syncUtil.sendInvoicePool(new_sock, lastIDInfo['lastID'])
                         return None
 
                     elif('sync_spam_management' in str(returnData)): # Get user balance and send to user

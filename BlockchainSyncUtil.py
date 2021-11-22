@@ -97,26 +97,21 @@ class BlockchainSyncUtil:
         return None, None
 
 
-    def sendInvoicePool(self, socket, blockchainObj, previousChunkID=None):
+    def sendInvoicePool(self, socket, previousChunkID):
 
         try:
 
-            for i in range(10):
+            data,lastID = BlockchainMongo.get_invoices_sync_util(5, previousChunkID)
 
-                data,lastID = BlockchainMongo.get_invoices_sync_util(5, previousChunkID)
+            print("=================================================================")
+            print(data)
+            print(lastID)
 
-                print("=================================================================")
-                print(data)
-                print(lastID)
+            socket.sendall(pickle.dumps({"poolChunk": data, "lastID": lastID}))
+            previousChunkID = lastID
 
-                socket.sendall(pickle.dumps({"poolChunk": data, "lastID": lastID}))
-                previousChunkID = lastID
-
-                print("Sent invoice pool chunk")
-                print("=================================================================")
-
-                if(data == None and lastID == None):
-                    break
+            print("Sent invoice pool chunk")
+            print("=================================================================")
 
             return 0
         
@@ -285,7 +280,7 @@ class BlockchainSyncUtil:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((ip, port))
         #s.setblocking(0)
-        dataToSend = b'invoice_pool_init_sync'
+        dataToSend = b'invoice_pool_init_sync://:' + pickle.dumps({"lastID": None})
         data = pickle.dumps(dataToSend)
         s.sendall(data)
 
@@ -299,12 +294,22 @@ class BlockchainSyncUtil:
                     dataTemp += blockPacket
 
                     if not blockPacket: break
+                
+                s.close()
                     
                 poolChunkData = pickle.loads(dataTemp)
                 print(poolChunkData)
 
                 if(poolChunkData['poolChunk'] == None and poolChunkData['lastID'] == None):
                     break
+                
+                # Resends request for next chunk
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((ip, port))
+                #s.setblocking(0)
+                dataToSend = b'invoice_pool_init_sync://:' + pickle.dumps({"lastID": poolChunkData['lastID']})
+                data = pickle.dumps(dataToSend)
+                s.sendall(data)
                 
 
         
