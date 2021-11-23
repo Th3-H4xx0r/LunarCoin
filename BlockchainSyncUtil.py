@@ -275,57 +275,72 @@ class BlockchainSyncUtil:
         # Invoice Pool Initial Sync
         '''
 
-        # Generates random node to fetch pool
-        
-        ip, port, nodeDataJSON = BlockchainSyncUtil().getRandomNode(None, fullNodesList)
-
-        print(colored('[VALIDATOR CORE] Syncing invoices pool.','cyan'))
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((ip, port))
-        #s.setblocking(0)
-        dataToSend = b'invoice_pool_init_sync://:' + pickle.dumps({"lastID": None})
-        data = pickle.dumps(dataToSend)
-        s.sendall(data)
-
-        lastChunkID = ''
-
         try:
-            dataTemp = b''
 
-            while True:
+            # Generates random node to fetch pool
+            
+            ip, port, nodeDataJSON = BlockchainSyncUtil().getRandomNode(None, fullNodesList)
+
+            print(colored('[VALIDATOR CORE] Syncing invoices pool.','cyan'))
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((ip, port))
+            #s.setblocking(0)
+            dataToSend = b'invoice_pool_init_sync://:' + pickle.dumps({"lastID": None})
+            data = pickle.dumps(dataToSend)
+            s.sendall(data)
+
+            lastChunkID = ''
+
+            deletedCurrentPool = False
+
+            try:
 
                 while True:
-                    blockPacket = s.recv(BUFFER_SIZE)
-                    dataTemp += blockPacket
 
-                    if not blockPacket: break
-                
-                s.close()
+                    dataTemp = b''
+
+                    while True:
+                        blockPacket = s.recv(BUFFER_SIZE)
+                        dataTemp += blockPacket
+
+                        if not blockPacket: break
                     
-                poolChunkData = pickle.loads(dataTemp)
+                    s.close()
+                        
+                    poolChunkData = pickle.loads(dataTemp) # TODO: INFINITE LOOP WITH WRONG ID
 
-                if(poolChunkData is not None):
-                    #print(poolChunkData)
+                    if(poolChunkData is not None):
+                        #print(poolChunkData)
 
-                    if(poolChunkData['poolChunk'] == None and poolChunkData['lastID'] == None):
-                        break
+                        if(poolChunkData['poolChunk'] == None and poolChunkData['lastID'] == None):
+                            break
 
-                    lastChunkID = poolChunkData['lastID']
+                        lastChunkID = poolChunkData['lastID']
 
-                    print(lastChunkID)
-                    
-                    # Resends request for next chunk
-                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    s.connect((ip, port))
-                    #s.setblocking(0)
-                    dataToSend = b'invoice_pool_init_sync://:' + pickle.dumps({"lastID": lastChunkID})
-                    data = pickle.dumps(dataToSend)
-                    s.sendall(data)
-                else:
-                    print("NULL DATA RECIEVED")
-        
-        except Exception as e:
-            print("Failed to recieve pool: " + str(e))
+                        if(not deletedCurrentPool):
+                            BlockchainMongo.delete_invoice_pool()
+                            deletedCurrentPool = True
+
+                        print(lastChunkID)
+
+                        BlockchainMongo.save_invoice_chunk(poolChunkData['poolChunk'])
+                        
+                        # Resends request for next chunk
+                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        s.connect((ip, port))
+                        #s.setblocking(0)
+                        dataToSend = b'invoice_pool_init_sync://:' + pickle.dumps({"lastID": lastChunkID})
+                        print('invoice_pool_init_sync://:' + str({"lastID": lastChunkID}))
+                        data = pickle.dumps(dataToSend)
+                        s.sendall(data)
+                    else:
+                        print("NULL DATA RECIEVED")
+            
+            except Exception as e:
+                print("Failed to recieve pool: " + str(e))
+
+        except Exception as eMain:
+            print("Invoice pool init sync mainloop error: " + str(eMain))
 
 
 

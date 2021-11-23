@@ -146,7 +146,7 @@ class SocketUtil:
 
         for node in networkNodes:
             try:
-                r = requests.get(node + '/validator/update?ip=' + str(ip) + "&port=" + str(port) + "&id=" + str(validatorID) + "&network=" + str(net) + "&publicKey=" + str(publicKey) + "&walletAddr=" + str(walletAddr) + "&signature=" + str(signature))
+                r = requests.get(node + '/validator/update?validatorIP=' + str(ip) + "&validatorPort=" + str(port) + "&validatorID=" + str(validatorID) + "&network=" + str(net) + "&publicKey=" + str(publicKey) + "&walletAddr=" + str(walletAddr) + "&signature=" + str(signature))
                 #print("Updated miner ip: " + str(r.json()))
 
                 data = r.json()

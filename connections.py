@@ -9,8 +9,9 @@ class Connections:
 
     # Hardcoded
     networkNodes = [
-        #'http://10.0.0.13:4993'
-        'https://network-node-us1.lunarcoin.network',
+        #'http://127.0.0.1:8000'
+        #'https://network-node-us1.lunarcoin.network',
+        'https://lunarcoin-network-node.herokuapp.com'
         #'http://server1.protosystems.net'
     ]
 

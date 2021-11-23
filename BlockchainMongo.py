@@ -707,6 +707,21 @@ class BlockchainMongo:
             data = db.InvoicePool.estimated_document_count()
             return data
         except: return None
+    
+    def delete_invoice_pool():
+        client = MongoClient('localhost')
+        db=client.LunarCoin
+        db.InvoicePool.delete_many({})
+
+    def save_invoice_chunk(invoices):
+        try:
+            client = MongoClient('localhost')
+            db=client.LunarCoin
+
+            db.InvoicePool.insert_many(invoices)
+            
+        except Exception as e:
+            print("Failed to save invoice chunk")
 
     def get_invoices_sync_util(page_size, last_id=None):
         try:
