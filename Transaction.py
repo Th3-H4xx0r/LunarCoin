@@ -38,7 +38,7 @@ class Transaction:
             self.__data = []
             self.__transactionID = (b'0x' + binascii.b2a_hex(os.urandom(48))).decode()
         
-        else:
+        else: # Mobile transaction
             print("Mobile tx init")
             self.__txType = 'mobile'
             self.__metaData = metaData
@@ -65,7 +65,6 @@ class Transaction:
             
                                 #"LC1234" + 10.0.toString() + timestamp.toString() + pub.toHex().toString() + txID.toString()
             
-            print
             hashRaw = hashlib.sha256(pickle.dumps(self.__data))
             self.__hashData = hashRaw.hexdigest()
 
@@ -86,16 +85,28 @@ class Transaction:
         
             self.__transactionTimestamp = time.time()
 
+            ''' 
             self.__data.append(self.__outputAddress)
             self.__data.append(self.__outputAmount)
             self.__data.append(self.__transactionTimestamp)
             self.__data.append(self.__public.to_string().hex())
             self.__data.append(self.__transactionID)
+            
+            '''
+
+            # New
+            dataToEncode = (str(self.__outputAddress) + str(self.__outputAmount) + str(self.__transactionTimestamp) + str(self.__public.to_string().hex()) + str(self.__transactionID))
+            print(dataToEncode)
+
+            dataToEncode = dataToEncode.encode('utf-8')
+
+            #(str(self.__outputAddress) + str(self.__outputAmount) + str(self.__transactionTimestamp) + str(publicHex) + str(self.__transactionID)).encode('utf-8')
 
             if(miningReward):
                 pass
             else:
-                self.__signedData = SignaturesECDSA().sign(self.__data, privateKey)
+                #self.__signedData = SignaturesECDSA().sign(self.__data, privateKey)
+                self.__signedData = SignaturesECDSA().sign(dataToEncode, privateKey) # New
             
             hashRaw = hashlib.sha256(pickle.dumps(self.__data))
             self.__hashData = hashRaw.hexdigest()

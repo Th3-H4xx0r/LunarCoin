@@ -21,31 +21,43 @@ class SocketUtil:
     def __init__(self):
         pass
 
-    def verifyTransactionRaw(self, tx, public):
+    def verifyTransactionRaw(self, tx, public, txType):
 
         try:
 
             verified = False
+            originalData = None
 
-            originalData = []
+            #if(txType == "mobile"):
+            print(public.to_string().hex())
+            #(str(self.__outputAddress) + str(self.__outputAmount) + str(self.__transactionTimestamp) + str(self.__public.to_string().hex()) + str(self.__transactionID)).encode('utf-8')
+            originalData = (str(tx['recipient']) + str(tx['amount']) + str(tx['timestamp']) + str(public.to_string().hex()) + str(tx['transactionID']))
+            print(originalData)
 
-            originalData.append(tx['recipient'])
-            originalData.append(tx['amount'])
-            originalData.append(tx['timestamp'])
-            originalData.append(tx['publicKey'])
-            originalData.append(tx['transactionID'])
+            originalData = originalData.encode('utf-8')
+            verified = SignaturesECDSA().verify(originalData, bytes.fromhex(tx['signedMessage']), public)
+            #else:
+                #originalData = []
+
+                #originalData.append(tx['recipient'])
+                #originalData.append(tx['amount'])
+                #originalData.append(tx['timestamp'])
+                #originalData.append(tx['publicKey'])
+                #originalData.append(tx['transactionID'])
+
+                #verified = SignaturesECDSA().verify(bytes(str(originalData), 'utf-8'), bytes.fromhex(tx['signedMessage']), public)
 
             #print(bytes(str(originalData), 'utf-8').hex())
 
             #print(originalData)
 
-            verified = SignaturesECDSA().verify(bytes(str(originalData), 'utf-8'), bytes.fromhex(tx['signedMessage']), public)
+            
             return verified
 
         
         except Exception as e: # On error
             print(" Error occured verifyTransactionRaw - SocketUtil.py: " + str(e))
-            print(traceback.format_exc())
+            #print(traceback.format_exc())
             return False
 
     def verifyTransaction(self, transaction, public):

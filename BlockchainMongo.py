@@ -207,14 +207,15 @@ class BlockchainMongo:
             if(tx['sender'] != 'genesis' and tx['sender'] != 'validator_reward'):
                 valid = False
 
-                try:
-                    publicKey = ecdsa.VerifyingKey.from_string(bytes.fromhex(tx['publicKey']), curve=ecdsa.SECP256k1, hashfunc = hashlib.sha1)
-                    valid = self.util.verifyTransactionRaw(tx, publicKey)
-                
-                except:
-                    publicKey = ecdsa.VerifyingKey.from_string(bytes.fromhex(tx['publicKey']), curve=ecdsa.SECP256k1, hashfunc = hashlib.sha256)
-                    valid = self.util.verifyTransactionRaw(tx, publicKey)
-                    
+                print("TRYING 1")
+                publicKey = ecdsa.VerifyingKey.from_string(bytes.fromhex(tx['publicKey']), curve=ecdsa.SECP256k1, hashfunc = hashlib.sha1)
+                valid = self.util.verifyTransactionRaw(tx, publicKey, 'normal')
+
+                #if(valid == False):
+                    #print("TRYING 2")
+                    #publicKey = ecdsa.VerifyingKey.from_string(bytes.fromhex(tx['publicKey']), curve=ecdsa.SECP256k1, hashfunc = hashlib.sha1)
+                    #valid = self.util.verifyTransactionRaw(tx, publicKey, 'mobile')
+
                 madeWalletAddr, wif = SignaturesECDSA().make_address(publicKey.to_string())
                 getOwnWalletFunc = tx['sender']
                 if(madeWalletAddr == getOwnWalletFunc):
